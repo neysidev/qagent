@@ -1,0 +1,54 @@
+{
+  "common": {
+    "brand": "QAgent",
+    "signOut": "Sign out",
+    "dashboard": "Dashboard",
+    "loading": "Loading…",
+    "switchLocale": "فارسی"
+  },
+  "landing": {
+    "title": "Test your site before your customers do",
+    "subtitle": "Tell QAgent what to check. It uses your site like a real user and tells you exactly what broke, where, and why.",
+    "cta": "Get started free"
+  },
+  "auth": {
+    "signInTitle": "Log in",
+    "signUpTitle": "Create an account",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Log in",
+    "signUp": "Sign up",
+    "toSignUp": "No account? Sign up",
+    "toSignIn": "Have an account? Log in",
+    "error": "Could not authenticate. Check your email and password (min. 8 characters)."
+  },
+  "dashboard": {
+    "newTest": "New test",
+    "url": "Website URL",
+    "goal": "What should QAgent check?",
+    "goalPlaceholder": "e.g. Add a product to the cart, change the quantity, then remove it",
+    "start": "Start test",
+    "tryDemo": "Try on demo shop",
+    "demoGoal": "Add a product to the cart, change the quantity, then remove it",
+    "recentRuns": "Recent runs",
+    "noRuns": "No runs yet. Start one above.",
+    "error": "Could not start the test"
+  },
+  "run": {
+    "status": "Status",
+    "goal": "Goal",
+    "steps": "Steps",
+    "waiting": "Waiting for the agent…",
+    "back": "Back to dashboard"
+  },
+  "status": {
+    "queued": "Queued",
+    "planning": "Planning",
+    "running": "Running",
+    "verifying": "Verifying",
+    "reporting": "Reporting",
+    "done": "Done",
+    "failed": "Failed",
+    "canceled": "Canceled"
+  }
+}
