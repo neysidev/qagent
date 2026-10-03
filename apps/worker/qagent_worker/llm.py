@@ -1,7 +1,10 @@
 """Model factory + token/cost accounting. Provider and models are env-configurable."""
 
+import asyncio
 import json
+import logging
 import os
+import random
 from functools import cache
 from typing import Literal, TypeVar
 
@@ -9,6 +12,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage
 from pydantic import BaseModel
 
+log = logging.getLogger("qagent.llm")
 T = TypeVar("T", bound=BaseModel)
 ModelKind = Literal["fast", "smart"]
 
@@ -39,12 +43,12 @@ def chat_model(kind: ModelKind) -> BaseChatModel:
             api_key=os.environ["LLM_API_KEY"],
             temperature=0.1,
             timeout=60,
-            max_retries=2,
+            max_retries=0,
         )
     from langchain_google_genai import ChatGoogleGenerativeAI
 
     return ChatGoogleGenerativeAI(
-        model=name, google_api_key=os.environ["GOOGLE_API_KEY"], temperature=0.1, timeout=60, max_retries=2
+        model=name, google_api_key=os.environ["GOOGLE_API_KEY"], temperature=0.1, timeout=60, max_retries=0
     )
 
 
@@ -62,15 +66,60 @@ class Cost(BaseModel):
         self.llmCalls += 1
 
 
-async def structured(kind: ModelKind, schema: type[T], messages: list[BaseMessage], cost: Cost) -> T:
-    """One structured-output call; retries once on a parse failure. Usage is always billed."""
+RETRY_MARKERS = ("429", "500", "502", "503", "504", "RESOURCE_EXHAUSTED", "UNAVAILABLE", "overloaded", "timed out", "Timeout")
+ATTEMPTS = 3
+
+
+def _retryable(e: Exception) -> bool:
+    status = getattr(e, "status_code", None) or getattr(e, "code", None)
+    if isinstance(status, int):
+        return status == 429 or status >= 500
+    return isinstance(e, (TimeoutError, asyncio.TimeoutError)) or any(m in str(e) for m in RETRY_MARKERS)
+
+
+async def _call(kind: ModelKind, schema: type[T], messages: list[BaseMessage], cost: Cost) -> T:
+    """Retries 429/5xx with exponential backoff; retries once on a parse failure. Usage is always billed."""
     llm = chat_model(kind).with_structured_output(schema, include_raw=True)
-    last_error: Exception | None = None
-    for _ in range(2):
-        res = await llm.ainvoke(messages)
+    parse_failures = 0
+    attempt = 0
+    while True:
+        try:
+            res = await llm.ainvoke(messages)
+        except Exception as e:
+            attempt += 1
+            if not _retryable(e) or attempt >= ATTEMPTS:
+                raise
+            delay = 2**attempt + random.random()
+            log.warning("llm %s retry %d in %.1fs: %s", model_name(kind), attempt, delay, str(e)[:200])
+            await asyncio.sleep(delay)
+            continue
         usage = getattr(res["raw"], "usage_metadata", None) or {}
         cost.add(model_name(kind), usage.get("input_tokens", 0), usage.get("output_tokens", 0))
         if res.get("parsed") is not None:
             return res["parsed"]
-        last_error = res.get("parsing_error")
-    raise RuntimeError(f"LLM returned invalid output: {last_error}")
+        parse_failures += 1
+        if parse_failures >= 2:
+            raise RuntimeError(f"LLM returned invalid output: {res.get('parsing_error')}")
+
+
+async def structured(kind: ModelKind, schema: type[T], messages: list[BaseMessage], cost: Cost) -> T:
+    """Structured call on `kind`; if that model stays unavailable, falls back to the other one."""
+    try:
+        return await _call(kind, schema, messages, cost)
+    except Exception as e:
+        if not _retryable(e) or model_name("fast") == model_name("smart"):
+            raise
+        other: ModelKind = "smart" if kind == "fast" else "fast"
+        log.warning("llm %s unavailable, falling back to %s", model_name(kind), model_name(other))
+        return await _call(other, schema, messages, cost)
+
+
+if __name__ == "__main__":
+
+    class E(Exception):
+        def __init__(self, code: int) -> None:
+            self.status_code = code
+
+    assert _retryable(E(429)) and _retryable(E(503)) and not _retryable(E(400))
+    assert _retryable(Exception("429 RESOURCE_EXHAUSTED")) and not _retryable(ValueError("bad schema"))
+    print("ok")

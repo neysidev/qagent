@@ -5,7 +5,9 @@ import { ACTIVE_STATUSES, requireOwnedRun, requireUser } from "./lib";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-type NewRun = Pick<Doc<"runs">, "url" | "goal" | "templateKey" | "locale" | "credentials">;
+type NewRun = Pick<Doc<"runs">, "url" | "goal" | "templateKey" | "locale" | "credentials" | "replayOf">;
+
+const dailyLimit = () => Number(process.env.DAILY_RUN_LIMIT ?? 10);
 
 async function insertRun(ctx: MutationCtx, userId: Id<"users">, args: NewRun) {
   let parsed: URL;
@@ -19,7 +21,7 @@ async function insertRun(ctx: MutationCtx, userId: Id<"users">, args: NewRun) {
   if (!goal || goal.length > 2000) throw new ConvexError("INVALID_GOAL");
 
   const now = Date.now();
-  const limit = Number(process.env.DAILY_RUN_LIMIT ?? 10);
+  const limit = dailyLimit();
   const recent = await ctx.db
     .query("runs")
     .withIndex("by_user", (q) => q.eq("userId", userId))
@@ -45,6 +47,7 @@ async function insertRun(ctx: MutationCtx, userId: Id<"users">, args: NewRun) {
     templateKey: args.templateKey,
     locale: args.locale,
     credentials: args.credentials,
+    replayOf: args.replayOf,
     status: "queued",
     createdAt: now,
   });
@@ -65,7 +68,8 @@ export const rerun = mutation({
   args: { runId: v.id("runs") },
   handler: async (ctx, { runId }) => {
     const run = await requireOwnedRun(ctx, runId);
-    return insertRun(ctx, run.userId, run);
+    // Passed scenarios are replayed deterministically (no LLM); the rest re-run with the agent.
+    return insertRun(ctx, run.userId, { ...run, replayOf: run._id });
   },
 });
 
@@ -86,6 +90,21 @@ export const share = mutation({
     const shareToken = crypto.randomUUID().replaceAll("-", "");
     await ctx.db.patch(runId, { shareToken });
     return shareToken;
+  },
+});
+
+export const quota = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireUser(ctx);
+    const limit = dailyLimit();
+    const recent = await ctx.db
+      .query("runs")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(limit);
+    const since = Date.now() - DAY_MS;
+    return { used: recent.filter((r) => r.createdAt > since).length, limit };
   },
 });
 

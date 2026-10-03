@@ -30,6 +30,22 @@ export const cost = v.object({
   usd: v.number(),
   llmCalls: v.number(),
 });
+export const trace = v.object({
+  actions: v.array(
+    v.object({
+      type: v.string(),
+      role: v.optional(v.string()),
+      name: v.optional(v.string()),
+      ref: v.optional(v.string()),
+      text: v.optional(v.string()),
+      key: v.optional(v.string()),
+      url: v.optional(v.string()),
+      direction: v.optional(v.string()),
+      ms: v.optional(v.number()),
+    }),
+  ),
+  checks: v.object({ path: v.string(), texts: v.array(v.string()) }),
+});
 export const bbox = v.object({ x: v.number(), y: v.number(), w: v.number(), h: v.number() });
 export const action = v.object({
   type: v.string(),
@@ -69,6 +85,7 @@ export default defineSchema({
     locale: v.union(v.literal("fa"), v.literal("en")),
     credentials: v.optional(v.object({ username: v.string(), password: v.string() })),
     status: runStatus,
+    replayOf: v.optional(v.id("runs")),
     workerId: v.optional(v.string()),
     heartbeatAt: v.optional(v.number()),
     attempts: v.optional(v.number()),
@@ -94,6 +111,8 @@ export default defineSchema({
     expected: v.string(),
     status: scenarioStatus,
     verdictReason: v.optional(v.string()),
+    replayed: v.optional(v.boolean()),
+    trace: v.optional(trace),
   }).index("by_run", ["runId", "index"]),
 
   steps: defineTable({

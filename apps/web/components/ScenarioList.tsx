@@ -44,6 +44,11 @@ export function ScenarioList({
                 <span className="block font-medium text-pretty">{s.title}</span>
                 <span className="mt-0.5 block text-xs text-zinc-500">
                   {t(`kind.${s.kind}`)} · {t(`scenario.${s.status}`)}
+                  {s.replayed && (
+                    <span className="ms-1.5 rounded bg-violet-100 px-1.5 py-0.5 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                      {t("replayed")}
+                    </span>
+                  )}
                 </span>
                 {showReasons && s.verdictReason && (
                   <span className="mt-1.5 block text-sm text-pretty text-zinc-600 dark:text-zinc-400">{s.verdictReason}</span>

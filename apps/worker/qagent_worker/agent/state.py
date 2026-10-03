@@ -68,6 +68,7 @@ class ScenarioResult(BaseModel):
     status: Literal["passed", "failed", "error"]
     reason: str
     bug: bool = False
+    replayed: bool = False
 
 
 class RunState(BaseModel):

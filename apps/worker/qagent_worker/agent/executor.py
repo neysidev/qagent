@@ -126,6 +126,8 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
     limit_reason: str | None = None
     final_obs: Observation | None = None
     final_shot: bytes | None = None
+    trace: list[dict[str, Any]] = []
+    blocked = False
     try:
         page = await context.new_page()
         evidence.attach(page)
@@ -138,6 +140,9 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
                         limit_reason = f"Step limit ({MAX_STEPS}) reached"
                         break
                     obs = await observe(page)
+                    if obs.captcha:
+                        blocked, limit_reason = True, "Blocked by captcha"
+                        break
                     user = (
                         f"Scenario ({scenario['kind']}): {scenario['title']}\n{scenario['description']}\n"
                         f"Expected outcome: {scenario['expected']}\nOverall goal: {run['goal']}\n\n"
@@ -192,6 +197,12 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
                                 },
                             )
                         )
+                        if ok:
+                            el = obs.by_ref(action.ref)
+                            trace.append(
+                                {k: v for k, v in action.model_dump().items() if v is not None}
+                                | ({"role": el.aria_role, "name": el.name} if el and el.name else {})
+                            )
                         step += 1
                         history.append(f"{step}. {describe(action)} -> {'ok' if ok else 'FAILED: ' + (error or '')}")
                         if not ok or page.url != url_before:
@@ -215,6 +226,12 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
     finally:
         await context.close()
         await writer.close()
+
+    if blocked:
+        # Captchas are a test-environment limit, not a site bug; no LLM verdict needed.
+        reason = "Blocked by captcha: the agent cannot test past a captcha challenge."
+        await api.mutation("updateScenario", scenarioId=scenario["_id"], status="error", verdictReason=reason)
+        return ScenarioResult(index=scenario["index"], status="error", reason=reason)
 
     if finished_ok is None:
         conclusion = f"The tester did not finish: {limit_reason}"
@@ -246,5 +263,11 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
         )
     status = {"passed": "passed", "failed": "failed", "agent_error": "error"}[verdict.status]
     reason = scrub(verdict.reason, secret_values)
-    await api.mutation("updateScenario", scenarioId=scenario["_id"], status=status, verdictReason=reason)
+    extra: dict[str, Any] = {}
+    if status == "passed" and final_obs:
+        checks = final_obs.checks()
+        checks["texts"] = [t for t in checks["texts"] if t == scrub(t, secret_values)]
+        actions = [{k: scrub(v, secret_values) if isinstance(v, str) else v for k, v in a.items()} for a in trace]
+        extra = {"trace": {"actions": actions, "checks": checks}}
+    await api.mutation("updateScenario", scenarioId=scenario["_id"], status=status, verdictReason=reason, **extra)
     return ScenarioResult(index=scenario["index"], status=status, reason=reason, bug=verdict.status == "failed")

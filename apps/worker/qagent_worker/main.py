@@ -1,9 +1,11 @@
 """Worker entry: claim loop, concurrency cap, heartbeat; each run executes the LangGraph agent."""
 
 import asyncio
+import json
 import logging
 import os
 import socket
+import time
 from typing import Any
 
 from .agent.executor import Deps
@@ -19,6 +21,45 @@ MAX_CONCURRENT_RUNS = int(os.environ.get("MAX_CONCURRENT_RUNS", "2"))
 SCENARIO_PARALLELISM = int(os.environ.get("SCENARIO_PARALLELISM", "3"))
 POLL_INTERVAL_S = 1.0
 HEARTBEAT_INTERVAL_S = 15.0
+
+
+class JsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        entry: dict[str, Any] = {
+            "ts": round(record.created, 3),
+            "level": record.levelname,
+            "logger": record.name,
+            "msg": record.getMessage(),
+            "worker": WORKER_ID,
+        }
+        if record.exc_info:
+            entry["exc"] = self.formatException(record.exc_info)
+        return json.dumps(entry, ensure_ascii=False)
+
+
+async def start_health_server(running: set[asyncio.Task[None]]) -> None:
+    """GET /health → 200 JSON (Railway healthcheck). Up only once the browser is warm."""
+    started = time.time()
+
+    async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        try:
+            line = await asyncio.wait_for(reader.readline(), timeout=5)
+            ok = line.split(b" ")[1:2] == [b"/health"]
+            body = json.dumps({"ok": True, "worker": WORKER_ID, "runs": len(running), "uptime": int(time.time() - started)})
+            status = "200 OK" if ok else "404 Not Found"
+            writer.write(
+                f"HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {len(body)}\r\n"
+                f"Connection: close\r\n\r\n{body}".encode()
+            )
+            await writer.drain()
+        except Exception:
+            pass
+        finally:
+            writer.close()
+
+    port = int(os.environ.get("PORT", "8080"))
+    await asyncio.start_server(handle, "0.0.0.0", port)
+    log.info("health endpoint on :%d/health", port)
 
 
 async def heartbeat(api: ConvexApi, run_id: str, deps: Deps, task: asyncio.Task[None]) -> None:
@@ -68,12 +109,15 @@ async def handle(api: ConvexApi, pool: BrowserPool, run: dict[str, Any], slots: 
 
 
 async def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+    handler = logging.StreamHandler()
+    handler.setFormatter(JsonFormatter())
+    logging.basicConfig(level=logging.INFO, handlers=[handler])
     api = ConvexApi()
     pool = BrowserPool()
     await pool.start()
     slots = asyncio.Semaphore(MAX_CONCURRENT_RUNS)
     running: set[asyncio.Task[None]] = set()
+    await start_health_server(running)
     log.info("worker %s ready (max %d runs)", WORKER_ID, MAX_CONCURRENT_RUNS)
     try:
         while True:

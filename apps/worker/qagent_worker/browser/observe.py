@@ -1,6 +1,7 @@
 """In-page extraction of interactive/meaningful elements with stable data-qa-ref ids."""
 
 from typing import Any
+from urllib.parse import urlsplit
 
 from playwright.async_api import Page
 from pydantic import BaseModel
@@ -37,7 +38,9 @@ _EXTRACT_JS = r"""
       bbox: { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) },
     });
   }
-  return { url: location.href, title: document.title, text: clip(document.body ? document.body.innerText : '', 1500), elements: out };
+  const captcha = !!document.querySelector('iframe[src*="recaptcha"],iframe[src*="hcaptcha"],' +
+    'iframe[src*="challenges.cloudflare.com"],.g-recaptcha,.h-captcha,.cf-turnstile,#challenge-form');
+  return { url: location.href, title: document.title, text: clip(document.body ? document.body.innerText : '', 1500), elements: out, captcha };
 }
 """
 
@@ -88,6 +91,12 @@ class Observation(BaseModel):
     title: str
     text: str
     elements: list[Element]
+    captcha: bool = False
+
+    def checks(self) -> dict[str, Any]:
+        """Deterministic end-state assertions for replay: URL path + key headings/messages."""
+        texts = [e.name for e in self.elements if e.name and (e.tag in INFO_TAGS or e.role in ("alert", "status"))]
+        return {"path": urlsplit(self.url).path, "texts": texts[:3]}
 
     def by_ref(self, ref: str | None) -> Element | None:
         return next((e for e in self.elements if e.ref == ref), None)

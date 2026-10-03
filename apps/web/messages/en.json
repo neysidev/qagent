@@ -59,7 +59,8 @@
     "recentRuns": "Recent runs",
     "noRuns": "No tests yet",
     "noRunsBody": "Start with the demo shop or test your own site.",
-    "bugs": "{count, plural, =0 {No bugs} one {# bug} other {# bugs}}"
+    "bugs": "{count, plural, =0 {No bugs} one {# bug} other {# bugs}}",
+    "quota": "{used} of {limit} free runs used today"
   },
   "newTest": {
     "title": "New test",
@@ -132,7 +133,8 @@
       "navigate": "Go to",
       "scroll": "Scroll",
       "wait": "Wait"
-    }
+    },
+    "replayed": "Replayed"
   },
   "report": {
     "title": "Report",
@@ -163,7 +165,8 @@
       "high": "High",
       "medium": "Medium",
       "low": "Low"
-    }
+    },
+    "replayedBadge": "Replayed — $0.00 LLM cost"
   },
   "status": {
     "queued": "Queued",

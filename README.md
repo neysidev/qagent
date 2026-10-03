@@ -54,6 +54,18 @@ verify; max `SCENARIO_PARALLELISM` in parallel) → report. Fast model for plann
 to re-check failed or low-confidence verdicts. Every LLM call is costed into `run.cost`. Requests to private/loopback/
 metadata addresses are blocked on every request (`security.py`).
 
+## Re-runs and replay
+
+"Re-run" replays every previously passed scenario deterministically (role + accessible name selectors, no LLM).
+If a replay step or end-state check fails, that scenario falls back to the agent. Failed scenarios always re-run
+with the agent.
+
+## Operations
+
+- Worker logs are JSON lines on stdout. `GET /health` on `$PORT` (default 8080) is the Railway healthcheck.
+- LLM 429/5xx/timeouts: 3 attempts with backoff, then fallback to the other model.
+- Docs: `docs/technical.md`, `docs/business-plan.md`, `docs/pitch-outline.md`, `docs/video-script.md`.
+
 ## Acceptance checks
 
 - Sign up on the web URL → **Try on demo shop** → a screenshot appears on the run page within ~10s.

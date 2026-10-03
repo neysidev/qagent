@@ -19,6 +19,7 @@ function Dashboard() {
   const locale = useLocale() as Locale;
   const router = useRouter();
   const runs = useQuery(api.runs.listMine);
+  const quota = useQuery(api.runs.quota);
   const createRun = useMutation(api.runs.create);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -39,7 +40,14 @@ function Dashboard() {
   return (
     <main className="mx-auto max-w-4xl space-y-8 px-4 py-8">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">{t("title")}</h1>
+        <div>
+          <h1 className="text-2xl font-semibold">{t("title")}</h1>
+          {quota && (
+            <p className={`mt-1 text-sm ${quota.used >= quota.limit ? "text-red-600" : "text-zinc-500"}`}>
+              {t("quota", { used: quota.used, limit: quota.limit })}
+            </p>
+          )}
+        </div>
         <Link href="/tests/new" className={button.primary}>
           + {t("newTest")}
         </Link>
@@ -49,7 +57,7 @@ function Dashboard() {
         <section className="flex flex-col gap-4 rounded-xl bg-linear-to-br from-blue-600 to-indigo-600 p-6 text-white sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-md text-pretty text-blue-50">{t("tryDemoBody")}</p>
           <button
-            disabled={pending}
+            disabled={pending || (quota !== undefined && quota.used >= quota.limit)}
             onClick={() => void tryDemo()}
             className={`${button.primary} shrink-0 bg-white px-6 py-3 text-base text-blue-700 hover:bg-blue-50 dark:bg-white dark:text-blue-700`}
           >

@@ -34,14 +34,27 @@ MATCHERS = {
 
 
 class MemoryApi:
-    def __init__(self) -> None:
+    def __init__(self, replay_source: "MemoryApi | None" = None) -> None:
         self.bugs: list[dict[str, Any]] = []
         self.finished: dict[str, Any] = {}
+        self.scenarios: dict[str, dict[str, Any]] = {}
+        self._source = replay_source
         self._ids = count()
 
     async def mutation(self, name: str, **args: Any) -> Any:
         if name == "createScenarios":
-            return [f"s{next(self._ids)}" for _ in args["scenarios"]]
+            ids = [f"s{next(self._ids)}" for _ in args["scenarios"]]
+            self.scenarios.update({i: dict(s) for i, s in zip(ids, args["scenarios"])})
+            return ids
+        if name == "updateScenario":
+            self.scenarios[args["scenarioId"]].update(
+                {k: v for k, v in args.items() if k in ("status", "trace", "replayed")}
+            )
+        if name == "getReplay" and self._source:
+            return [
+                {**s, "trace": s.get("trace") if s.get("status") == "passed" else None}
+                for s in self._source.scenarios.values()
+            ]
         if name == "addBug":
             self.bugs.append(args)
         if name == "finishRun":
@@ -52,10 +65,12 @@ class MemoryApi:
         return f"file{next(self._ids)}"
 
 
-async def one_run(pool: BrowserPool, url: str, goal: str) -> tuple[MemoryApi, float, float]:
-    api = MemoryApi()
+async def one_run(
+    pool: BrowserPool, url: str, goal: str, replay_of: MemoryApi | None = None
+) -> tuple[MemoryApi, float, float]:
+    api = MemoryApi(replay_of)
     deps = Deps(api=api, pool=pool, scenario_slots=asyncio.Semaphore(int(os.environ.get("SCENARIO_PARALLELISM", "3"))))
-    run = {"_id": "run", "url": url, "goal": goal, "locale": "en"}
+    run = {"_id": "run", "url": url, "goal": goal, "locale": "en", **({"replayOf": "prev"} if replay_of else {})}
     started = time.monotonic()
     await build_graph(deps).ainvoke(RunState(run=run))
     return api, time.monotonic() - started, deps.cost.usd
@@ -67,6 +82,7 @@ async def main() -> None:
     await pool.start()
     detected: set[str] = set()
     false_positives = 0
+    baseline: MemoryApi | None = None
     durations: list[float] = []
     costs: list[float] = []
     try:
@@ -85,7 +101,12 @@ async def main() -> None:
                     detected |= hits
                 else:
                     false_positives += len(api.bugs)
+                    baseline = baseline or api
                 print(f"[{mode}] {goal}\n  {secs:.0f}s ${usd:.4f} bugs: {[b['title'] for b in api.bugs]}")
+        if baseline:
+            api, secs, usd = await one_run(pool, f"{base}/?bugs=none", GOALS[0][0], replay_of=baseline)
+            replayed = sum(bool(s.get("replayed")) for s in api.scenarios.values())
+            print(f"[replay] {replayed}/{len(api.scenarios)} scenarios replayed in {secs:.1f}s, ${usd:.4f}")
     finally:
         await pool.stop()
 

@@ -1,4 +1,4 @@
-"""LangGraph: plan → fan-out execute_scenario (execute + verify, max N parallel) → report."""
+"""LangGraph: plan → fan-out execute_scenario (replay or agent + verify, max N parallel) → report."""
 
 from typing import Any
 
@@ -6,17 +6,34 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 
 from ..browser.observe import observe
+from ..replay import replay
 from ..security import url_allowed
 from . import planner, reporter
 from .executor import Deps, run_scenario
 from .state import RunState
 
+SCENARIO_FIELDS = ("title", "description", "kind", "expected")
+
 
 def build_graph(deps: Deps) -> Any:
+    async def save(run_id: str, planned: list[dict[str, Any]], traces: list[Any]) -> dict[str, Any]:
+        ids = await deps.api.mutation("createScenarios", runId=run_id, scenarios=planned)
+        await deps.api.mutation("setRunStatus", runId=run_id, status="running")
+        return {
+            "scenarios": [
+                {**s, "_id": sid, "index": i, "trace": tr} for i, (s, sid, tr) in enumerate(zip(planned, ids, traces))
+            ]
+        }
+
     async def plan(state: RunState) -> dict[str, Any]:
         run = state.run
         if not await url_allowed(run["url"]):
             raise RuntimeError("This URL is not allowed (only public http/https sites can be tested)")
+        if run.get("replayOf"):
+            source = await deps.api.mutation("getReplay", runId=run["_id"])
+            if source:  # re-run: reuse the original scenarios, no planning call
+                planned = [{k: s[k] for k in SCENARIO_FIELDS} for s in source]
+                return await save(run["_id"], planned, [s.get("trace") for s in source])
         context = await deps.pool.new_context()
         try:
             page = await context.new_page()
@@ -28,10 +45,7 @@ def build_graph(deps: Deps) -> Any:
         finally:
             await context.close()
         result = await planner.plan(run, obs, deps.cost)
-        planned = [s.model_dump() for s in result.scenarios]
-        ids = await deps.api.mutation("createScenarios", runId=run["_id"], scenarios=planned)
-        await deps.api.mutation("setRunStatus", runId=run["_id"], status="running")
-        return {"scenarios": [{**s, "_id": sid, "index": i} for i, (s, sid) in enumerate(zip(planned, ids))]}
+        return await save(run["_id"], [s.model_dump() for s in result.scenarios], [None] * len(result.scenarios))
 
     def fan_out(state: RunState) -> list[Send]:
         return [Send("execute_scenario", {"run": state.run, "scenarios": [s]}) for s in state.scenarios]
@@ -39,15 +53,26 @@ def build_graph(deps: Deps) -> Any:
     async def execute_scenario(state: RunState | dict[str, Any]) -> dict[str, Any]:
         if isinstance(state, dict):  # Send payloads may arrive uncoerced
             state = RunState.model_validate(state)
+        scenario = state.scenarios[0]
         async with deps.scenario_slots:
-            result = await run_scenario(deps, state.run, state.scenarios[0])
+            result = await replay(deps, state.run, scenario) if scenario.get("trace") else None
+            if result is None:
+                result = await run_scenario(deps, state.run, scenario)
         return {"results": [result]}
 
     async def report(state: RunState) -> dict[str, Any]:
         run = state.run
-        await deps.api.mutation("setRunStatus", runId=run["_id"], status="reporting")
-        text = await reporter.summarize(run, state.scenarios, state.results, deps.cost)
         results = state.results
+        await deps.api.mutation("setRunStatus", runId=run["_id"], status="reporting")
+        if deps.cost.llmCalls == 0:  # everything replayed: keep it at $0
+            n = len(results)
+            text = (
+                f"{n} سناریو به‌صورت قطعی و بدون فراخوانی مدل بازپخش شد و همه موفق بودند. هزینه مدل: ۰ دلار."
+                if run["locale"] == "fa"
+                else f"Replayed {n} scenarios deterministically with no LLM calls; all passed. LLM cost: $0.00."
+            )
+        else:
+            text = await reporter.summarize(run, state.scenarios, results, deps.cost)
         await deps.api.mutation(
             "finishRun",
             runId=run["_id"],

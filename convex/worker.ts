@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
-import { action, bbox, cost, runStatus, scenarioKind, scenarioStatus, severity } from "./schema";
+import { action, bbox, cost, runStatus, scenarioKind, scenarioStatus, severity, trace } from "./schema";
 import { checkSecret } from "./lib";
 
 const secret = v.string();
@@ -82,10 +82,33 @@ export const updateScenario = mutation({
     scenarioId: v.id("scenarios"),
     status: scenarioStatus,
     verdictReason: v.optional(v.string()),
+    replayed: v.optional(v.boolean()),
+    trace: v.optional(trace),
   },
-  handler: async (ctx, { secret, scenarioId, status, verdictReason }) => {
+  handler: async (ctx, { secret, scenarioId, ...patch }) => {
     checkSecret(secret);
-    await ctx.db.patch(scenarioId, { status, verdictReason });
+    await ctx.db.patch(scenarioId, patch);
+  },
+});
+
+/** Scenarios of the run being replayed, with traces for the ones that passed. */
+export const getReplay = mutation({
+  args: { secret, runId: v.id("runs") },
+  handler: async (ctx, { secret, runId }) => {
+    checkSecret(secret);
+    const run = await ctx.db.get(runId);
+    if (!run?.replayOf) return [];
+    const scenarios = await ctx.db
+      .query("scenarios")
+      .withIndex("by_run", (q) => q.eq("runId", run.replayOf!))
+      .collect();
+    return scenarios.map(({ title, description, kind, expected, status, trace }) => ({
+      title,
+      description,
+      kind,
+      expected,
+      trace: status === "passed" ? trace : undefined,
+    }));
   },
 });
 

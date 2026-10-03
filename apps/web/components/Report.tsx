@@ -33,7 +33,14 @@ export function Report({ data, actions }: { data: RunDetails; actions?: ReactNod
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold">{t("title")}</h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-xl font-semibold">{t("title")}</h2>
+          {run.replayOf && scenarios.length > 0 && (run.cost?.llmCalls ?? 0) === 0 && (
+            <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+              {t("replayedBadge")}
+            </span>
+          )}
+        </div>
         {actions && <div className="no-print flex flex-wrap gap-2">{actions}</div>}
       </div>
 
