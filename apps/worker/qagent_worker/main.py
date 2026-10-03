@@ -27,8 +27,7 @@ async def heartbeat(api: ConvexApi, run_id: str, deps: Deps, task: asyncio.Task[
         try:
             res = await api.mutation("heartbeat", runId=run_id, workerId=WORKER_ID, cost=deps.cost.model_dump())
             if res and res.get("stop"):
-                log.info("run %s: stop requested", run_id)
-                task.cancel()
+                deps.stop.set()
         except Exception:
             log.exception("run %s: heartbeat failed", run_id)
 
@@ -42,6 +41,13 @@ async def handle(api: ConvexApi, pool: BrowserPool, run: dict[str, Any], slots: 
     deps = Deps(api=api, pool=pool, scenario_slots=asyncio.Semaphore(SCENARIO_PARALLELISM))
     task = asyncio.create_task(execute(deps, run))
     hb = asyncio.create_task(heartbeat(api, run_id, deps, task))
+
+    async def stop_watcher() -> None:
+        await deps.stop.wait()
+        log.info("run %s: stop requested", run_id)
+        task.cancel()
+
+    watcher = asyncio.create_task(stop_watcher())
     try:
         await task
         log.info("run %s: done", run_id)
@@ -57,6 +63,7 @@ async def handle(api: ConvexApi, pool: BrowserPool, run: dict[str, Any], slots: 
             log.exception("run %s: could not mark failed", run_id)
     finally:
         hb.cancel()
+        watcher.cancel()
         slots.release()
 
 

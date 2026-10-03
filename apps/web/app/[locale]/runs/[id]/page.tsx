@@ -2,116 +2,175 @@
 
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import { useQuery } from "convex/react";
-import { useTranslations } from "next-intl";
+import type { RunDetails } from "@convex/runs";
+import { useMutation, useQuery } from "convex/react";
+import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/Header";
-import { RequireAuth } from "@/components/RequireAuth";
-import { StatusBadge } from "@/components/StatusBadge";
-import { Link } from "@/i18n/routing";
+import { Report } from "@/components/Report";
+import { PageSkeleton, RequireAuth } from "@/components/RequireAuth";
+import { ScenarioList } from "@/components/ScenarioList";
+import { isActive, StatusBadge } from "@/components/StatusBadge";
+import { StepViewer } from "@/components/StepViewer";
+import { button, card } from "@/components/ui";
+import { Link, useRouter } from "@/i18n/routing";
+import { errorKey, formatDuration, formatUsd, runDuration, runErrorKey, toMarkdown } from "@/lib/format";
 
-function Run({ runId }: { runId: Id<"runs"> }) {
+function useNow(ticking: boolean) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!ticking) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [ticking]);
+  return now;
+}
+
+function RunHeader({ data }: { data: RunDetails }) {
   const t = useTranslations("run");
-  const data = useQuery(api.runs.get, { runId });
-  if (!data) return null;
-  const { run, steps, scenarios, bugs } = data;
-  const latest = steps.at(-1);
+  const locale = useLocale();
+  const { run } = data;
+  const active = isActive(run.status);
+  const now = useNow(active);
+  const cancel = useMutation(api.runs.cancel);
 
   return (
-    <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">
-      <Link href="/dashboard" className="text-sm text-zinc-500">
-        {t("back")}
+    <div className="space-y-3">
+      <Link href="/dashboard" className="no-print text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
+        {locale === "fa" ? "→" : "←"} {t("back")}
       </Link>
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-semibold">{run.goal}</h1>
-        <StatusBadge status={run.status} />
-      </div>
-      <p className="text-sm text-zinc-500" dir="ltr">
-        {run.url}
-      </p>
-      {run.error && <p role="alert" className="text-sm text-red-600">{run.error}</p>}
-      {run.cost && (
-        <p className="text-sm text-zinc-500">
-          {t("cost")}: <span dir="ltr">${run.cost.usd.toFixed(4)} · {run.cost.llmCalls} LLM</span>
-        </p>
-      )}
-      {run.summaryText && <p className="rounded-lg bg-zinc-100 p-4 dark:bg-zinc-900">{run.summaryText}</p>}
-
-      {scenarios.length > 0 && (
-        <section>
-          <h2 className="mb-2 font-semibold">{t("scenarios")}</h2>
-          <ul className="space-y-2">
-            {scenarios.map((s) => (
-              <li key={s._id} className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{s.title}</span>
-                  <span className="text-xs text-zinc-500">{t(`scenario.${s.status}`)}</span>
-                </div>
-                {s.verdictReason && <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{s.verdictReason}</p>}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {bugs.length > 0 && (
-        <section>
-          <h2 className="mb-2 font-semibold">{t("bugs")}</h2>
-          <ul className="space-y-3">
-            {bugs.map((b) => (
-              <li key={b._id} className="rounded-lg border border-red-200 p-4 dark:border-red-900">
-                <p className="font-medium">
-                  <span className="me-2 rounded bg-red-100 px-1.5 text-xs text-red-700 dark:bg-red-950 dark:text-red-300">
-                    {b.severity}
-                  </span>
-                  {b.title}
-                </p>
-                <ol className="mt-2 list-decimal ps-5 text-sm">
-                  {b.reproSteps.map((step, i) => (
-                    <li key={i}>{step}</li>
-                  ))}
-                </ol>
-                <p className="mt-2 text-sm"><strong>{t("expected")}:</strong> {b.expected}</p>
-                <p className="text-sm"><strong>{t("actual")}:</strong> {b.actual}</p>
-                {[...b.evidence.networkErrors.map((n) => `${n.method} ${n.url} → ${n.status}`), ...b.evidence.consoleErrors].map(
-                  (line, i) => (
-                    <code key={i} dir="ltr" className="mt-1 block truncate text-xs text-red-600">{line}</code>
-                  ),
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {latest?.screenshotUrl ? (
-        <figure className="space-y-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={latest.screenshotUrl}
-            alt={latest.thought}
-            className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800"
-          />
-          <figcaption className="text-sm text-zinc-600 dark:text-zinc-400">{latest.thought}</figcaption>
-        </figure>
-      ) : (
-        <div className="grid aspect-[16/10] place-items-center rounded-lg border border-dashed border-zinc-300 text-zinc-500 dark:border-zinc-700">
-          {t("waiting")}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={run.status} />
+            <a href={run.url} target="_blank" rel="noreferrer" dir="ltr" className="truncate text-sm text-zinc-500 hover:underline">
+              {run.url}
+            </a>
+          </div>
+          <h1 className="text-xl font-semibold text-balance sm:text-2xl">{run.goal}</h1>
         </div>
-      )}
+        <div className="flex items-center gap-4">
+          <dl className="flex gap-4 text-sm">
+            <div>
+              <dt className="text-xs text-zinc-500">{t("elapsed")}</dt>
+              <dd className="font-medium tabular-nums">{formatDuration(runDuration(run, now), locale)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-zinc-500">{t("cost")}</dt>
+              <dd className="font-medium tabular-nums" dir="ltr">{formatUsd(run.cost?.usd ?? 0)}</dd>
+            </div>
+          </dl>
+          {active && (
+            <button onClick={() => void cancel({ runId: run._id })} className={`${button.danger} no-print`}>
+              {t("cancel")}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      {steps.length > 0 && (
-        <section>
-          <h2 className="mb-2 font-semibold">{t("steps")}</h2>
-          <ol className="list-decimal space-y-1 ps-5 text-sm">
-            {steps.map((s) => (
-              <li key={s._id}>
-                <code dir="ltr">{s.action.type}</code> — {s.thought}
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
+function LiveView({ data }: { data: RunDetails }) {
+  const t = useTranslations("run");
+  const [scenarioId, setScenarioId] = useState<string | null>(null);
+  const { run, scenarios, steps } = data;
+
+  if (scenarios.length === 0) {
+    return (
+      <div className={`${card} flex flex-col items-center gap-4 px-6 py-16 text-center`}>
+        <span className="size-8 animate-spin rounded-full border-2 border-zinc-300 border-t-blue-600" aria-hidden />
+        <p className="text-zinc-600 dark:text-zinc-400">{run.status === "queued" ? t("waiting") : t("planning")}</p>
+      </div>
+    );
+  }
+  return (
+    <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+      <aside className={`${card} h-fit p-2`}>
+        <h2 className="px-3 pt-2 pb-1 text-sm font-semibold">{t("scenarios")}</h2>
+        <ScenarioList scenarios={scenarios} selected={scenarioId} onSelect={setScenarioId} />
+      </aside>
+      <div className="min-w-0">
+        <StepViewer
+          key={scenarioId ?? "all"}
+          steps={scenarioId ? steps.filter((s) => s.scenarioId === scenarioId) : steps}
+          scenarios={scenarios}
+          live
+        />
+      </div>
+    </div>
+  );
+}
+
+function ReportActions({ data }: { data: RunDetails }) {
+  const t = useTranslations("report");
+  const te = useTranslations("errors");
+  const locale = useLocale();
+  const router = useRouter();
+  const rerun = useMutation(api.runs.rerun);
+  const share = useMutation(api.runs.share);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onRerun() {
+    try {
+      const runId = await rerun({ runId: data.run._id });
+      router.push(`/runs/${runId}`);
+    } catch (e) {
+      setError(te(errorKey(e)));
+    }
+  }
+  async function onShare() {
+    const token = await share({ runId: data.run._id });
+    await navigator.clipboard.writeText(`${location.origin}/${locale}/share/${token}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+  function onMarkdown() {
+    const md = toMarkdown(data, { duration: t("duration"), cost: t("cost") });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([md], { type: "text/markdown" }));
+    a.download = `qagent-report-${data.run._id}.md`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  return (
+    <>
+      {error && <p role="alert" className="w-full text-sm text-red-600">{error}</p>}
+      <button onClick={() => void onRerun()} className={button.primary}>{t("rerun")}</button>
+      <button onClick={() => void onShare()} className={button.secondary} aria-live="polite">
+        {copied ? t("copied") : t("share")}
+      </button>
+      <button onClick={onMarkdown} className={button.secondary}>{t("markdown")}</button>
+      <button onClick={() => window.print()} className={button.secondary}>{t("print")}</button>
+    </>
+  );
+}
+
+function RunError({ error }: { error: string }) {
+  const te = useTranslations("errors");
+  const key = runErrorKey(error);
+  return (
+    <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+      {key ? te(key) : <>{te("generic")} <span dir="ltr" className="opacity-70">({error})</span></>}
+    </div>
+  );
+}
+
+function Run({ runId }: { runId: Id<"runs"> }) {
+  const t = useTranslations("report");
+  const data = useQuery(api.runs.get, { runId });
+  if (!data) return <PageSkeleton />;
+  const { run } = data;
+
+  return (
+    <main className="mx-auto max-w-6xl space-y-6 px-4 py-6">
+      <RunHeader data={data} />
+      {run.error && <RunError error={run.error} />}
+      {run.status === "canceled" && <p className="text-sm text-zinc-500">{t("canceled")}</p>}
+      {isActive(run.status) ? <LiveView data={data} /> : <Report data={data} actions={<ReportActions data={data} />} />}
     </main>
   );
 }

@@ -3,6 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import { Inter, Vazirmatn } from "next/font/google";
 import { notFound } from "next/navigation";
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
+import { themeScript } from "@/components/themeScript";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
 
@@ -21,7 +22,12 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   setRequestLocale(locale);
 
   return (
-    <html lang={locale} dir={locale === "fa" ? "rtl" : "ltr"} className={`${inter.variable} ${vazirmatn.variable}`}>
+    <html lang={locale} dir={locale === "fa" ? "rtl" : "ltr"} className={`${inter.variable} ${vazirmatn.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-dvh font-sans antialiased">
         <NextIntlClientProvider>
           <ConvexClientProvider>{children}</ConvexClientProvider>

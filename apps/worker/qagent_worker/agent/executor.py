@@ -34,13 +34,15 @@ class Deps:
     pool: BrowserPool
     cost: Cost = field(default_factory=Cost)
     scenario_slots: asyncio.Semaphore = field(default_factory=lambda: asyncio.Semaphore(3))
+    stop: asyncio.Event = field(default_factory=asyncio.Event)  # set when the user cancels the run
 
 
 class StepWriter:
     """Uploads screenshots and writes steps in order, off the agent loop."""
 
-    def __init__(self, api: Api) -> None:
+    def __init__(self, api: Api, stop: asyncio.Event) -> None:
         self._api = api
+        self._stop = stop
         self._queue: asyncio.Queue[tuple[bytes | None, dict[str, Any], asyncio.Future[str | None]]] = asyncio.Queue()
         self._task = asyncio.create_task(self._loop())
 
@@ -55,7 +57,9 @@ class StepWriter:
             sid: str | None = None
             try:
                 sid = await self._api.upload(shot) if shot else None
-                await self._api.mutation("addStep", **step, **({"screenshotId": sid} if sid else {}))
+                res = await self._api.mutation("addStep", **step, **({"screenshotId": sid} if sid else {}))
+                if res and res.get("stop"):
+                    self._stop.set()
             except Exception:
                 log.exception("step write failed")
             finally:
@@ -113,7 +117,7 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
 
     await api.mutation("updateScenario", scenarioId=scenario["_id"], status="running")
     context = await deps.pool.new_context()
-    writer = StepWriter(api)
+    writer = StepWriter(api, deps.stop)
     evidence = Evidence()
     history: list[str] = []
     step_shots: list[asyncio.Future[str | None]] = []

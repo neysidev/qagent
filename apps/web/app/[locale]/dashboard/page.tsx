@@ -7,107 +7,101 @@ import { useState } from "react";
 import { Header } from "@/components/Header";
 import { RequireAuth } from "@/components/RequireAuth";
 import { StatusBadge } from "@/components/StatusBadge";
+import { button, card, skeleton } from "@/components/ui";
 import { Link, useRouter, type Locale } from "@/i18n/routing";
+import { errorKey } from "@/lib/format";
 
 const DEMO_URL = process.env.NEXT_PUBLIC_DEMO_SHOP_URL ?? "";
 
 function Dashboard() {
   const t = useTranslations("dashboard");
+  const te = useTranslations("errors");
   const locale = useLocale() as Locale;
   const router = useRouter();
   const runs = useQuery(api.runs.listMine);
   const createRun = useMutation(api.runs.create);
-  const [url, setUrl] = useState("");
-  const [goal, setGoal] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" });
 
-  async function start(runUrl: string, runGoal: string) {
+  async function tryDemo() {
     setError(null);
     setPending(true);
     try {
-      const runId = await createRun({ url: runUrl, goal: runGoal, locale });
+      const runId = await createRun({ url: DEMO_URL, goal: t("demoGoal"), templateKey: "cart", locale });
       router.push(`/runs/${runId}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("error"));
+      setError(te(errorKey(e)));
       setPending(false);
     }
   }
 
-  const input =
-    "w-full rounded-lg border border-zinc-300 bg-transparent px-3 py-2 dark:border-zinc-700 focus:outline-2 focus:outline-blue-500";
-
   return (
-    <main className="mx-auto max-w-3xl space-y-10 px-4 py-10">
-      {DEMO_URL && (
-        <button
-          disabled={pending}
-          onClick={() => void start(DEMO_URL, t("demoGoal"))}
-          className="w-full rounded-xl bg-blue-600 px-6 py-4 text-lg font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-        >
-          {t("tryDemo")}
-        </button>
-      )}
+    <main className="mx-auto max-w-4xl space-y-8 px-4 py-8">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-semibold">{t("title")}</h1>
+        <Link href="/tests/new" className={button.primary}>
+          + {t("newTest")}
+        </Link>
+      </div>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void start(url, goal);
-        }}
-        className="space-y-4 rounded-xl border border-zinc-200 p-5 dark:border-zinc-800"
-      >
-        <h2 className="text-lg font-semibold">{t("newTest")}</h2>
-        <label className="block space-y-1">
-          <span className="text-sm">{t("url")}</span>
-          <input
-            type="url"
-            required
-            dir="ltr"
-            placeholder="https://example.com"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className={input}
-          />
-        </label>
-        <label className="block space-y-1">
-          <span className="text-sm">{t("goal")}</span>
-          <textarea
-            required
-            rows={3}
-            maxLength={2000}
-            placeholder={t("goalPlaceholder")}
-            value={goal}
-            onChange={(e) => setGoal(e.target.value)}
-            className={input}
-          />
-        </label>
-        {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-        <button
-          disabled={pending}
-          className="rounded-lg bg-zinc-900 px-5 py-2.5 font-medium text-white disabled:opacity-50 dark:bg-white dark:text-zinc-900"
-        >
-          {t("start")}
-        </button>
-      </form>
+      {DEMO_URL && (
+        <section className="flex flex-col gap-4 rounded-xl bg-linear-to-br from-blue-600 to-indigo-600 p-6 text-white sm:flex-row sm:items-center sm:justify-between">
+          <p className="max-w-md text-pretty text-blue-50">{t("tryDemoBody")}</p>
+          <button
+            disabled={pending}
+            onClick={() => void tryDemo()}
+            className={`${button.primary} shrink-0 bg-white px-6 py-3 text-base text-blue-700 hover:bg-blue-50 dark:bg-white dark:text-blue-700`}
+          >
+            {pending && <span className="size-4 animate-spin rounded-full border-2 border-blue-200 border-t-blue-700" aria-hidden />}
+            {t("tryDemo")}
+          </button>
+        </section>
+      )}
+      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">{t("recentRuns")}</h2>
-        {runs?.length === 0 && <p className="text-zinc-500">{t("noRuns")}</p>}
-        <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
-          {runs?.map((run) => (
-            <li key={run._id}>
-              <Link href={`/runs/${run._id}`} className="flex items-center justify-between gap-4 py-3 hover:opacity-80">
-                <span className="min-w-0">
-                  <span className="block truncate font-medium">{run.goal}</span>
-                  <span className="block truncate text-sm text-zinc-500" dir="ltr">
-                    {run.url}
+        <h2 className="mb-3 font-semibold">{t("recentRuns")}</h2>
+        {runs === undefined ? (
+          <div className="space-y-2">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className={`${skeleton} h-16`} />
+            ))}
+          </div>
+        ) : runs.length === 0 ? (
+          <div className={`${card} px-6 py-12 text-center`}>
+            <p className="font-medium">{t("noRuns")}</p>
+            <p className="mt-1 text-sm text-zinc-500">{t("noRunsBody")}</p>
+          </div>
+        ) : (
+          <ul className={`${card} divide-y divide-zinc-200 dark:divide-zinc-800`}>
+            {runs.map((run) => (
+              <li key={run._id}>
+                <Link
+                  href={`/runs/${run._id}`}
+                  className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{run.goal}</span>
+                    <span className="mt-0.5 flex gap-2 text-xs text-zinc-500">
+                      <span dir="ltr" className="truncate">{new URL(run.url).host}</span>
+                      <span>·</span>
+                      <span className="shrink-0">{dateFormat.format(run.createdAt)}</span>
+                    </span>
                   </span>
-                </span>
-                <StatusBadge status={run.status} />
-              </Link>
-            </li>
-          ))}
-        </ul>
+                  <span className="flex shrink-0 items-center gap-3">
+                    {run.summary && (
+                      <span className={`text-xs max-sm:hidden ${run.summary.bugs ? "text-red-600 dark:text-red-400" : "text-zinc-500"}`}>
+                        {t("bugs", { count: run.summary.bugs })}
+                      </span>
+                    )}
+                    <StatusBadge status={run.status} />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </main>
   );

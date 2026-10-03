@@ -54,6 +54,8 @@ export const setRunStatus = mutation({
   args: { secret, runId: v.id("runs"), status: runStatus, error: v.optional(v.string()) },
   handler: async (ctx, { secret, runId, status, error }) => {
     checkSecret(secret);
+    const run = await ctx.db.get(runId);
+    if (!run || run.status === "canceled") return;
     await ctx.db.patch(runId, { status, error, heartbeatAt: Date.now() });
   },
 });
@@ -105,7 +107,9 @@ export const addStep = mutation({
   },
   handler: async (ctx, { secret, ...step }) => {
     checkSecret(secret);
-    return await ctx.db.insert("steps", { ...step, createdAt: Date.now() });
+    await ctx.db.insert("steps", { ...step, createdAt: Date.now() });
+    const run = await ctx.db.get(step.runId);
+    return { stop: !run || run.status === "canceled" };
   },
 });
 
