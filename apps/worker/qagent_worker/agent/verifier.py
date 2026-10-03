@@ -3,7 +3,7 @@ from typing import Any
 
 from ..browser.evidence import Evidence
 from ..browser.observe import Observation
-from ..llm import Cost, structured
+from ..llm import Cost, model_name, structured
 from . import prompts
 from .state import Verdict
 
@@ -32,7 +32,8 @@ async def verify(
     msgs = prompts.messages(prompts.VERIFIER_SYSTEM, run["locale"], user)
 
     verdict = await structured("fast", Verdict, msgs, cost)
-    if verdict.status != "passed" or verdict.confidence < LOW_CONFIDENCE:
+    escalate = model_name("smart") != model_name("fast")
+    if escalate and (verdict.status != "passed" or verdict.confidence < LOW_CONFIDENCE):
         verdict = await structured("smart", Verdict, msgs, cost)
     if verdict.status == "failed" and verdict.bug is None:
         verdict.status = "agent_error"

@@ -64,8 +64,8 @@ stops within one step. JSON logs on stdout; `GET /health` for Railway.
 
 ## Models and cost
 
-`MODEL_FAST` (default `gemini-2.5-flash`) for planning, acting, verifying and reporting; `MODEL_SMART`
-(default `gemini-2.5-pro`) only for re-checking failed or low-confidence verdicts. `LLM_PROVIDER=openai_compatible`
+`MODEL_FAST` (default `gemini-3.8-flash`) for planning, acting, verifying and reporting; `MODEL_SMART`
+(default `gemini-3.1-pro-preview`, no free tier) only for re-checking failed or low-confidence verdicts. `LLM_PROVIDER=openai_compatible`
 switches to any OpenAI-compatible endpoint by config. Token usage is read from each response and priced with
 `PRICE_TABLE_JSON` (USD per 1M tokens), accumulated into `run.cost` and shown live.
 

@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import random
+import re
 from functools import cache
 from typing import Literal, TypeVar
 
@@ -17,18 +18,19 @@ T = TypeVar("T", bound=BaseModel)
 ModelKind = Literal["fast", "smart"]
 
 # USD per 1M tokens: {"model": [input, output]}. Override with PRICE_TABLE_JSON.
+# ponytail: 3.8 Flash doubles to [1.50, 7.50] on 2027-01-01; override via PRICE_TABLE_JSON then.
 DEFAULT_PRICES: dict[str, list[float]] = {
-    "gemini-2.5-flash": [0.30, 2.50],
-    "gemini-2.5-flash-lite": [0.10, 0.40],
-    "gemini-2.5-pro": [1.25, 10.0],
+    "gemini-3.8-flash": [0.75, 3.75],
+    "gemini-3.1-flash-lite": [0.25, 1.50],
+    "gemini-3.1-pro-preview": [2.00, 12.00],
 }
 PRICES: dict[str, list[float]] = {**DEFAULT_PRICES, **json.loads(os.environ.get("PRICE_TABLE_JSON") or "{}")}
 
 
 def model_name(kind: ModelKind) -> str:
     if kind == "fast":
-        return os.environ.get("MODEL_FAST", "gemini-2.5-flash")
-    return os.environ.get("MODEL_SMART", "gemini-2.5-pro")
+        return os.environ.get("MODEL_FAST", "gemini-3.8-flash")
+    return os.environ.get("MODEL_SMART", "gemini-3.1-pro-preview")
 
 
 @cache
@@ -67,7 +69,7 @@ class Cost(BaseModel):
 
 
 RETRY_MARKERS = ("429", "500", "502", "503", "504", "RESOURCE_EXHAUSTED", "UNAVAILABLE", "overloaded", "timed out", "Timeout")
-ATTEMPTS = 3
+ATTEMPTS = 5  # 2+4+8+16s backoff ≈ 30s before giving up (or the server-hinted delay)
 
 
 def _retryable(e: Exception) -> bool:
@@ -89,7 +91,8 @@ async def _call(kind: ModelKind, schema: type[T], messages: list[BaseMessage], c
             attempt += 1
             if not _retryable(e) or attempt >= ATTEMPTS:
                 raise
-            delay = 2**attempt + random.random()
+            hinted = re.search(r"retry in (\d+(?:\.\d+)?)s|retryDelay': '(\d+)s", str(e))
+            delay = min(float(next(g for g in hinted.groups() if g)) + 1, 60) if hinted else 2**attempt + random.random()
             log.warning("llm %s retry %d in %.1fs: %s", model_name(kind), attempt, delay, str(e)[:200])
             await asyncio.sleep(delay)
             continue
