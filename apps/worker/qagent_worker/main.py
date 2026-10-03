@@ -1,28 +1,31 @@
-"""Worker entry: claim loop, concurrency cap, heartbeat. Phase 1 agent = open URL, 1 screenshot, done."""
+"""Worker entry: claim loop, concurrency cap, heartbeat; each run executes the LangGraph agent."""
 
 import asyncio
 import logging
 import os
 import socket
-import time
 from typing import Any
 
-from .browser.pool import VIEWPORT, BrowserPool
+from .agent.executor import Deps
+from .agent.graph import build_graph
+from .agent.state import RunState
+from .browser.pool import BrowserPool
 from .convex_api import ConvexApi
 
 log = logging.getLogger("qagent")
 
 WORKER_ID = os.environ.get("WORKER_ID") or socket.gethostname()
 MAX_CONCURRENT_RUNS = int(os.environ.get("MAX_CONCURRENT_RUNS", "2"))
+SCENARIO_PARALLELISM = int(os.environ.get("SCENARIO_PARALLELISM", "3"))
 POLL_INTERVAL_S = 1.0
 HEARTBEAT_INTERVAL_S = 15.0
 
 
-async def heartbeat(api: ConvexApi, run_id: str, task: asyncio.Task[None]) -> None:
+async def heartbeat(api: ConvexApi, run_id: str, deps: Deps, task: asyncio.Task[None]) -> None:
     while not task.done():
         await asyncio.sleep(HEARTBEAT_INTERVAL_S)
         try:
-            res = await api.mutation("heartbeat", runId=run_id, workerId=WORKER_ID)
+            res = await api.mutation("heartbeat", runId=run_id, workerId=WORKER_ID, cost=deps.cost.model_dump())
             if res and res.get("stop"):
                 log.info("run %s: stop requested", run_id)
                 task.cancel()
@@ -30,63 +33,15 @@ async def heartbeat(api: ConvexApi, run_id: str, task: asyncio.Task[None]) -> No
             log.exception("run %s: heartbeat failed", run_id)
 
 
-async def execute(api: ConvexApi, pool: BrowserPool, run: dict[str, Any]) -> None:
-    run_id = run["_id"]
-    await api.mutation("setRunStatus", runId=run_id, status="running")
-    [scenario_id] = await api.mutation(
-        "createScenarios",
-        runId=run_id,
-        scenarios=[
-            {"title": "Open the site", "description": "Load the start URL.", "kind": "happy", "expected": "The page loads."}
-        ],
-    )
-    await api.mutation("updateScenario", scenarioId=scenario_id, status="running")
-
-    context = await pool.new_context()
-    started = time.monotonic()
-    ok, error = True, None
-    try:
-        page = await context.new_page()
-        try:
-            await page.goto(run["url"], wait_until="domcontentloaded", timeout=20_000)
-        except Exception as e:  # still screenshot whatever rendered
-            ok, error = False, str(e)[:500]
-        shot = await page.screenshot(type="jpeg", quality=60)
-        screenshot_id = await api.upload(shot)
-        thought = "در حال باز کردن سایت" if run["locale"] == "fa" else "Opening the site"
-        await api.mutation(
-            "addStep",
-            runId=run_id,
-            scenarioId=scenario_id,
-            index=0,
-            action={"type": "navigate", "url": run["url"]},
-            thought=thought,
-            viewport={"w": VIEWPORT["width"], "h": VIEWPORT["height"]},
-            pageUrl=page.url,
-            screenshotId=screenshot_id,
-            ok=ok,
-            durationMs=int((time.monotonic() - started) * 1000),
-            **({"error": error} if error else {}),
-        )
-    finally:
-        await context.close()
-
-    await api.mutation(
-        "updateScenario", scenarioId=scenario_id, status="passed" if ok else "error", verdictReason=error or "Page loaded"
-    )
-    await api.mutation(
-        "finishRun",
-        runId=run_id,
-        status="done",
-        summary={"total": 1, "passed": int(ok), "failed": 0, "bugs": 0},
-        cost={"inputTokens": 0, "outputTokens": 0, "usd": 0, "llmCalls": 0},
-    )
+async def execute(deps: Deps, run: dict[str, Any]) -> None:
+    await build_graph(deps).ainvoke(RunState(run=run))
 
 
 async def handle(api: ConvexApi, pool: BrowserPool, run: dict[str, Any], slots: asyncio.Semaphore) -> None:
     run_id = run["_id"]
-    task = asyncio.create_task(execute(api, pool, run))
-    hb = asyncio.create_task(heartbeat(api, run_id, task))
+    deps = Deps(api=api, pool=pool, scenario_slots=asyncio.Semaphore(SCENARIO_PARALLELISM))
+    task = asyncio.create_task(execute(deps, run))
+    hb = asyncio.create_task(heartbeat(api, run_id, deps, task))
     try:
         await task
         log.info("run %s: done", run_id)
@@ -95,7 +50,9 @@ async def handle(api: ConvexApi, pool: BrowserPool, run: dict[str, Any], slots: 
     except Exception as e:
         log.exception("run %s: failed", run_id)
         try:
-            await api.mutation("finishRun", runId=run_id, status="failed", error=str(e)[:500])
+            await api.mutation(
+                "finishRun", runId=run_id, status="failed", error=str(e)[:500], cost=deps.cost.model_dump()
+            )
         except Exception:
             log.exception("run %s: could not mark failed", run_id)
     finally:

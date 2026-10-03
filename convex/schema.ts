@@ -24,6 +24,12 @@ export const scenarioStatus = v.union(
 
 export const scenarioKind = v.union(v.literal("happy"), v.literal("negative"), v.literal("edge"));
 export const severity = v.union(v.literal("critical"), v.literal("high"), v.literal("medium"), v.literal("low"));
+export const cost = v.object({
+  inputTokens: v.number(),
+  outputTokens: v.number(),
+  usd: v.number(),
+  llmCalls: v.number(),
+});
 export const bbox = v.object({ x: v.number(), y: v.number(), w: v.number(), h: v.number() });
 export const action = v.object({
   type: v.string(),
@@ -69,9 +75,8 @@ export default defineSchema({
     startedAt: v.optional(v.number()),
     finishedAt: v.optional(v.number()),
     summary: v.optional(v.object({ total: v.number(), passed: v.number(), failed: v.number(), bugs: v.number() })),
-    cost: v.optional(
-      v.object({ inputTokens: v.number(), outputTokens: v.number(), usd: v.number(), llmCalls: v.number() }),
-    ),
+    cost: v.optional(cost),
+    summaryText: v.optional(v.string()),
     error: v.optional(v.string()),
     shareToken: v.optional(v.string()),
     createdAt: v.number(),

@@ -39,7 +39,20 @@
     "goal": "Goal",
     "steps": "Steps",
     "waiting": "Waiting for the agent…",
-    "back": "Back to dashboard"
+    "back": "Back to dashboard",
+    "cost": "LLM cost",
+    "scenarios": "Scenarios",
+    "bugs": "Bugs",
+    "expected": "Expected",
+    "actual": "Actual",
+    "scenario": {
+      "pending": "Pending",
+      "running": "Running",
+      "passed": "Passed",
+      "failed": "Failed",
+      "error": "Agent stuck",
+      "skipped": "Skipped"
+    }
   },
   "status": {
     "queued": "Queued",

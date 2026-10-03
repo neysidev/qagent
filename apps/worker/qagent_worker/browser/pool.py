@@ -1,8 +1,28 @@
-"""One warm Chromium per worker; a fresh context per scenario."""
+"""One warm Chromium per worker; a fresh, guarded context per scenario."""
 
-from playwright.async_api import Browser, BrowserContext, Playwright, async_playwright
+from urllib.parse import urlsplit
+
+from playwright.async_api import Browser, BrowserContext, Playwright, Route, async_playwright
+
+from ..security import url_allowed
 
 VIEWPORT = {"width": 1280, "height": 800}
+BLOCKED_TYPES = {"font", "media"}
+BLOCKED_DOMAINS = (
+    "google-analytics.com", "googletagmanager.com", "doubleclick.net", "googlesyndication.com", "facebook.net",
+    "hotjar.com", "clarity.ms", "segment.io", "mixpanel.com", "mc.yandex.ru", "yandex.ru/metrika", "sentry.io",
+)
+
+
+async def _guard(route: Route) -> None:
+    req = route.request
+    host = urlsplit(req.url).hostname or ""
+    if req.resource_type in BLOCKED_TYPES or any(host == d or host.endswith("." + d) for d in BLOCKED_DOMAINS):
+        await route.abort("blockedbyclient")
+    elif not await url_allowed(req.url):
+        await route.abort("addressunreachable")
+    else:
+        await route.continue_()
 
 
 class BrowserPool:
@@ -16,7 +36,10 @@ class BrowserPool:
 
     async def new_context(self) -> BrowserContext:
         assert self._browser, "BrowserPool.start() not called"
-        return await self._browser.new_context(viewport=VIEWPORT, ignore_https_errors=True)
+        context = await self._browser.new_context(viewport=VIEWPORT, ignore_https_errors=True, locale="en-US")
+        context.set_default_timeout(20_000)
+        await context.route("**/*", _guard)
+        return context
 
     async def stop(self) -> None:
         if self._browser:

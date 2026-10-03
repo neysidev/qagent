@@ -85,6 +85,11 @@ export const get = query({
       .query("scenarios")
       .withIndex("by_run", (q) => q.eq("runId", runId))
       .collect();
+    const bugs = await ctx.db
+      .query("bugs")
+      .withIndex("by_run", (q) => q.eq("runId", runId))
+      .collect();
+    steps.sort((a, b) => a.createdAt - b.createdAt);
     return {
       run,
       scenarios,
@@ -92,6 +97,12 @@ export const get = query({
         steps.map(async (s) => ({
           ...s,
           screenshotUrl: s.screenshotId ? await ctx.storage.getUrl(s.screenshotId) : null,
+        })),
+      ),
+      bugs: await Promise.all(
+        bugs.map(async (b) => ({
+          ...b,
+          screenshotUrls: await Promise.all(b.evidence.screenshotIds.map((id) => ctx.storage.getUrl(id))),
         })),
       ),
     };

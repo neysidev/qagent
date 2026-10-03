@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
-import { action, bbox, runStatus, scenarioKind, scenarioStatus, severity } from "./schema";
+import { action, bbox, cost, runStatus, scenarioKind, scenarioStatus, severity } from "./schema";
 import { checkSecret } from "./lib";
 
 const secret = v.string();
@@ -15,6 +15,16 @@ export const claimNextRun = mutation({
       .order("asc")
       .first();
     if (!run) return null;
+    if (run.attempts) {
+      // Re-queued after a worker died: drop partial results from the previous attempt.
+      for (const table of ["steps", "scenarios", "bugs"] as const) {
+        const docs = await ctx.db
+          .query(table)
+          .withIndex("by_run", (q) => q.eq("runId", run._id))
+          .collect();
+        for (const doc of docs) await ctx.db.delete(doc._id);
+      }
+    }
     const now = Date.now();
     await ctx.db.patch(run._id, {
       status: "planning",
@@ -28,14 +38,14 @@ export const claimNextRun = mutation({
 });
 
 export const heartbeat = mutation({
-  args: { secret, runId: v.id("runs"), workerId: v.string() },
-  handler: async (ctx, { secret, runId, workerId }) => {
+  args: { secret, runId: v.id("runs"), workerId: v.string(), cost: v.optional(cost) },
+  handler: async (ctx, { secret, runId, workerId, cost }) => {
     checkSecret(secret);
     const run = await ctx.db.get(runId);
     // Tell the worker to stop if the run was canceled or handed to someone else.
     if (!run || run.workerId !== workerId) return { stop: true };
     if (run.status === "canceled" || run.status === "failed" || run.status === "done") return { stop: true };
-    await ctx.db.patch(runId, { heartbeatAt: Date.now() });
+    await ctx.db.patch(runId, { heartbeatAt: Date.now(), ...(cost && { cost }) });
     return { stop: false };
   },
 });
@@ -127,10 +137,9 @@ export const finishRun = mutation({
     runId: v.id("runs"),
     status: v.union(v.literal("done"), v.literal("failed")),
     error: v.optional(v.string()),
+    summaryText: v.optional(v.string()),
     summary: v.optional(v.object({ total: v.number(), passed: v.number(), failed: v.number(), bugs: v.number() })),
-    cost: v.optional(
-      v.object({ inputTokens: v.number(), outputTokens: v.number(), usd: v.number(), llmCalls: v.number() }),
-    ),
+    cost: v.optional(cost),
   },
   handler: async (ctx, { secret, runId, ...rest }) => {
     checkSecret(secret);
