@@ -203,7 +203,7 @@ function ProjectRow({
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm text-fg">{project.name}</span>
         <span className="block text-xs text-fg-3">
-          <span dir="ltr">{project.baseUrl.replace(/^https?:\/\//, "")}</span> · {t("projectMeta", { n: tasks })}
+          <span dir="ltr" className="font-url">{project.baseUrl.replace(/^https?:\/\//, "")}</span> · {t("projectMeta", { n: tasks })}
           {lastAt && <> · {timeAgo(lastAt)}</>}
         </span>
       </span>

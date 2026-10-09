@@ -59,7 +59,7 @@ function Project({ data }: { data: Overview }) {
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-[26px] leading-[1.3] font-bold"><bdi>{project.name}</bdi></h1>
             <a href={project.baseUrl} target="_blank" rel="noreferrer" dir="ltr"
-              className="mt-1 inline-flex items-center gap-1.5 rounded text-sm text-fg-3 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+              className="font-url mt-1 inline-flex items-center gap-1.5 rounded text-sm text-fg-3 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
             >
               {hostOf(project.baseUrl)}
               <ExternalLink className="size-3.5" aria-hidden />

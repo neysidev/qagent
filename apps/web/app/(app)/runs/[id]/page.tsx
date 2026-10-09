@@ -4,19 +4,20 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import type { RunDetails } from "@convex/runs";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowRight, Check, Clock, Coins, Download, Ellipsis, ExternalLink, Link2, Printer, RotateCcw, Square } from "lucide-react";
+import { ArrowRight, Check, Clock, Coins, Download, FileText, Hourglass, Play, Route, ShieldCheck, Ellipsis, ExternalLink, Link2, Printer, RotateCcw, Square } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ConfirmDialog, menuItem, Popover } from "@/components/overlay";
+import { PendingScene } from "@/components/PendingScene";
 import { Report } from "@/components/Report";
 import { PageSkeleton } from "@/components/RequireAuth";
 import { ScenarioList } from "@/components/ScenarioList";
 import { isActive, StatusBadge } from "@/components/StatusBadge";
 import { StepViewer } from "@/components/StepViewer";
 import { button, card, cardHeader, cardTitle } from "@/components/ui";
-import { errorKey, formatDuration, formatUsd, hostOf, runDuration, runErrorKey, toMarkdown } from "@/lib/format";
+import { errorKey, formatCost, formatDuration, hostOf, runDuration, runErrorKey, toMarkdown } from "@/lib/format";
 
 function useNow(ticking: boolean) {
   const [now, setNow] = useState(() => Date.now());
@@ -26,6 +27,20 @@ function useNow(ticking: boolean) {
     return () => clearInterval(id);
   }, [ticking]);
   return now;
+}
+
+/**
+ * A live counter that never jiggles: the brand font's Persian digits have different widths and no tabular
+ * figures, so every character gets its own fixed-width, centered slot.
+ */
+function Ticker({ value }: { value: string }) {
+  return (
+    <span dir="ltr" className="inline-flex text-fg" aria-label={value}>
+      {[...value].map((ch, i) => (
+        <span key={i} aria-hidden className={`inline-block text-center ${/\d|[۰-۹]/.test(ch) ? "w-[0.62em]" : "w-[0.35em]"}`}>{ch}</span>
+      ))}
+    </span>
+  );
 }
 
 const STAGES = ["queued", "planning", "running", "verifying", "reporting"] as const;
@@ -40,7 +55,7 @@ function RunHeader({ data, actions }: { data: RunDetails; actions: React.ReactNo
     <div className="space-y-4">
       <Link href={`/projects/${run.projectId}`} className="no-print inline-flex items-center gap-1.5 rounded text-sm text-fg-3 transition-colors hover:text-fg focus-visible:outline-2 focus-visible:outline-accent">
         <ArrowRight className="size-4" strokeWidth={1.75} aria-hidden />
-        <span dir="ltr">{hostOf(run.url)}</span>
+        <span dir="ltr" className="font-url">{hostOf(run.url)}</span>
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1 space-y-2">
@@ -51,7 +66,7 @@ function RunHeader({ data, actions }: { data: RunDetails; actions: React.ReactNo
               target="_blank"
               rel="noreferrer"
               dir="ltr"
-              className="inline-flex min-w-0 items-center gap-1 truncate text-sm text-fg-3 transition-colors hover:text-fg"
+              className="font-url inline-flex min-w-0 items-center gap-1 truncate text-sm text-fg-3 transition-colors hover:text-fg"
             >
               <ExternalLink className="size-3.5 shrink-0" />
               <span className="truncate">{run.url}</span>
@@ -64,11 +79,11 @@ function RunHeader({ data, actions }: { data: RunDetails; actions: React.ReactNo
       <div className="flex flex-wrap gap-2 text-xs">
         <span className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 py-1.5 text-fg-3">
           <Clock className="size-3.5" /> {t("elapsed")}
-          <span className="font-mono text-fg">{formatDuration(runDuration(run, now))}</span>
+          <Ticker value={formatDuration(runDuration(run, now))} />
         </span>
         <span className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 py-1.5 text-fg-3">
           <Coins className="size-3.5" /> {t("cost")}
-          <span dir="ltr" className="font-mono text-fg">{formatUsd(run.cost?.usd ?? 0)}</span>
+          <span className="text-fg">{formatCost(run.cost?.usd ?? 0)}</span>
         </span>
       </div>
     </div>
@@ -76,31 +91,48 @@ function RunHeader({ data, actions }: { data: RunDetails; actions: React.ReactNo
 }
 
 /** Agent job pipeline: where the run is right now. */
+const STAGE_ICONS = { queued: Hourglass, planning: Route, running: Play, verifying: ShieldCheck, reporting: FileText } as const;
+
+/** Where an active run is: icon nodes on one rail that fills as stages complete, plus what the current stage is doing. */
 function StageTrack({ status }: { status: RunDetails["run"]["status"] }) {
   const t = useTranslations("status");
-  const current = STAGES.indexOf(status as (typeof STAGES)[number]);
+  const tr = useTranslations("run");
+  const current = Math.max(0, STAGES.indexOf(status as (typeof STAGES)[number]));
+  const stage = STAGES[current];
   return (
-    <ol className={`${card} flex overflow-x-auto p-1.5`}>
-      {STAGES.map((s, i) => {
-        const done = i < current;
-        const now = i === current;
-        return (
-          <li
-            key={s}
-            aria-current={now ? "step" : undefined}
-            className={`flex flex-1 items-center gap-2 rounded-lg px-3 py-2 text-xs whitespace-nowrap ${now ? "bg-accent-soft text-accent" : done ? "text-fg-2" : "text-fg-3"}`}
-          >
-            <span
-              className={`grid size-5 shrink-0 place-items-center rounded-full font-mono text-[10px] ${done ? "bg-success-soft text-success" : now ? "bg-accent text-on-accent" : "bg-card ring-1 ring-line"}`}
-            >
-              {done ? <Check className="size-3" strokeWidth={2.5} /> : i + 1}
-            </span>
-            {t(s)}
-            {i < STAGES.length - 1 && <span className={`h-px min-w-4 flex-1 ${done ? "bg-success/40" : "bg-line-strong"}`} aria-hidden />}
-          </li>
-        );
-      })}
-    </ol>
+    <section className={`${card} px-5 pt-5 pb-4`}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="flex items-center gap-2 text-sm font-bold">
+          <span className="relative flex size-2.5" aria-hidden>
+            <span className="absolute inset-0 animate-ping rounded-full bg-accent/60 motion-reduce:animate-none" />
+            <span className="relative size-2.5 rounded-full bg-accent" />
+          </span>
+          {tr(`stageHint.${stage}`)}
+        </p>
+        <span className="shrink-0 text-xs text-fg-3">{tr("stageOf", { n: (current + 1).toLocaleString("fa-IR"), total: STAGES.length.toLocaleString("fa-IR") })}</span>
+      </div>
+      <ol className="relative mt-5 grid grid-cols-5">
+        {/* rail from the first node's center to the last; the filled part grows toward the inline end */}
+        <span aria-hidden className="absolute inset-x-[10%] top-[18px] h-0.5 rounded-full bg-line-strong" />
+        <span aria-hidden className="absolute start-[10%] top-[18px] h-0.5 rounded-full bg-accent transition-[width] duration-500 ease-[var(--ease-out-strong)]"
+          style={{ width: `${(current / (STAGES.length - 1)) * 80}%` }} />
+        {STAGES.map((s, i) => {
+          const done = i < current;
+          const now = i === current;
+          const Icon = done ? Check : STAGE_ICONS[s];
+          return (
+            <li key={s} aria-current={now ? "step" : undefined} className="relative flex flex-col items-center gap-2 text-center">
+              <span className={`grid size-9 place-items-center rounded-full transition-[background-color,color,box-shadow] duration-300 ${
+                done ? "bg-accent text-white" : now ? "bg-card text-accent shadow-[0_0_0_2px_var(--accent),0_0_0_6px_var(--accent-soft)]" : "bg-card text-fg-3 ring-1 ring-line-strong"
+              }`}>
+                <Icon className="size-4" strokeWidth={done ? 2.5 : 1.9} aria-hidden />
+              </span>
+              <span className={`text-xs ${now ? "font-bold text-fg" : done ? "text-fg-2" : "text-fg-3"}`}>{t(s)}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   );
 }
 
@@ -110,12 +142,7 @@ function LiveView({ data }: { data: RunDetails }) {
   const { run, scenarios, steps } = data;
 
   if (scenarios.length === 0) {
-    return (
-      <div className={`${card} flex flex-col items-center gap-4 px-6 py-20 text-center`}>
-        <span className="size-8 animate-spin rounded-full border-2 border-accent/20 border-t-accent motion-reduce:animate-none" aria-hidden />
-        <p className="text-sm text-fg-2">{run.status === "queued" ? t("waiting") : t("planning")}</p>
-      </div>
-    );
+    return <PendingScene status={run.status === "queued" ? "queued" : "planning"} host={hostOf(run.url)} />;
   }
   return (
     <div className="grid gap-4 lg:grid-cols-[320px_1fr]">

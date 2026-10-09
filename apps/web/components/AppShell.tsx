@@ -156,7 +156,7 @@ function ProjectsNav({ query, pathname }: { query: string; pathname: string }) {
                 <ProjectAvatar name={p.name} url={p.baseUrl} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate"><bdi>{p.name}</bdi></span>
-                  {p.name !== hostOf(p.baseUrl) && <span className="block truncate text-[11px] text-fg-3"><bdi>{hostOf(p.baseUrl)}</bdi></span>}
+                  {p.name !== hostOf(p.baseUrl) && <span className="font-url block truncate text-[11px] text-fg-3"><bdi>{hostOf(p.baseUrl)}</bdi></span>}
                 </span>
                 {p.lastRun && <TaskIcon status={p.lastRun.status} bugs={p.lastRun.summary?.bugs} />}
               </Link>

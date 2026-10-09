@@ -39,7 +39,7 @@ export default function SharedReportPage() {
           <div className="space-y-2">
             <p className="text-xs text-fg-3">{t("sharedBy")}</p>
             <h1 className="text-xl leading-[1.35] font-bold text-balance sm:text-[26px]">{data.run.goal}</h1>
-            <a href={data.run.url} target="_blank" rel="noreferrer" dir="ltr" className="inline-flex items-center gap-1 text-sm text-fg-3 hover:text-fg">
+            <a href={data.run.url} target="_blank" rel="noreferrer" dir="ltr" className="font-url inline-flex items-center gap-1 text-sm text-fg-3 hover:text-fg">
               <ExternalLink className="size-3.5" /> {data.run.url}
             </a>
           </div>

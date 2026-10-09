@@ -145,6 +145,11 @@ dialog.modal::backdrop {
   }
 }
 
+/* URLs and hosts read better in Geist; everything else stays Peyda. */
+@utility font-url {
+  font-family: var(--font-geist), var(--font-peyda), ui-sans-serif, sans-serif;
+}
+
 /* ---- Marketing type scale ---- */
 @utility t-display {
   font-size: clamp(40px, 6vw, 76px);
@@ -361,6 +366,100 @@ dialog.modal::backdrop {
 }
 .audience-fade[data-show] {
   opacity: 1;
+}
+
+/* ---- Run waiting room (PendingScene): compositor-only loops, all off under reduced motion. ---- */
+.pending-scan {
+  animation: pending-scan 3.2s var(--ease-in-out-strong) infinite alternate;
+}
+@keyframes pending-scan {
+  from { transform: translateY(0); }
+  to { transform: translateY(150px); }
+}
+.pending-block {
+  animation: pending-block 2.7s ease-in-out infinite;
+}
+@keyframes pending-block {
+  0%, 100% { opacity: 0.45; }
+  40% { opacity: 1; }
+}
+.pending-detect {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pending-detect 4s var(--ease-out-strong) infinite;
+}
+@keyframes pending-detect {
+  0%, 15% { opacity: 0; transform: scale(1.12); }
+  25%, 70% { opacity: 1; transform: scale(1); }
+  85%, 100% { opacity: 0; transform: scale(1); }
+}
+.pending-cursor {
+  animation: pending-cursor 6s var(--ease-in-out-strong) infinite;
+}
+@keyframes pending-cursor {
+  0%, 8% { transform: translate(150px, 60px); }
+  25%, 33% { transform: translate(70px, 112px); }
+  50%, 58% { transform: translate(140px, 150px); }
+  75%, 83% { transform: translate(226px, 92px); }
+  100% { transform: translate(150px, 60px); }
+}
+.pending-click {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pending-click 1.5s ease-out infinite;
+}
+@keyframes pending-click {
+  0%, 30% { opacity: 0; transform: scale(0.4); }
+  45% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+.pending-float {
+  animation: pending-float 6s ease-in-out infinite;
+}
+@keyframes pending-float {
+  50% { transform: translateY(-3px); }
+}
+.pending-card {
+  animation: pending-card 5.4s var(--ease-out-strong) infinite;
+}
+@keyframes pending-card {
+  0% { opacity: 0; transform: translateX(14px); }
+  12%, 82% { opacity: 1; transform: translateX(0); }
+  96%, 100% { opacity: 0; transform: translateX(0); }
+}
+.pending-check {
+  stroke-dasharray: 16;
+  stroke-dashoffset: 16;
+  animation: pending-check 5.4s var(--ease-out-strong) infinite;
+}
+@keyframes pending-check {
+  0%, 8% { stroke-dashoffset: 16; }
+  20%, 100% { stroke-dashoffset: 0; }
+}
+.pending-line {
+  animation: pending-line 420ms var(--ease-out-strong) both;
+}
+@keyframes pending-line {
+  from { opacity: 0; transform: translateY(8px); filter: blur(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pending-scan,
+  .pending-cursor,
+  .pending-float,
+  .pending-card,
+  .pending-click,
+  .pending-block {
+    animation: none;
+  }
+  .pending-detect { animation: none; opacity: 1; }
+  .pending-check { animation: none; stroke-dashoffset: 0; }
+  .pending-cursor { transform: translate(70px, 112px); }
+  .pending-line { animation: pending-fade 300ms ease both; }
+}
+@keyframes pending-fade {
+  from { opacity: 0; }
 }
 
 /* FAQ: answers slide open where the browser can animate details content; others just toggle. */

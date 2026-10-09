@@ -117,7 +117,7 @@ export function Composer({ site, draft, setDraft }: { site: string; draft: Draft
       </Step>
 
       <Step n={2} title={t("step2")} hint={t("step2Hint")} tag={t("optional")}>
-        <label dir="ltr" className="flex h-10 items-center rounded-lg border border-line-strong bg-card ps-3.5 text-sm transition-[border-color,box-shadow] duration-150 focus-within:border-accent focus-within:shadow-[0_0_0_4px_var(--accent-soft)]">
+        <label dir="ltr" className="font-url flex h-10 items-center rounded-lg border border-line-strong bg-card ps-3.5 text-sm transition-[border-color,box-shadow] duration-150 focus-within:border-accent focus-within:shadow-[0_0_0_4px_var(--accent-soft)]">
           <span className="sr-only">{t("startPath")}</span>
           <span className="shrink-0 text-fg-3">{hostOf(site)}</span>
           <input value={draft.path} onChange={(e) => setDraft({ ...draft, path: e.target.value })} placeholder="/" spellCheck={false}

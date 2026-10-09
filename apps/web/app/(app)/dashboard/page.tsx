@@ -140,7 +140,7 @@ function ProjectCard({ project: p }: { project: ProjectRow }) {
           <ProjectAvatar name={p.name} url={p.baseUrl} />
           <span className="min-w-0 flex-1">
             <span className="block truncate font-bold"><bdi>{p.name}</bdi></span>
-            {p.name !== hostOf(p.baseUrl) && <span className="mt-0.5 block truncate text-xs text-fg-3"><bdi>{hostOf(p.baseUrl)}</bdi></span>}
+            {p.name !== hostOf(p.baseUrl) && <span className="font-url mt-0.5 block truncate text-xs text-fg-3"><bdi>{hostOf(p.baseUrl)}</bdi></span>}
           </span>
           <ArrowLeft className="size-4 text-fg-3 transition-transform duration-200 group-hover:-translate-x-1" aria-hidden />
         </span>

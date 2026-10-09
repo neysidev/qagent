@@ -4,7 +4,7 @@ import type { RunDetails } from "@convex/runs";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CircleCheck, Sparkles } from "lucide-react";
-import { formatDuration, formatUsd, runDuration, type Bug } from "@/lib/format";
+import { formatCost, formatDuration, runDuration, type Bug } from "@/lib/format";
 import { ScenarioList } from "./ScenarioList";
 import { StepViewer } from "./StepViewer";
 import { card, cardHeader, cardTitle, eyebrow, pill, type Tone } from "./ui";
@@ -22,7 +22,7 @@ export function Report({ data }: { data: RunDetails }) {
     { label: t("passed"), value: new Intl.NumberFormat("fa-IR").format(passed), tone: "text-success" },
     { label: t("bugs"), value: new Intl.NumberFormat("fa-IR").format(bugs.length), tone: bugs.length ? "text-warning" : "" },
     { label: t("duration"), value: formatDuration(runDuration(run, Date.now())) },
-    { label: t("cost"), value: formatUsd(run.cost?.usd ?? 0), ltr: true },
+    { label: t("cost"), value: formatCost(run.cost?.usd ?? 0) },
   ];
 
   return (
@@ -31,7 +31,7 @@ export function Report({ data }: { data: RunDetails }) {
         {stats.map((s) => (
           <div key={s.label} className={`${card} p-4`}>
             <p className={eyebrow}>{s.label}</p>
-            <p className={`mt-2 font-mono text-2xl leading-none font-medium ${s.tone ?? ""}`} dir={s.ltr ? "ltr" : undefined}>
+            <p className={`mt-2 font-mono text-2xl leading-none font-medium ${s.tone ?? ""}`}>
               {s.value}
             </p>
           </div>
