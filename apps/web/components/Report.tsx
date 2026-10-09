@@ -4,11 +4,11 @@ import type { RunDetails } from "@convex/runs";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
-import { formatDuration, runDuration, type Bug } from "@/lib/format";
+import type { Bug } from "@/lib/format";
 import { CleanRunIllustration, NoScenariosIllustration } from "./illustrations";
 import { ScenarioList } from "./ScenarioList";
 import { StepViewer } from "./StepViewer";
-import { card, cardHeader, cardTitle, eyebrow, pill, type Tone } from "./ui";
+import { card, cardHeader, cardTitle, pill, type Tone } from "./ui";
 
 const severityTone: Record<Bug["severity"], Tone> = { critical: "danger", high: "danger", medium: "warning", low: "neutral" };
 
@@ -16,28 +16,8 @@ export function Report({ data }: { data: RunDetails }) {
   const t = useTranslations("report");
   const { run, scenarios, steps, bugs } = data;
   const [scenarioId, setScenarioId] = useState<string | null>(null);
-  const passed = scenarios.filter((s) => s.status === "passed").length;
-
-  const stats = [
-    { label: t("scenarios"), value: new Intl.NumberFormat("fa-IR").format(scenarios.length) },
-    { label: t("passed"), value: new Intl.NumberFormat("fa-IR").format(passed), tone: "text-success" },
-    { label: t("bugs"), value: new Intl.NumberFormat("fa-IR").format(bugs.length), tone: bugs.length ? "text-warning" : "" },
-    { label: t("duration"), value: formatDuration(runDuration(run, Date.now())) },
-  ];
-
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {stats.map((s) => (
-          <div key={s.label} className={`${card} p-4`}>
-            <p className={eyebrow}>{s.label}</p>
-            <p className={`mt-2 font-mono text-2xl leading-none font-medium ${s.tone ?? ""}`}>
-              {s.value}
-            </p>
-          </div>
-        ))}
-      </div>
-
       {run.summaryText && (
         <section className={card}>
           <header className={cardHeader}>
