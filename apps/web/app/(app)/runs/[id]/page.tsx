@@ -275,10 +275,10 @@ function Actions({ data }: { data: RunDetails }) {
 
 function RunError({ error }: { error: string }) {
   const te = useTranslations("errors");
-  const key = runErrorKey(error);
+  // Only the short Persian explanation is shown; the raw provider detail stays in the worker logs.
   return (
-    <div role="alert" className="rounded-xl border border-danger/25 bg-danger-soft p-4 text-sm text-danger">
-      {key ? te(key) : <>{te("generic")} <span dir="ltr" className="opacity-70">({error})</span></>}
+    <div role="alert" className="rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-sm text-danger">
+      {te(runErrorKey(error))}
     </div>
   );
 }

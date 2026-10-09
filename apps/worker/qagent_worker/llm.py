@@ -33,6 +33,11 @@ def model_name(kind: ModelKind) -> str:
     return os.environ.get("MODEL_SMART", "gemini-3.1-pro-preview")
 
 
+# Cap on reply length. Replies are small structured JSON; without a cap, OpenAI-compatible providers reserve the
+# model's full output window (64k+ tokens) per call, which credit-limited keys reject outright (OpenRouter: 402).
+MAX_TOKENS = int(os.environ.get("LLM_MAX_TOKENS", "4096"))
+
+
 @cache
 def chat_model(kind: ModelKind) -> BaseChatModel:
     name = model_name(kind)
@@ -43,6 +48,7 @@ def chat_model(kind: ModelKind) -> BaseChatModel:
             model=name,
             base_url=os.environ.get("LLM_BASE_URL") or None,
             api_key=os.environ["LLM_API_KEY"],
+            max_tokens=MAX_TOKENS,
             temperature=0.1,
             timeout=60,
             max_retries=0,
@@ -50,7 +56,12 @@ def chat_model(kind: ModelKind) -> BaseChatModel:
     from langchain_google_genai import ChatGoogleGenerativeAI
 
     return ChatGoogleGenerativeAI(
-        model=name, google_api_key=os.environ["GOOGLE_API_KEY"], temperature=0.1, timeout=60, max_retries=0
+        model=name,
+        google_api_key=os.environ["GOOGLE_API_KEY"],
+        max_output_tokens=MAX_TOKENS,
+        temperature=0.1,
+        timeout=60,
+        max_retries=0,
     )
 
 
@@ -117,6 +128,25 @@ async def structured(kind: ModelKind, schema: type[T], messages: list[BaseMessag
         return await _call(other, schema, messages, cost)
 
 
+def error_code(e: BaseException) -> str | None:
+    """Stable code for a model-provider failure, stored on the run so the app can explain it; None if not one."""
+    status = getattr(e, "status_code", None) or getattr(e, "code", None)
+    text = str(e)
+    if status == 402 or "requires more credits" in text or "insufficient_quota" in text:
+        return "LLM_CREDITS"
+    if status in (401, 403) or "invalid api key" in text.lower() or "API_KEY_INVALID" in text:
+        return "LLM_AUTH"
+    if status == 404 or "model_not_found" in text or "is not a valid model" in text:
+        return "LLM_MODEL"
+    if status == 429 or "RESOURCE_EXHAUSTED" in text:
+        return "LLM_RATE_LIMIT"
+    if text.startswith("LLM returned invalid output"):
+        return "LLM_BAD_OUTPUT"
+    if _retryable(e):
+        return "LLM_UNAVAILABLE"
+    return None
+
+
 if __name__ == "__main__":
 
     class E(Exception):
@@ -125,4 +155,8 @@ if __name__ == "__main__":
 
     assert _retryable(E(429)) and _retryable(E(503)) and not _retryable(E(400))
     assert _retryable(Exception("429 RESOURCE_EXHAUSTED")) and not _retryable(ValueError("bad schema"))
+    assert error_code(E(402)) == "LLM_CREDITS" and error_code(E(401)) == "LLM_AUTH" and error_code(E(404)) == "LLM_MODEL"
+    assert error_code(E(429)) == "LLM_RATE_LIMIT" and error_code(E(503)) == "LLM_UNAVAILABLE"
+    assert error_code(RuntimeError("LLM returned invalid output: x")) == "LLM_BAD_OUTPUT"
+    assert error_code(RuntimeError("Site unreachable: net::ERR")) is None
     print("ok")

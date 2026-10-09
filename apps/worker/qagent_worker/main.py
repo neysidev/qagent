@@ -13,6 +13,7 @@ from .agent.graph import build_graph
 from .agent.state import RunState
 from .browser.pool import BrowserPool
 from .convex_api import ConvexApi
+from .llm import error_code
 
 log = logging.getLogger("qagent")
 
@@ -98,7 +99,7 @@ async def handle(api: ConvexApi, pool: BrowserPool, run: dict[str, Any], slots: 
         log.exception("run %s: failed", run_id)
         try:
             await api.mutation(
-                "finishRun", runId=run_id, status="failed", error=str(e)[:500], cost=deps.cost.model_dump()
+                "finishRun", runId=run_id, status="failed", error=_run_error(e), cost=deps.cost.model_dump()
             )
         except Exception:
             log.exception("run %s: could not mark failed", run_id)
@@ -106,6 +107,12 @@ async def handle(api: ConvexApi, pool: BrowserPool, run: dict[str, Any], slots: 
         hb.cancel()
         watcher.cancel()
         slots.release()
+
+
+def _run_error(e: BaseException) -> str:
+    """Run error as stored: "CODE: detail" for known provider failures (the app maps CODE), raw text otherwise."""
+    code = error_code(e)
+    return (f"{code}: {e}" if code else str(e))[:500]
 
 
 async def main() -> None:

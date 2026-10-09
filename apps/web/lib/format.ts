@@ -14,13 +14,27 @@ export function errorKey(e: unknown): string {
   return "generic";
 }
 
-/** Translation key under `errors` for a worker-reported run error, or null for raw display. */
-export function runErrorKey(error: string): string | null {
+// Codes the worker prefixes onto provider failures ("LLM_CREDITS: …"), mapped to `errors.*` keys.
+const RUN_ERROR_CODES: Record<string, string> = {
+  LLM_CREDITS: "llmCredits",
+  LLM_AUTH: "llmAuth",
+  LLM_MODEL: "llmModel",
+  LLM_RATE_LIMIT: "llmRateLimit",
+  LLM_UNAVAILABLE: "llmUnavailable",
+  LLM_BAD_OUTPUT: "llmBadOutput",
+};
+// Runs that failed before the worker coded its errors only carry the provider's raw "Error code: NNN".
+const LEGACY_HTTP: Record<string, string> = { "402": "llmCredits", "401": "llmAuth", "403": "llmAuth", "404": "llmModel", "429": "llmRateLimit" };
+
+/** Translation key under `errors` for a worker-reported run error. Always a key: unknown errors read as generic. */
+export function runErrorKey(error: string): string {
   if (error.startsWith("Site unreachable")) return "unreachable";
   if (error.startsWith("This URL is not allowed")) return "notAllowed";
   if (error.startsWith("Worker stopped responding")) return "worker";
   if (error.startsWith("No worker available")) return "noWorker";
-  return null;
+  const code = RUN_ERROR_CODES[error.split(":", 1)[0]];
+  if (code) return code;
+  return LEGACY_HTTP[/Error code: (\d{3})/.exec(error)?.[1] ?? ""] ?? "runFailed";
 }
 
 export function formatDuration(ms: number): string {
