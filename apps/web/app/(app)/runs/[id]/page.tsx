@@ -4,21 +4,24 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import type { RunDetails } from "@convex/runs";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowRight, Check, Clock, Download, FileText, Hourglass, Play, Route, ShieldCheck, Ellipsis, ExternalLink, Link2, Printer, RotateCcw, Square } from "lucide-react";
+import { ArrowRight, Check, Clock, Download, FileText, Hourglass, Play, Route, ShieldCheck, Ellipsis, ExternalLink, GitCompareArrows, Link2, Printer, RotateCcw, Square } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { ConfirmDialog, menuItem, Popover } from "@/components/overlay";
 import { LostIllustration } from "@/components/illustrations";
 import { PendingScene } from "@/components/PendingScene";
+import { BugActions } from "@/components/BugActions";
+import { ExportDialog } from "@/components/ExportDialog";
 import { Report } from "@/components/Report";
+import { ShareDialog } from "@/components/ShareDialog";
 import { isActive, StatusBadge } from "@/components/StatusBadge";
 import { StepViewer } from "@/components/StepViewer";
 import { button, card, cardHeader, skeleton } from "@/components/ui";
 import { useWorkerOnline } from "@/lib/useWorkerOnline";
-import { errorKey, formatDuration, hostOf, runDuration, runErrorKey, toMarkdown } from "@/lib/format";
+import { errorKey, formatDuration, hostOf, runDuration, runErrorKey } from "@/lib/format";
+import { PageTitle } from "@/components/PageTitle";
 
 function useNow(ticking: boolean) {
   const [now, setNow] = useState(() => Date.now());
@@ -73,6 +76,7 @@ function RunHeader({ data, actions }: { data: RunDetails; actions: React.ReactNo
               <span className="truncate">{run.url}</span>
             </a>
           </div>
+          <PageTitle title={run.goal} />
           <h1 className="text-xl leading-[1.35] font-bold text-balance sm:text-[26px]">{run.goal}</h1>
         </div>
         <div className="no-print flex flex-wrap items-center gap-2">{actions}</div>
@@ -205,12 +209,14 @@ function ScenarioChips({ scenarios, selected, onSelect }: {
 function Actions({ data }: { data: RunDetails }) {
   const t = useTranslations("report");
   const tr = useTranslations("run");
+  const tc = useTranslations("compare");
   const te = useTranslations("errors");
+  const te2 = useTranslations("export");
   const router = useRouter();
   const rerun = useMutation(api.runs.rerun);
-  const share = useMutation(api.runs.share);
   const cancel = useMutation(api.runs.cancel);
   const [confirm, setConfirm] = useState(false);
+  const [dialog, setDialog] = useState<"share" | "export" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { run } = data;
 
@@ -241,29 +247,14 @@ function Actions({ data }: { data: RunDetails }) {
       setError(te(errorKey(e)));
     }
   }
-  async function onShare() {
-    try {
-      const token = await share({ runId: run._id });
-      await navigator.clipboard.writeText(`${location.origin}/share/${token}`);
-      toast.success(t("copied"), { id: "share-link", description: t("copiedBody") });
-    } catch {
-      toast.error(t("copyFailed"), { id: "share-link" });
-    }
-  }
-  function onMarkdown() {
-    const md = toMarkdown(data, { duration: t("duration") });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([md], { type: "text/markdown" }));
-    a.download = `qagent-report-${run._id}.md`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }
-
   return (
     <>
       {error && <p role="alert" className="w-full text-sm text-danger">{error}</p>}
-      <button onClick={() => void onShare()} className={button.secondary}>
+      <button onClick={() => setDialog("share")} className={button.secondary}>
         <Link2 className="size-4" /> {t("share")}
+      </button>
+      <button onClick={() => setDialog("export")} className={button.secondary}>
+        <Download className="size-4" /> {te2("trigger")}
       </button>
       <button onClick={() => void onRerun()} className={button.primary}>
         <RotateCcw className="size-4" /> {t("rerun")}
@@ -279,15 +270,17 @@ function Actions({ data }: { data: RunDetails }) {
       >
         {(close) => (
           <>
-            <button onClick={() => { onMarkdown(); close(); }} className={menuItem}>
-              <Download className="size-4" strokeWidth={1.75} /> {t("markdown")}
-            </button>
+            <Link href={`/runs/${run._id}/compare`} onClick={close} className={menuItem}>
+              <GitCompareArrows className="size-4" strokeWidth={1.75} /> {tc("menu")}
+            </Link>
             <button onClick={() => { close(); setTimeout(() => window.print(), 50); }} className={menuItem}>
               <Printer className="size-4" strokeWidth={1.75} /> {t("print")}
             </button>
           </>
         )}
       </Popover>
+      <ShareDialog open={dialog === "share"} onClose={() => setDialog(null)} run={run} />
+      <ExportDialog open={dialog === "export"} onClose={() => setDialog(null)} data={data} />
     </>
   );
 }
@@ -373,7 +366,7 @@ export default function RunPage() {
       {active && <StageTrack status={run.status} />}
       {run.error && <RunError error={run.error} />}
       {run.status === "canceled" && <p className="text-sm text-fg-3">{t("canceled")}</p>}
-      {active ? <LiveView data={data} /> : <Report data={data} />}
+      {active ? <LiveView data={data} /> : <Report data={data} bugActions={(bug) => <BugActions bug={bug} run={run} />} />}
     </div>
   );
 }

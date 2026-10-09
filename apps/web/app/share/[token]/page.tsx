@@ -12,6 +12,7 @@ import { LostIllustration } from "@/components/illustrations";
 import { Report } from "@/components/Report";
 import { PageSkeleton } from "@/components/RequireAuth";
 import { button, card } from "@/components/ui";
+import { PageTitle } from "@/components/PageTitle";
 
 export default function SharedReportPage() {
   const { token } = useParams<{ token: string }>();
@@ -39,7 +40,11 @@ export default function SharedReportPage() {
       ) : (
         <main className="mx-auto max-w-[1280px] space-y-5 px-4 py-6 sm:px-6">
           <div className="space-y-2">
-            <p className="text-xs text-fg-3">{t("sharedBy")}</p>
+            <p className="flex items-center gap-2 text-xs text-fg-3">
+              {data.brand?.logo && <img src={data.brand.logo} alt="" className="h-6 w-auto rounded" />}
+              {data.brand ? data.brand.name : t("sharedBy")}
+            </p>
+            <PageTitle title={data.run.goal} />
             <h1 className="text-xl leading-[1.35] font-bold text-balance sm:text-[26px]">{data.run.goal}</h1>
             <a href={data.run.url} target="_blank" rel="noreferrer" dir="ltr" className="font-url inline-flex items-center gap-1 text-sm text-fg-3 hover:text-fg">
               <ExternalLink className="size-3.5" /> {data.run.url}

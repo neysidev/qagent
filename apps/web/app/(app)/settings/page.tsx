@@ -10,11 +10,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { ProjectAvatar, useWorkspace, type ProjectRow as ProjectRowData } from "@/components/AppShell";
 import { EmptyState } from "@/components/EmptyState";
+import { BrandingCard, ChannelsCard, DigestCard } from "@/components/SettingsExtras";
 import { SitesIllustration } from "@/components/illustrations";
 import { ConfirmDialog } from "@/components/overlay";
 import { Tip } from "@/components/ui/tooltip";
 import { button, card, cardHeader, cardTitle, input, label, pill, skeleton } from "@/components/ui";
 import { errorKey, nf, planKey, timeAgo } from "@/lib/format";
+import { PageTitle } from "@/components/PageTitle";
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
@@ -40,6 +42,7 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-8 max-lg:pt-14 sm:px-8">
       <div className="pb-1">
+        <PageTitle title={t("title")} />
         <h1 className="text-[28px] leading-[1.3] font-bold">{t("title")}</h1>
         <p className="mt-1 text-sm text-fg-3">{t("subtitle")}</p>
       </div>
@@ -93,6 +96,10 @@ export default function SettingsPage() {
           )}
         </div>
       </section>
+
+      <BrandingCard />
+      <ChannelsCard />
+      <DigestCard />
 
       <section className={card}>
         <header className={cardHeader}>

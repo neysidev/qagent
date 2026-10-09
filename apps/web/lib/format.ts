@@ -6,7 +6,8 @@ export type Scenario = RunDetails["scenarios"][number];
 export type Bug = RunDetails["bugs"][number];
 export type Run = RunDetails["run"];
 
-const ERROR_CODES = ["INVALID_URL", "INVALID_GOAL", "DAILY_LIMIT", "INVALID_NAME", "PROJECT_BUSY"] as const;
+const ERROR_CODES = ["INVALID_URL", "INVALID_GOAL", "DAILY_LIMIT", "INVALID_NAME", "PROJECT_BUSY",
+  "INVALID_BRAND", "INVALID_TRACKER", "INVALID_CHANNEL", "INVALID_EMAIL", "EMAIL_NOT_CONFIGURED", "EMAIL_FAILED"] as const;
 
 /** Translation key under `errors` for a thrown mutation error. */
 export function errorKey(e: unknown): string {
@@ -55,38 +56,6 @@ export function actionValue(step: Step): string | undefined {
   if (!raw) return undefined;
   const masked = raw.replaceAll("{{password}}", "••••").replaceAll("{{username}}", "••••");
   return masked.length > 28 ? `${masked.slice(0, 27)}…` : masked;
-}
-
-export function toMarkdown(data: RunDetails, labels: { duration: string }): string {
-  const { run, scenarios, bugs } = data;
-  const lines = [
-    `# گزارش کیوایجنت — ${run.url}`,
-    "",
-    `**هدف:** ${run.goal}`,
-    "",
-    `- سناریوها: ${run.summary?.passed ?? 0}/${run.summary?.total ?? scenarios.length} موفق`,
-    `- باگ‌ها: ${bugs.length}`,
-    `- ${labels.duration}: ${formatDuration(runDuration(run, Date.now()))}`,
-    "",
-  ];
-  if (run.summaryText) lines.push(run.summaryText, "");
-  lines.push("## باگ‌ها", "");
-  if (!bugs.length) lines.push("باگی پیدا نشد.", "");
-  for (const b of bugs) {
-    lines.push(`### [${b.severity.toUpperCase()}] ${b.title}`, "", "**مراحل بازتولید:**", "");
-    b.reproSteps.forEach((s, i) => lines.push(`${i + 1}. ${s}`));
-    lines.push("", `**انتظار:** ${b.expected}`, "", `**نتیجه:** ${b.actual}`, "");
-    const evidence = [
-      ...b.evidence.networkErrors.map((n) => `${n.method} ${n.url} → ${n.status || "failed"}`),
-      ...b.evidence.consoleErrors,
-    ];
-    if (evidence.length) lines.push("```", ...evidence, "```", "");
-    b.screenshotUrls.forEach((u, i) => lines.push(`![اسکرین‌شات ${i + 1}](${u})`));
-    lines.push("");
-  }
-  lines.push("## سناریوها", "");
-  for (const s of scenarios) lines.push(`- **${s.status.toUpperCase()}** ${s.title} — ${s.verdictReason ?? ""}`);
-  return lines.join("\n") + "\n";
 }
 
 const rtf = new Intl.RelativeTimeFormat("fa", { numeric: "auto", style: "short" });

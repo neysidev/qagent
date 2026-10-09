@@ -115,3 +115,40 @@ export function ConfirmDialog({
     </dialog>
   );
 }
+
+/** Content dialog on <dialog> (same shell as ConfirmDialog): scrolls when tall, closes on Escape or backdrop click. */
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+  wide = false,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+  footer?: ReactNode;
+  wide?: boolean;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const d = ref.current;
+    if (open && !d?.open) d?.showModal();
+    if (!open && d?.open) d.close();
+  }, [open]);
+
+  return (
+    <dialog
+      ref={ref}
+      onClose={onClose}
+      onClick={(e) => e.target === ref.current && onClose()}
+      className={`modal m-auto max-h-[min(720px,calc(100dvh-32px))] ${wide ? "w-[min(620px,calc(100vw-32px))]" : "w-[min(480px,calc(100vw-32px))]"} flex-col overflow-hidden rounded-2xl border border-line-strong bg-surface p-0 text-fg shadow-[0_16px_40px_-16px_rgb(0_0_0/0.25)] open:flex`}
+    >
+      <h2 className="shrink-0 border-b border-line px-5 py-4 font-semibold">{title}</h2>
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">{children}</div>
+      {footer && <div className="flex shrink-0 justify-end gap-2 border-t border-line bg-shell/60 px-5 py-3">{footer}</div>}
+    </dialog>
+  );
+}

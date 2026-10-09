@@ -10,7 +10,9 @@
 
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
+import type * as email from "../email.js";
 import type * as http from "../http.js";
+import type * as integrations from "../integrations.js";
 import type * as lib from "../lib.js";
 import type * as runs from "../runs.js";
 import type * as siteMeta from "../siteMeta.js";
@@ -25,7 +27,9 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   crons: typeof crons;
+  email: typeof email;
   http: typeof http;
+  integrations: typeof integrations;
   lib: typeof lib;
   runs: typeof runs;
   siteMeta: typeof siteMeta;

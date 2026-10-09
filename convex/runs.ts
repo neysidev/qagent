@@ -102,14 +102,28 @@ export const cancel = mutation({
   },
 });
 
+/** Creates (or reuses) the public link. `expiresInDays` of 0 or none means the link never expires. */
 export const share = mutation({
+  args: { runId: v.id("runs"), expiresInDays: v.optional(v.number()) },
+  handler: async (ctx, { runId, expiresInDays }) => {
+    const run = await requireOwnedRun(ctx, runId);
+    return ensureShare(ctx, run, expiresInDays);
+  },
+});
+
+export async function ensureShare(ctx: MutationCtx, run: Doc<"runs">, expiresInDays?: number) {
+  const shareToken = run.shareToken ?? crypto.randomUUID().replaceAll("-", "");
+  const shareExpiresAt = expiresInDays && expiresInDays > 0 ? Date.now() + expiresInDays * DAY_MS : undefined;
+  await ctx.db.patch(run._id, { shareToken, shareExpiresAt });
+  return shareToken;
+}
+
+/** Revokes the public link: the old URL stops working and a later share makes a new one. */
+export const unshare = mutation({
   args: { runId: v.id("runs") },
   handler: async (ctx, { runId }) => {
-    const run = await requireOwnedRun(ctx, runId);
-    if (run.shareToken) return run.shareToken;
-    const shareToken = crypto.randomUUID().replaceAll("-", "");
-    await ctx.db.patch(runId, { shareToken });
-    return shareToken;
+    await requireOwnedRun(ctx, runId);
+    await ctx.db.patch(runId, { shareToken: undefined, shareExpiresAt: undefined });
   },
 });
 
@@ -192,7 +206,9 @@ export const getShared = query({
       .query("runs")
       .withIndex("by_shareToken", (q) => q.eq("shareToken", token))
       .unique();
-    return run ? details(ctx, run) : null;
+    if (!run || (run.shareExpiresAt && run.shareExpiresAt < Date.now())) return null;
+    const owner = await ctx.db.get(run.userId);
+    return { ...(await details(ctx, run)), brand: owner?.brand ?? null };
   },
 });
 
@@ -288,7 +304,23 @@ export const viewer = query({
   args: {},
   handler: async (ctx) => {
     const user = await ctx.db.get(await requireUser(ctx));
-    return user && { email: user.email ?? "", plan: user.plan ?? "free" };
+    return user && { email: user.email ?? "", plan: user.plan ?? "free", weeklyDigest: user.weeklyDigest ?? false, brand: user.brand ?? null };
+  },
+});
+
+export const setWeeklyDigest = mutation({
+  args: { on: v.boolean() },
+  handler: async (ctx, { on }) => ctx.db.patch(await requireUser(ctx), { weeklyDigest: on }),
+});
+
+/** Report branding. A missing name clears it; the logo is a data: URL the client already shrank. */
+export const setBrand = mutation({
+  args: { brand: v.union(v.null(), v.object({ name: v.string(), logo: v.optional(v.string()) })) },
+  handler: async (ctx, { brand }) => {
+    const userId = await requireUser(ctx);
+    if (brand && (!brand.name.trim() || brand.name.length > 60 || (brand.logo && (brand.logo.length > 200_000 || !brand.logo.startsWith("data:image/")))))
+      throw new ConvexError("INVALID_BRAND");
+    await ctx.db.patch(userId, { brand: brand ? { name: brand.name.trim(), logo: brand.logo } : undefined });
   },
 });
 
@@ -306,6 +338,27 @@ export const renameProject = mutation({
     const trimmed = name.trim();
     if (!trimmed || trimmed.length > 80) throw new ConvexError("INVALID_NAME");
     await ctx.db.patch(projectId, { name: trimmed });
+  },
+});
+
+export const setTracker = mutation({
+  args: {
+    projectId: v.id("projects"),
+    tracker: v.union(
+      v.null(),
+      v.object({ kind: v.union(v.literal("github"), v.literal("linear"), v.literal("jira")), target: v.string(), projectId: v.optional(v.string()) }),
+    ),
+  },
+  handler: async (ctx, { projectId, tracker }) => {
+    await requireOwnedProject(ctx, projectId);
+    if (tracker) {
+      const t = tracker.target.trim();
+      const ok =
+        tracker.kind === "github" ? /^[\w.-]+\/[\w.-]+$/.test(t) : tracker.kind === "linear" ? /^[A-Za-z0-9]{1,10}$/.test(t) : /^[\w.-]+\.atlassian\.net$/.test(t) && /^\d+$/.test(tracker.projectId ?? "");
+      if (!ok) throw new ConvexError("INVALID_TRACKER");
+      tracker = { ...tracker, target: t };
+    }
+    await ctx.db.patch(projectId, { tracker: tracker ?? undefined });
   },
 });
 

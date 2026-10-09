@@ -41,4 +41,6 @@ export const reapStaleRuns = internalMutation({
 
 const crons = cronJobs();
 crons.interval("reap stale runs", { seconds: 30 }, internal.crons.reapStaleRuns);
+// Saturday morning (Tehran), the start of the Iranian week.
+crons.weekly("weekly digest", { dayOfWeek: "saturday", hourUTC: 5, minuteUTC: 30 }, internal.email.weeklyDigest);
 export default crons;

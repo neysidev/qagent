@@ -2,7 +2,7 @@
 
 import type { RunDetails } from "@convex/runs";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Sparkles } from "lucide-react";
 import type { Bug } from "@/lib/format";
 import { CleanRunIllustration, NoScenariosIllustration } from "./illustrations";
@@ -13,7 +13,7 @@ import { card, cardHeader, cardTitle, pill, type Tone } from "./ui";
 
 const severityTone: Record<Bug["severity"], Tone> = { critical: "danger", high: "danger", medium: "warning", low: "neutral" };
 
-export function Report({ data }: { data: RunDetails }) {
+export function Report({ data, bugActions }: { data: RunDetails; bugActions?: (bug: Bug) => ReactNode }) {
   const t = useTranslations("report");
   const { run, scenarios, steps, bugs } = data;
   const [scenarioId, setScenarioId] = useState<string | null>(null);
@@ -54,7 +54,7 @@ export function Report({ data }: { data: RunDetails }) {
                 <p className="mt-1.5 text-sm text-fg-2">{t("noBugsBody")}</p>
               </div>
             ) : (
-              bugs.map((b) => <BugCard key={b._id} bug={b} />)
+              bugs.map((b) => <BugCard key={b._id} bug={b} actions={bugActions?.(b)} />)
             )}
           </section>
 
@@ -83,7 +83,7 @@ export function Report({ data }: { data: RunDetails }) {
   );
 }
 
-function BugCard({ bug }: { bug: Bug }) {
+function BugCard({ bug, actions }: { bug: Bug; actions?: ReactNode }) {
   const t = useTranslations("report");
   const { consoleErrors, networkErrors } = bug.evidence;
   return (
@@ -92,7 +92,8 @@ function BugCard({ bug }: { bug: Bug }) {
         <span className={pill(severityTone[bug.severity])}>
           {t(`severity.${bug.severity}`)}
         </span>
-        <h4 className="font-medium text-pretty">{bug.title}</h4>
+        <h4 className="min-w-0 flex-1 font-medium text-pretty">{bug.title}</h4>
+        {actions}
       </header>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border border-success/15 bg-success-soft/50 p-3">

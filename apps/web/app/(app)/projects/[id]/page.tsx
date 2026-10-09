@@ -2,18 +2,20 @@
 
 import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
-import { ArrowRight, Bug, ExternalLink, History, Play, Settings2 } from "lucide-react";
+import { ArrowRight, Bug, Download, ExternalLink, History, Play, Settings2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { ProjectAvatar } from "@/components/AppShell";
+import { BulkExportDialog } from "@/components/ExportDialog";
 import { Composer, type Draft } from "@/components/Composer";
 import { EmptyState } from "@/components/EmptyState";
 import { BugHuntIllustration, CleanRunIllustration, LostIllustration } from "@/components/illustrations";
 import { StatusBadge, TaskIcon } from "@/components/StatusBadge";
 import { button, card, cardHeader, cardTitle, pill, skeleton, type Tone } from "@/components/ui";
 import { hostOf, nf, timeAgo } from "@/lib/format";
+import { PageTitle } from "@/components/PageTitle";
 
 type Overview = NonNullable<ReturnType<typeof useOverview>>;
 const useOverview = (projectId: string) => useQuery(api.runs.projectOverview, { projectId });
@@ -41,6 +43,7 @@ function Project({ data }: { data: Overview }) {
   const [draft, setDraft] = useState<Draft>({ path: "", goal: "" });
 
   const [tab, setTab] = useState<"new" | "history" | "bugs">("new");
+  const [exporting, setExporting] = useState(false);
 
   const fresh = runs.length === 0;
   const tabs = [
@@ -59,6 +62,7 @@ function Project({ data }: { data: Overview }) {
         <div className="flex flex-wrap items-center gap-4">
           <ProjectAvatar name={project.name} url={project.baseUrl} favicon={project.faviconUrl} size="lg" />
           <div className="min-w-0 flex-1">
+            <PageTitle title={project.name} />
             <h1 className="truncate text-[26px] leading-[1.3] font-bold"><bdi>{project.name}</bdi></h1>
             <a href={project.baseUrl} target="_blank" rel="noreferrer" dir="ltr"
               className="font-url mt-1 inline-flex items-center gap-1.5 rounded text-sm text-fg-3 transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
@@ -68,12 +72,19 @@ function Project({ data }: { data: Overview }) {
               <span className="sr-only">{t("visit")}</span>
             </a>
           </div>
+          {runs.some((r) => r.status === "done") && (
+            <button onClick={() => setExporting(true)} className={button.secondary}>
+              <Download className="size-4" strokeWidth={1.75} aria-hidden />
+              {t("exportAll")}
+            </button>
+          )}
           <Link href="/settings" className={button.secondary}>
             <Settings2 className="size-4" strokeWidth={1.75} aria-hidden />
             {t("manage")}
           </Link>
         </div>
       </header>
+      <BulkExportDialog open={exporting} onClose={() => setExporting(false)} runs={runs} projectName={project.name} />
 
       {!fresh && (
         <div role="tablist" className="-mt-3 flex gap-1 overflow-x-auto border-b border-line">

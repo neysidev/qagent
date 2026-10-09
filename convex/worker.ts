@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { mutation } from "./_generated/server";
 import { action, bbox, cost, runStatus, scenarioKind, scenarioStatus, severity, trace } from "./schema";
 import { checkSecret, markWorkerSeen } from "./lib";
@@ -175,6 +176,7 @@ export const finishRun = mutation({
     const run = await ctx.db.get(runId);
     if (!run || run.status === "canceled") return;
     await ctx.db.patch(runId, { ...rest, finishedAt: Date.now() });
+    await ctx.scheduler.runAfter(0, internal.integrations.notifyRun, { runId });
   },
 });
 

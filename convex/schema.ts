@@ -66,7 +66,22 @@ export default defineSchema({
     phoneVerificationTime: v.optional(v.number()),
     isAnonymous: v.optional(v.boolean()),
     plan: v.optional(v.string()),
+    weeklyDigest: v.optional(v.boolean()),
+    /** White-label identity for exported and shared reports; `logo` is a small data: URL. */
+    brand: v.optional(v.object({ name: v.string(), logo: v.optional(v.string()) })),
   }).index("email", ["email"]),
+
+  /** Where a finished run is announced: a Slack webhook, a Telegram chat or any HTTPS endpoint. */
+  integrations: defineTable({
+    userId: v.id("users"),
+    kind: v.union(v.literal("slack"), v.literal("telegram"), v.literal("webhook")),
+    /** Slack/webhook URL, or the Telegram chat id. */
+    target: v.string(),
+    /** Telegram bot token, or the webhook's signing secret. */
+    secret: v.optional(v.string()),
+    onlyFailures: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
 
   /** Last time each worker process checked in (polling or heartbeating), so the app can tell nobody is running tests. */
   workers: defineTable({
@@ -79,6 +94,10 @@ export default defineSchema({
     name: v.string(),
     baseUrl: v.string(),
     faviconUrl: v.optional(v.string()),
+    /** Where "create issue" on a bug opens: a GitHub repo, a Linear team key or a Jira project. */
+    tracker: v.optional(
+      v.object({ kind: v.union(v.literal("github"), v.literal("linear"), v.literal("jira")), target: v.string(), projectId: v.optional(v.string()) }),
+    ),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
 
@@ -102,6 +121,7 @@ export default defineSchema({
     summaryText: v.optional(v.string()),
     error: v.optional(v.string()),
     shareToken: v.optional(v.string()),
+    shareExpiresAt: v.optional(v.number()),
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
