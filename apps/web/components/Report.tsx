@@ -3,8 +3,9 @@
 import type { RunDetails } from "@convex/runs";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { CircleCheck, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { formatCost, formatDuration, runDuration, type Bug } from "@/lib/format";
+import { CleanRunIllustration, NoScenariosIllustration } from "./illustrations";
 import { ScenarioList } from "./ScenarioList";
 import { StepViewer } from "./StepViewer";
 import { card, cardHeader, cardTitle, eyebrow, pill, type Tone } from "./ui";
@@ -52,40 +53,52 @@ export function Report({ data }: { data: RunDetails }) {
         </section>
       )}
 
-      <section className="space-y-3">
-        <h3 className="flex items-center gap-2 pt-2 text-sm font-medium text-fg-2">
-          {t("bugs")} <span className="font-mono text-fg-3">{bugs.length}</span>
-        </h3>
-        {bugs.length === 0 ? (
-          <div className={`${card} flex flex-col items-center p-8 text-center`}>
-            <CircleCheck className="size-8 text-success" strokeWidth={1.5} />
-            <p className="mt-3 font-medium">{t("noBugs")}</p>
-            <p className="mt-1 text-sm text-fg-3">{t("noBugsBody")}</p>
-          </div>
-        ) : (
-          bugs.map((b) => <BugCard key={b._id} bug={b} />)
-        )}
-      </section>
+      {scenarios.length === 0 ? (
+        <section className={`${card} flex flex-col items-center px-6 py-14 text-center`}>
+          <NoScenariosIllustration className="w-56" />
+          <h3 className="mt-5 text-lg font-bold">{t("noScenariosTitle")}</h3>
+          <p className="mt-2 max-w-md text-sm leading-[1.9] text-pretty text-fg-2">
+            {run.status === "canceled" ? t("noScenariosCanceled") : t("noScenariosFailed")}
+          </p>
+        </section>
+      ) : (
+        <>
+          <section className="space-y-3">
+            <h3 className="flex items-center gap-2 pt-2 text-sm font-medium text-fg-2">
+              {t("bugs")} <span className="font-mono text-fg-3">{bugs.length}</span>
+            </h3>
+            {bugs.length === 0 ? (
+              <div className={`${card} flex flex-col items-center px-6 py-10 text-center`}>
+                <CleanRunIllustration className="w-44" />
+                <p className="mt-4 font-bold">{t("noBugs")}</p>
+                <p className="mt-1.5 text-sm text-fg-2">{t("noBugsBody")}</p>
+              </div>
+            ) : (
+              bugs.map((b) => <BugCard key={b._id} bug={b} />)
+            )}
+          </section>
 
-      <section className="grid gap-4 lg:grid-cols-[320px_1fr]">
-        <div className={`${card} h-fit`}>
-          <header className={cardHeader}>
-            <h3 className={cardTitle}>{t("verdicts")}</h3>
-          </header>
-          <div className="p-1.5">
-            <ScenarioList scenarios={scenarios} selected={scenarioId} onSelect={setScenarioId} showReasons />
-          </div>
-        </div>
-        <div className={`${card} min-w-0 p-4`}>
-          <h3 className={`${cardTitle} mb-3`}>{t("timeline")}</h3>
-          <StepViewer
-            key={scenarioId ?? "all"}
-            steps={scenarioId ? steps.filter((s) => s.scenarioId === scenarioId) : steps}
-            scenarios={scenarios}
-            live={false}
-          />
-        </div>
-      </section>
+          <section className="grid gap-4 lg:grid-cols-[320px_1fr]">
+            <div className={`${card} h-fit`}>
+              <header className={cardHeader}>
+                <h3 className={cardTitle}>{t("verdicts")}</h3>
+              </header>
+              <div className="p-1.5">
+                <ScenarioList scenarios={scenarios} selected={scenarioId} onSelect={setScenarioId} showReasons />
+              </div>
+            </div>
+            <div className={`${card} min-w-0 p-4`}>
+              <h3 className={`${cardTitle} mb-3`}>{t("timeline")}</h3>
+              <StepViewer
+                key={scenarioId ?? "all"}
+                steps={scenarioId ? steps.filter((s) => s.scenarioId === scenarioId) : steps}
+                scenarios={scenarios}
+                live={false}
+              />
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }

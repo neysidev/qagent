@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import { action, bbox, cost, runStatus, scenarioKind, scenarioStatus, severity, trace } from "./schema";
-import { checkSecret } from "./lib";
+import { checkSecret, markWorkerSeen } from "./lib";
 
 const secret = v.string();
 
@@ -9,6 +9,7 @@ export const claimNextRun = mutation({
   args: { secret, workerId: v.string() },
   handler: async (ctx, { secret, workerId }) => {
     checkSecret(secret);
+    await markWorkerSeen(ctx, workerId);
     const run = await ctx.db
       .query("runs")
       .withIndex("by_status", (q) => q.eq("status", "queued"))
@@ -41,6 +42,7 @@ export const heartbeat = mutation({
   args: { secret, runId: v.id("runs"), workerId: v.string(), cost: v.optional(cost) },
   handler: async (ctx, { secret, runId, workerId, cost }) => {
     checkSecret(secret);
+    await markWorkerSeen(ctx, workerId); // a worker with every slot busy stops polling but keeps heartbeating
     const run = await ctx.db.get(runId);
     // Tell the worker to stop if the run was canceled or handed to someone else.
     if (!run || run.workerId !== workerId) return { stop: true };

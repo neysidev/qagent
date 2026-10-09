@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { errorKey, hostOf, nf } from "@/lib/format";
+import { useWorkerOnline } from "@/lib/useWorkerOnline";
 import { input, label } from "./ui";
 
 export const DEMO_URL = process.env.NEXT_PUBLIC_DEMO_SHOP_URL ?? "";
@@ -35,6 +36,7 @@ export function Composer({ site, draft, setDraft }: { site: string; draft: Draft
   const te = useTranslations("errors");
   const router = useRouter();
   const quota = useQuery(api.runs.quota);
+  const workerOnline = useWorkerOnline();
   const createRun = useMutation(api.runs.create);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -156,6 +158,11 @@ export function Composer({ site, draft, setDraft }: { site: string; draft: Draft
         )}
       </Step>
 
+      {workerOnline === false && (
+        <div className="px-5 py-4">
+          <Notice tone="warn">{t("workerOffline")}</Notice>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-3 bg-surface px-5 py-4">
         <button disabled={!ready}
           className="inline-flex h-11 items-center gap-2 rounded-full bg-accent px-6 text-sm font-medium text-white shadow-[0_8px_20px_-10px_var(--accent)] transition-[transform,background-color,opacity] duration-150 ease-out hover:bg-accent-hover active:scale-[0.97] disabled:opacity-40"

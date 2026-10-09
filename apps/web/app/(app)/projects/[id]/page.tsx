@@ -9,7 +9,8 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { ProjectAvatar } from "@/components/AppShell";
 import { Composer, type Draft } from "@/components/Composer";
-import { LostIllustration } from "@/components/illustrations";
+import { EmptyState } from "@/components/EmptyState";
+import { BugHuntIllustration, CleanRunIllustration, LostIllustration } from "@/components/illustrations";
 import { StatusBadge, TaskIcon } from "@/components/StatusBadge";
 import { button, card, cardHeader, cardTitle, pill, skeleton, type Tone } from "@/components/ui";
 import { hostOf, nf, timeAgo } from "@/lib/format";
@@ -127,7 +128,11 @@ function Project({ data }: { data: Overview }) {
               <h2 id="bugs" className={cardTitle}>{t("recentBugs")}</h2>
             </header>
             {recentBugs.length === 0 ? (
-              <p className="px-5 py-8 text-center text-sm text-fg-3">{t("noBugs")}</p>
+              totals.scenarios === 0 ? (
+                <EmptyState art={<BugHuntIllustration className="w-36" />} title={t("noFinished")} body={t("noFinishedBody")} compact />
+              ) : (
+                <EmptyState art={<CleanRunIllustration className="w-32" />} title={t("noBugs")} body={t("noBugsBody")} compact />
+              )
             ) : (
               <ul className="divide-y divide-line">
                 {recentBugs.map((b) => (

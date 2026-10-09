@@ -9,15 +9,18 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { ProjectAvatar, useWorkspace, type ProjectRow as ProjectRowData } from "@/components/AppShell";
+import { EmptyState } from "@/components/EmptyState";
+import { SitesIllustration } from "@/components/illustrations";
 import { ConfirmDialog } from "@/components/overlay";
 import { button, card, cardHeader, cardTitle, input, label, pill, skeleton } from "@/components/ui";
-import { errorKey, nf, timeAgo } from "@/lib/format";
+import { errorKey, nf, planKey, timeAgo } from "@/lib/format";
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const viewer = useQuery(api.runs.viewer);
   const quota = useQuery(api.runs.quota);
   const te = useTranslations("errors");
+  const tc = useTranslations("common");
   const { projects } = useWorkspace();
   const { signOut } = useAuthActions();
   const deleteProject = useMutation(api.runs.deleteProject);
@@ -52,7 +55,7 @@ export default function SettingsPage() {
           <div className="space-y-1.5">
             <span className={label}>{t("plan")}</span>
             <p className="flex h-9 items-center">
-              <span className={pill("accent")}>{viewer?.plan ?? "free"}</span>
+              <span className={pill("accent")}>{tc(planKey(viewer?.plan))}</span>
             </p>
           </div>
         </div>
@@ -102,7 +105,12 @@ export default function SettingsPage() {
             <div className={`${skeleton} h-10`} />
           </div>
         ) : projects.length === 0 ? (
-          <p className="p-8 text-center text-sm text-fg-3">{t("noProjects")}</p>
+          <EmptyState
+            art={<SitesIllustration className="w-48" />}
+            title={t("noProjectsTitle")}
+            body={t("noProjects")}
+            action={<Link href="/dashboard" className={button.primary}>{t("newProject")}</Link>}
+          />
         ) : (
           <ul className="divide-y divide-line">
             {projects.map((p) => (

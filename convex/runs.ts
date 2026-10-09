@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
-import { ACTIVE_STATUSES, requireOwnedRun, requireUser } from "./lib";
+import { ACTIVE_STATUSES, lastWorkerSeen, requireOwnedRun, requireUser, WORKER_ONLINE_MS } from "./lib";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -265,6 +265,18 @@ export const projectOverview = query({
       .flat()
       .slice(0, 8);
     return { project, runs: runs.map(summarize), totals: { runs: runs.length, ...totals }, recentBugs };
+  },
+});
+
+/**
+ * When a worker last checked in. Queries re-run when data changes, not as time passes, so the client compares
+ * `lastSeenAt + onlineMs` with its own clock to notice a worker going quiet.
+ */
+export const workerStatus = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireUser(ctx);
+    return { lastSeenAt: await lastWorkerSeen(ctx), onlineMs: WORKER_ONLINE_MS };
   },
 });
 

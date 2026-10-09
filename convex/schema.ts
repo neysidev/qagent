@@ -68,6 +68,12 @@ export default defineSchema({
     plan: v.optional(v.string()),
   }).index("email", ["email"]),
 
+  /** Last time each worker process checked in (polling or heartbeating), so the app can tell nobody is running tests. */
+  workers: defineTable({
+    workerId: v.string(),
+    lastSeenAt: v.number(),
+  }).index("by_worker", ["workerId"]),
+
   projects: defineTable({
     userId: v.id("users"),
     name: v.string(),

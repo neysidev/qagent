@@ -19,6 +19,7 @@ export function runErrorKey(error: string): string | null {
   if (error.startsWith("Site unreachable")) return "unreachable";
   if (error.startsWith("This URL is not allowed")) return "notAllowed";
   if (error.startsWith("Worker stopped responding")) return "worker";
+  if (error.startsWith("No worker available")) return "noWorker";
   return null;
 }
 
@@ -106,3 +107,8 @@ export const hostOf = (url: string) => {
     return url;
   }
 };
+
+const PLANS = ["free", "pro", "agency"] as const;
+/** Translation key under `common` for a stored plan id; unknown ids fall back to the free plan's label. */
+export const planKey = (plan: string | undefined) =>
+  `plans.${PLANS.includes(plan as (typeof PLANS)[number]) ? plan : "free"}` as `plans.${(typeof PLANS)[number]}`;

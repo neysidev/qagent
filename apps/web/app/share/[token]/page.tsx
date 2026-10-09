@@ -7,6 +7,8 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { LogoBox } from "@/components/brand/LogoBox";
+import { EmptyState } from "@/components/EmptyState";
+import { LostIllustration } from "@/components/illustrations";
 import { Report } from "@/components/Report";
 import { PageSkeleton } from "@/components/RequireAuth";
 import { button, card } from "@/components/ui";
@@ -32,7 +34,7 @@ export default function SharedReportPage() {
         <PageSkeleton />
       ) : data === null ? (
         <main className="mx-auto max-w-md px-4 py-24">
-          <p className={`${card} p-8 text-center text-sm text-fg-2`}>{te("notFound")}</p>
+          <div className={card}><EmptyState art={<LostIllustration className="w-52" />} title={te("notFoundTitle")} body={te("notFound")} /></div>
         </main>
       ) : (
         <main className="mx-auto max-w-[1280px] space-y-5 px-4 py-6 sm:px-6">

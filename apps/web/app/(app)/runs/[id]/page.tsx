@@ -8,8 +8,10 @@ import { ArrowRight, Check, Clock, Coins, Download, FileText, Hourglass, Play, R
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { ConfirmDialog, menuItem, Popover } from "@/components/overlay";
+import { LostIllustration } from "@/components/illustrations";
 import { PendingScene } from "@/components/PendingScene";
 import { Report } from "@/components/Report";
 import { PageSkeleton } from "@/components/RequireAuth";
@@ -17,6 +19,7 @@ import { ScenarioList } from "@/components/ScenarioList";
 import { isActive, StatusBadge } from "@/components/StatusBadge";
 import { StepViewer } from "@/components/StepViewer";
 import { button, card, cardHeader, cardTitle } from "@/components/ui";
+import { useWorkerOnline } from "@/lib/useWorkerOnline";
 import { errorKey, formatCost, formatDuration, hostOf, runDuration, runErrorKey, toMarkdown } from "@/lib/format";
 
 function useNow(ticking: boolean) {
@@ -136,12 +139,26 @@ function StageTrack({ status }: { status: RunDetails["run"]["status"] }) {
   );
 }
 
+/** Queued with nobody to run it: say so plainly instead of animating progress that isn't happening. */
+function WorkerOffline() {
+  const t = useTranslations("run.offline");
+  return (
+    <section role="status" className={`${card} flex flex-col items-center px-6 py-14 text-center`}>
+      <LostIllustration className="w-52" />
+      <h2 className="mt-6 text-lg font-bold">{t("title")}</h2>
+      <p className="mt-2 max-w-md text-sm leading-[1.9] text-pretty text-fg-2">{t("body")}</p>
+    </section>
+  );
+}
+
 function LiveView({ data }: { data: RunDetails }) {
   const t = useTranslations("run");
+  const workerOnline = useWorkerOnline();
   const [scenarioId, setScenarioId] = useState<string | null>(null);
   const { run, scenarios, steps } = data;
 
   if (scenarios.length === 0) {
+    if (run.status === "queued" && workerOnline === false) return <WorkerOffline />;
     return <PendingScene status={run.status === "queued" ? "queued" : "planning"} host={hostOf(run.url)} />;
   }
   return (
@@ -174,7 +191,6 @@ function Actions({ data }: { data: RunDetails }) {
   const rerun = useMutation(api.runs.rerun);
   const share = useMutation(api.runs.share);
   const cancel = useMutation(api.runs.cancel);
-  const [copied, setCopied] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { run } = data;
@@ -207,10 +223,13 @@ function Actions({ data }: { data: RunDetails }) {
     }
   }
   async function onShare() {
-    const token = await share({ runId: run._id });
-    await navigator.clipboard.writeText(`${location.origin}/share/${token}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      const token = await share({ runId: run._id });
+      await navigator.clipboard.writeText(`${location.origin}/share/${token}`);
+      toast.success(t("copied"), { id: "share-link", description: t("copiedBody") });
+    } catch {
+      toast.error(t("copyFailed"), { id: "share-link" });
+    }
   }
   function onMarkdown() {
     const md = toMarkdown(data, { duration: t("duration"), cost: t("cost") });
@@ -224,9 +243,8 @@ function Actions({ data }: { data: RunDetails }) {
   return (
     <>
       {error && <p role="alert" className="w-full text-sm text-danger">{error}</p>}
-      <button onClick={() => void onShare()} className={button.secondary} aria-live="polite">
-        {copied ? <Check className="size-4 text-success" /> : <Link2 className="size-4" />}
-        {copied ? t("copied") : t("share")}
+      <button onClick={() => void onShare()} className={button.secondary}>
+        <Link2 className="size-4" /> {t("share")}
       </button>
       <button onClick={() => void onRerun()} className={button.primary}>
         <RotateCcw className="size-4" /> {t("rerun")}

@@ -2,6 +2,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { Geist } from "next/font/google";
 import localFont from "next/font/local";
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
+import { Toaster } from "@/components/Toaster";
 import "./globals.css";
 
 const peyda = localFont({
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-dvh font-sans antialiased">
         <NextIntlClientProvider>
           <ConvexClientProvider>{children}</ConvexClientProvider>
+          <Toaster />
         </NextIntlClientProvider>
       </body>
     </html>

@@ -8,9 +8,11 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { hostOf, timeAgo } from "@/lib/format";
+import { hostOf, planKey, timeAgo } from "@/lib/format";
 import { LogoBox } from "./brand/LogoBox";
 import { menuItem, Popover } from "./overlay";
+import { EmptyState } from "./EmptyState";
+import { QuietBellIllustration, SearchEmptyIllustration, SitesIllustration } from "./illustrations";
 import { TaskIcon } from "./StatusBadge";
 import { button, skeleton } from "./ui";
 
@@ -142,12 +144,9 @@ function ProjectsNav({ query, pathname }: { query: string; pathname: string }) {
           {[0, 1, 2, 3].map((i) => <div key={i} className={`${skeleton} h-11`} />)}
         </div>
       ) : projects?.length === 0 ? (
-        <div className="mx-1 mt-2 rounded-2xl border border-dashed border-line-strong px-4 py-6 text-center">
-          <p className="text-sm text-fg-2">{t("noProjects")}</p>
-          <p className="mt-1 text-xs leading-[1.8] text-pretty text-fg-3">{t("noProjectsBody")}</p>
-        </div>
+        <EmptyState art={<SitesIllustration className="w-36" />} title={t("noProjects")} body={t("noProjectsBody")} compact className="mx-1 mt-1 rounded-xl border border-dashed border-line-strong" />
       ) : visible.length === 0 ? (
-        <p className="px-3 py-8 text-center text-sm text-fg-3">{t("noMatch")}</p>
+        <EmptyState art={<SearchEmptyIllustration className="w-28" />} title={t("noMatch")} body={t("noMatchBody")} compact />
       ) : (
         <ul className="space-y-0.5">
           {visible.map((p) => (
@@ -211,6 +210,7 @@ export function ProjectAvatar({ name, url, size = "md" }: { name: string; url: s
 
 function Account() {
   const t = useTranslations("shell");
+  const tc = useTranslations("common");
   const viewer = useQuery(api.runs.viewer);
   const { signOut } = useAuthActions();
   return (
@@ -225,7 +225,7 @@ function Account() {
             </span>
             <span className="min-w-0 flex-1 text-start">
               <span dir="ltr" className="block truncate text-end text-sm text-fg">{viewer?.email.split("@")[0]}</span>
-              <span className="block text-[11px] text-fg-3">{t("plan", { plan: viewer?.plan ?? "free" })}</span>
+              <span className="block text-[11px] text-fg-3">{t("plan", { plan: tc(planKey(viewer?.plan)) })}</span>
             </span>
             <ChevronsUpDown className="size-4 shrink-0 text-fg-3" />
           </button>
@@ -287,7 +287,7 @@ function Notifications() {
         <>
           <p className="px-2.5 pt-1.5 pb-2 text-sm font-medium">{t("notifications")}</p>
           {finished.length === 0 ? (
-            <p className="px-2.5 pb-4 text-sm text-pretty text-fg-3">{t("noNotifications")}</p>
+            <EmptyState art={<QuietBellIllustration className="w-28" />} title={t("noNotifications")} body={t("noNotificationsBody")} compact />
           ) : (
             finished.map((r) => (
               <Link key={r._id} href={`/runs/${r._id}`} onClick={close} className={`${menuItem} items-start`}>

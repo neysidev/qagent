@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { actionValue, type Scenario, type Step } from "@/lib/format";
+import { NoStepsIllustration } from "./illustrations";
 import { button } from "./ui";
 
 /** Screenshot of the selected step with a virtual cursor gliding between targets, plus a scrubbable timeline. */
@@ -38,8 +39,9 @@ export function StepViewer({ steps, scenarios, live }: { steps: Step[]; scenario
 
   if (!step) {
     return (
-      <div className="grid aspect-[16/10] place-items-center rounded-xl border border-dashed border-line-strong text-sm text-fg-3">
-        {t("noSteps")}
+      <div className="flex aspect-[16/10] flex-col items-center justify-center rounded-xl bg-surface px-6 text-center">
+        <NoStepsIllustration className="w-56 max-w-full" />
+        <p className="mt-4 text-sm text-fg-2">{live ? t("noStepsLive") : t("noSteps")}</p>
       </div>
     );
   }
