@@ -420,14 +420,25 @@ dialog.modal::backdrop {
   }
 }
 
-/* Nav returning as a fixed bar after the hero: slides down from above. */
+/* Nav after the hero: slides down softly on enter, glides up a little faster on exit. */
 @keyframes nav-drop {
   from {
     transform: translateY(-100%);
+    opacity: 0;
   }
 }
-@utility nav-drop {
-  animation: nav-drop 320ms var(--ease-out-strong);
+.nav-bar[data-bar="in"] {
+  animation: nav-drop 600ms var(--ease-out-strong);
+  transition:
+    transform 450ms var(--ease-out-strong),
+    opacity 450ms var(--ease-out-strong);
+}
+.nav-bar[data-bar="out"] {
+  transform: translateY(-100%);
+  opacity: 0;
+  transition:
+    transform 380ms var(--ease-in-out-strong),
+    opacity 300ms ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -435,6 +446,9 @@ dialog.modal::backdrop {
     from {
       opacity: 0;
     }
+  }
+  .nav-bar[data-bar="out"] {
+    transform: none;
   }
   @keyframes hero-in {
     from {

@@ -54,7 +54,7 @@ export function signup(email: string, password: string): string | null {
   if (password.length < 6) return "رمز عبور باید حداقل ۶ کاراکتر باشد · Password must be at least 6 characters";
   const users = read<User[]>("users", []);
   const normalized = email.trim().toLowerCase();
-  if (users.some((u) => u.email === normalized)) return "این ایمیل قبلاً ثبت شده · Email already registered";
+  if (users.some((u) => u.email === normalized)) return "این ایمیل قبلا ثبت شده · Email already registered";
   write("users", [...users, { email: normalized, password }]);
   localStorage.setItem("session", normalized);
   return null;

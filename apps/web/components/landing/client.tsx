@@ -32,7 +32,8 @@ type NavLabels = Record<"features" | "how" | "pricing" | "faq" | "login" | "star
 
 export function Nav({ labels }: { labels: NavLabels }) {
   const [open, setOpen] = useState(false);
-  const [solid, setSolid] = useState(false);
+  // top: rides on the hero (dark, transparent) · in: fixed white bar · out: fixed bar sliding away before returning to top.
+  const [bar, setBar] = useState<"top" | "in" | "out">("top");
   const closeRef = useRef<HTMLButtonElement>(null);
   const links = [
     ["#features", labels.features],
@@ -41,11 +42,14 @@ export function Nav({ labels }: { labels: NavLabels }) {
     ["#faq", labels.faq],
   ] as const;
 
-  // Scrolls away with the hero; drops back in fixed and solid once the hero is gone.
+  // Scrolls away with the hero; slides in as a fixed white bar once the hero is gone, slides out on the way back.
   useEffect(() => {
     const hero = document.querySelector("[data-hero]");
     if (!hero) return;
-    const io = new IntersectionObserver(([e]) => setSolid(!e.isIntersecting), { rootMargin: "-64px 0px 0px 0px" });
+    const io = new IntersectionObserver(
+      ([e]) => setBar((b) => (!e.isIntersecting ? "in" : b === "in" ? "out" : b)),
+      { rootMargin: "-64px 0px 0px 0px" },
+    );
     io.observe(hero);
     return () => io.disconnect();
   }, []);
@@ -64,7 +68,10 @@ export function Nav({ labels }: { labels: NavLabels }) {
 
   return (
     <>
-      <header data-solid={solid || undefined} className="theme-dark absolute inset-x-0 top-0 z-50 text-fg data-[solid]:nav-drop data-[solid]:fixed data-[solid]:bg-canvas/75 data-[solid]:backdrop-blur-md">
+      <header data-bar={bar}
+        onTransitionEnd={(e) => e.target === e.currentTarget && bar === "out" && setBar("top")}
+        className={`nav-bar inset-x-0 top-0 z-50 text-fg ${bar === "top" ? "theme-dark absolute" : "fixed border-b border-line-strong bg-canvas/80 shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_20px_-10px_rgb(0_0_0/0.12)] backdrop-blur-xl"}`}
+      >
         <nav aria-label="ناوبری اصلی" className="mx-auto grid h-16 w-full max-w-[1200px] grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6">
           <Link href="/" aria-label={labels.home} className="group flex items-center gap-2 justify-self-start rounded-lg font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
             <LogoBox size={26} />
