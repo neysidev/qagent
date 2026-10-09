@@ -7,7 +7,7 @@
     "dev:shop": "pnpm --filter demo-shop dev",
     "convex": "cd apps/web && npx convex dev",
     "typecheck": "pnpm -r typecheck",
-    "worker": "cd apps/worker && python3.12 -m qagent_worker.main",
+    "worker": "cd apps/worker && .venv/bin/python -m qagent_worker.main",
     "dev": "concurrently -n web,shop,convex,worker -c blue,green,magenta,yellow \"pnpm dev:web\" \"pnpm dev:shop\" \"pnpm convex\" \"pnpm worker\""
   },
   "dependencies": {

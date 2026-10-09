@@ -239,7 +239,7 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
         conclusion = f"{'success' if finished_ok else 'FAILED'}: {conclusion}"
 
     verdict = await verifier.verify(
-        run, scenario, history, conclusion, final_obs, final_shot, evidence, secret_values, cost
+        run, scenario, history, conclusion, final_obs, final_shot, evidence, secret_values, cost, finished_ok
     )
     # An unfinished scenario can only end as a proven site bug or an agent error, never a pass.
     if verdict.status == "passed" and finished_ok is None:
