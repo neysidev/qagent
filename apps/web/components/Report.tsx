@@ -4,7 +4,7 @@ import type { RunDetails } from "@convex/runs";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
-import { formatCost, formatDuration, runDuration, type Bug } from "@/lib/format";
+import { formatDuration, runDuration, type Bug } from "@/lib/format";
 import { CleanRunIllustration, NoScenariosIllustration } from "./illustrations";
 import { ScenarioList } from "./ScenarioList";
 import { StepViewer } from "./StepViewer";
@@ -23,12 +23,11 @@ export function Report({ data }: { data: RunDetails }) {
     { label: t("passed"), value: new Intl.NumberFormat("fa-IR").format(passed), tone: "text-success" },
     { label: t("bugs"), value: new Intl.NumberFormat("fa-IR").format(bugs.length), tone: bugs.length ? "text-warning" : "" },
     { label: t("duration"), value: formatDuration(runDuration(run, Date.now())) },
-    { label: t("cost"), value: formatCost(run.cost?.usd ?? 0) },
   ];
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label} className={`${card} p-4`}>
             <p className={eyebrow}>{s.label}</p>

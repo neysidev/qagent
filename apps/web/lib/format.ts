@@ -43,18 +43,6 @@ export function formatDuration(ms: number): string {
   return `${new Intl.NumberFormat("fa-IR").format(Math.floor(s / 60))}:${nf.format(s % 60)}`;
 }
 
-/** Toman per US dollar. Model usage is billed in dollars; the rate moves often, so it is configured, not hardcoded. */
-const USD_TOMAN = Number(process.env.NEXT_PUBLIC_USD_TOMAN_RATE) || 0;
-const tomanFormat = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
-
-/** Model cost for display, in toman. Shows "—" until a rate is configured rather than a made-up number. */
-export function formatCost(usd: number): string {
-  if (!USD_TOMAN) return "—";
-  const toman = usd * USD_TOMAN;
-  if (toman > 0 && toman < 1) return "کمتر از ۱ تومان";
-  return `${tomanFormat.format(toman)} تومان`;
-}
-
 export function runDuration(run: Run, now: number): number {
   const start = run.startedAt ?? run.createdAt;
   return (run.finishedAt ?? now) - start;
@@ -69,7 +57,7 @@ export function actionValue(step: Step): string | undefined {
   return masked.length > 28 ? `${masked.slice(0, 27)}…` : masked;
 }
 
-export function toMarkdown(data: RunDetails, labels: { duration: string; cost: string }): string {
+export function toMarkdown(data: RunDetails, labels: { duration: string }): string {
   const { run, scenarios, bugs } = data;
   const lines = [
     `# گزارش کیوایجنت — ${run.url}`,
@@ -79,7 +67,6 @@ export function toMarkdown(data: RunDetails, labels: { duration: string; cost: s
     `- سناریوها: ${run.summary?.passed ?? 0}/${run.summary?.total ?? scenarios.length} موفق`,
     `- باگ‌ها: ${bugs.length}`,
     `- ${labels.duration}: ${formatDuration(runDuration(run, Date.now()))}`,
-    `- ${labels.cost}: ${formatCost(run.cost?.usd ?? 0)}`,
     "",
   ];
   if (run.summaryText) lines.push(run.summaryText, "");

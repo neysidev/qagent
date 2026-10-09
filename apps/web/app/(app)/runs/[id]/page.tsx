@@ -4,7 +4,7 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import type { RunDetails } from "@convex/runs";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowRight, Check, Clock, Coins, Download, FileText, Hourglass, Play, Route, ShieldCheck, Ellipsis, ExternalLink, Link2, Printer, RotateCcw, Square } from "lucide-react";
+import { ArrowRight, Check, Clock, Download, FileText, Hourglass, Play, Route, ShieldCheck, Ellipsis, ExternalLink, Link2, Printer, RotateCcw, Square } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -15,12 +15,11 @@ import { LostIllustration } from "@/components/illustrations";
 import { PendingScene } from "@/components/PendingScene";
 import { Report } from "@/components/Report";
 import { PageSkeleton } from "@/components/RequireAuth";
-import { ScenarioList } from "@/components/ScenarioList";
 import { isActive, StatusBadge } from "@/components/StatusBadge";
 import { StepViewer } from "@/components/StepViewer";
-import { button, card, cardHeader, cardTitle } from "@/components/ui";
+import { button, card } from "@/components/ui";
 import { useWorkerOnline } from "@/lib/useWorkerOnline";
-import { errorKey, formatCost, formatDuration, hostOf, runDuration, runErrorKey, toMarkdown } from "@/lib/format";
+import { errorKey, formatDuration, hostOf, runDuration, runErrorKey, toMarkdown } from "@/lib/format";
 
 function useNow(ticking: boolean) {
   const [now, setNow] = useState(() => Date.now());
@@ -83,10 +82,6 @@ function RunHeader({ data, actions }: { data: RunDetails; actions: React.ReactNo
         <span className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 py-1.5 text-fg-3">
           <Clock className="size-3.5" /> {t("elapsed")}
           <Ticker value={formatDuration(runDuration(run, now))} />
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 py-1.5 text-fg-3">
-          <Coins className="size-3.5" /> {t("cost")}
-          <span className="text-fg">{formatCost(run.cost?.usd ?? 0)}</span>
         </span>
       </div>
     </div>
@@ -162,23 +157,48 @@ function LiveView({ data }: { data: RunDetails }) {
     return <PendingScene status={run.status === "queued" ? "queued" : "planning"} host={hostOf(run.url)} />;
   }
   return (
-    <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-      <aside className={`${card} h-fit`}>
-        <header className={cardHeader}>
-          <h2 className={cardTitle}>{t("scenarios")}</h2>
-        </header>
-        <div className="p-1.5">
-          <ScenarioList scenarios={scenarios} selected={scenarioId} onSelect={setScenarioId} />
-        </div>
-      </aside>
-      <div className={`${card} min-w-0 p-4`}>
-        <StepViewer
-          key={scenarioId ?? "all"}
-          steps={scenarioId ? steps.filter((s) => s.scenarioId === scenarioId) : steps}
-          scenarios={scenarios}
-          live
-        />
-      </div>
+    <div className={`${card} min-w-0 space-y-4 p-4`}>
+      <ScenarioChips scenarios={scenarios} selected={scenarioId} onSelect={setScenarioId} />
+      <StepViewer
+        key={scenarioId ?? "all"}
+        steps={scenarioId ? steps.filter((s) => s.scenarioId === scenarioId) : steps}
+        scenarios={scenarios}
+        live
+      />
+    </div>
+  );
+}
+
+const chipDot: Record<RunDetails["scenarios"][number]["status"], string> = {
+  pending: "bg-fg-3/50",
+  running: "bg-accent animate-pulse",
+  passed: "bg-success",
+  failed: "bg-danger",
+  error: "bg-warning",
+  skipped: "bg-fg-3/50",
+};
+
+/** Live scenarios as one scrollable row of filter chips, so the player keeps the full width. */
+function ScenarioChips({ scenarios, selected, onSelect }: {
+  scenarios: RunDetails["scenarios"];
+  selected: string | null;
+  onSelect: (id: string | null) => void;
+}) {
+  const t = useTranslations("run");
+  const chip = "inline-flex h-8 max-w-64 shrink-0 items-center gap-2 rounded-full border px-3 text-xs transition-colors duration-150 aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-fg";
+  return (
+    <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]" role="group" aria-label={t("scenarios")}>
+      <button type="button" aria-pressed={selected === null} onClick={() => onSelect(null)} className={`${chip} border-line-strong font-medium text-fg-2`}>
+        {t("allScenarios")}
+      </button>
+      {scenarios.map((s) => (
+        <button key={s._id} type="button" aria-pressed={selected === s._id} onClick={() => onSelect(s._id)} title={s.title}
+          className={`${chip} animate-rise border-line text-fg-2 hover:border-line-strong`}
+        >
+          <span className={`size-2 shrink-0 rounded-full ${chipDot[s.status]}`} aria-hidden />
+          <span className="truncate">{s.title}</span>
+        </button>
+      ))}
     </div>
   );
 }
@@ -232,7 +252,7 @@ function Actions({ data }: { data: RunDetails }) {
     }
   }
   function onMarkdown() {
-    const md = toMarkdown(data, { duration: t("duration"), cost: t("cost") });
+    const md = toMarkdown(data, { duration: t("duration") });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([md], { type: "text/markdown" }));
     a.download = `qagent-report-${run._id}.md`;

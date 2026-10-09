@@ -368,6 +368,69 @@ dialog.modal::backdrop {
   opacity: 1;
 }
 
+/* ---- Step stage (StepViewer): screenshot crossfade, target highlight, click feedback. ---- */
+.stage-in {
+  animation: stage-in 280ms var(--ease-out-strong) both;
+}
+@keyframes stage-in {
+  from { opacity: 0; filter: blur(3px); }
+}
+.target-in {
+  transform-origin: center;
+  animation: target-in 240ms var(--ease-out-strong) both;
+}
+@keyframes target-in {
+  from { opacity: 0; transform: scale(1.06); }
+}
+.click-ripple {
+  animation: click-ripple 520ms var(--ease-out-strong) both;
+}
+@keyframes click-ripple {
+  from { opacity: 0.9; transform: scale(0.3); }
+  to { opacity: 0; transform: scale(1.5); }
+}
+.cursor-press {
+  transform-origin: 3px 2px;
+  animation: cursor-press 220ms ease-out;
+}
+@keyframes cursor-press {
+  40% { transform: scale(0.82); }
+}
+.label-in {
+  animation: label-in 200ms var(--ease-out-strong) both;
+}
+@keyframes label-in {
+  from { opacity: 0; transform: translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage-in, .target-in, .label-in { animation: stage-fade 160ms ease both; }
+  .click-ripple, .cursor-press { animation: none; }
+  .click-ripple { opacity: 0; }
+}
+@keyframes stage-fade {
+  from { opacity: 0; }
+}
+
+/* Live step timeline: a new step opens room for itself (grid-rows 0fr → 1fr), then its row slides in. */
+.step-grow {
+  display: grid;
+  animation: step-grow 360ms var(--ease-out-strong) both;
+}
+@keyframes step-grow {
+  from { grid-template-rows: 0fr; }
+  to { grid-template-rows: 1fr; }
+}
+.step-in {
+  animation: step-in 420ms var(--ease-out-strong) 80ms both;
+}
+@keyframes step-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); filter: blur(2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .step-grow { animation: none; }
+  .step-in { animation: stage-fade 160ms ease both; }
+}
+
 /* ---- Run waiting room (PendingScene): compositor-only loops, all off under reduced motion. ---- */
 .pending-scan {
   animation: pending-scan 3.2s var(--ease-in-out-strong) infinite alternate;
