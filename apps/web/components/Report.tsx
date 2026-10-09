@@ -135,7 +135,7 @@ function BugCard({ bug }: { bug: Bug }) {
       {networkErrors.length > 0 && (
         <details>
           <summary className="cursor-pointer text-xs font-medium text-fg-3 hover:text-fg">{t("network", { n: networkErrors.length })}</summary>
-          <pre dir="ltr" className="mt-2 overflow-x-auto rounded-lg border border-line bg-canvas p-3 font-mono text-xs text-fg-2">
+          <pre dir="ltr" className="mt-2 overflow-x-auto rounded-xl border border-line bg-surface p-3 font-mono text-xs text-fg-2">
             {networkErrors.map((n) => `${n.method} ${n.url} → ${n.status || "failed"}`).join("\n")}
           </pre>
         </details>
@@ -143,7 +143,7 @@ function BugCard({ bug }: { bug: Bug }) {
       {consoleErrors.length > 0 && (
         <details>
           <summary className="cursor-pointer text-xs font-medium text-fg-3 hover:text-fg">{t("console", { n: consoleErrors.length })}</summary>
-          <pre dir="ltr" className="mt-2 overflow-x-auto rounded-lg border border-line bg-canvas p-3 font-mono text-xs text-fg-2">
+          <pre dir="ltr" className="mt-2 overflow-x-auto rounded-xl border border-line bg-surface p-3 font-mono text-xs text-fg-2">
             {consoleErrors.join("\n")}
           </pre>
         </details>

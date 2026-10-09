@@ -19,8 +19,8 @@ export default function SharedReportPage() {
   const data = useQuery(api.runs.getShared, { token });
 
   return (
-    <div className="min-h-dvh bg-shell">
-      <header className="no-print sticky top-0 z-20 border-b border-line bg-shell/80 backdrop-blur-md">
+    <div className="theme-light min-h-dvh bg-surface">
+      <header className="no-print sticky top-0 z-20 border-b border-line bg-canvas/80 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-[1280px] items-center justify-between gap-2 px-4 sm:px-6">
           <Link href="/" className="group flex items-center gap-2 font-semibold">
             <LogoBox size={26} /> {tc("brand")}
@@ -38,7 +38,7 @@ export default function SharedReportPage() {
         <main className="mx-auto max-w-[1280px] space-y-5 px-4 py-6 sm:px-6">
           <div className="space-y-2">
             <p className="text-xs text-fg-3">{t("sharedBy")}</p>
-            <h1 className="text-xl font-semibold tracking-tight text-balance sm:text-2xl">{data.run.goal}</h1>
+            <h1 className="text-xl leading-[1.35] font-bold text-balance sm:text-[26px]">{data.run.goal}</h1>
             <a href={data.run.url} target="_blank" rel="noreferrer" dir="ltr" className="inline-flex items-center gap-1 text-sm text-fg-3 hover:text-fg">
               <ExternalLink className="size-3.5" /> {data.run.url}
             </a>

@@ -16,7 +16,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 
   if (!isAuthenticated)
     return (
-      <div className="grid h-dvh place-items-center bg-canvas" aria-busy>
+      <div className="theme-light grid h-dvh place-items-center bg-canvas" aria-busy>
         <LogoBox size={44} />
       </div>
     );

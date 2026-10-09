@@ -31,8 +31,10 @@
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-/* Light theme, opted into by any page rendering `.theme-light` (landing for now). Same token names, so components re-skin untouched. */
-:root:has(.theme-light) {
+/* Light theme: the whole document when any `.theme-light` is rendered, plus that subtree itself so it can nest
+ * inside `.theme-dark` (app content panel inside the dark shell). Same token names, so components re-skin untouched. */
+:root:has(.theme-light),
+.theme-light {
   --bg-canvas: #ffffff;
   --bg-shell: #fafafa;
   --bg-surface: #f7f7f6;

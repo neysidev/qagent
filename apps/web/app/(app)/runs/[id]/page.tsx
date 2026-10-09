@@ -52,7 +52,7 @@ function RunHeader({ data, actions }: { data: RunDetails; actions: React.ReactNo
               <span className="truncate">{run.url}</span>
             </a>
           </div>
-          <h1 className="text-xl font-semibold tracking-tight text-balance sm:text-2xl">{run.goal}</h1>
+          <h1 className="text-xl leading-[1.35] font-bold text-balance sm:text-[26px]">{run.goal}</h1>
         </div>
         <div className="no-print flex flex-wrap items-center gap-2">{actions}</div>
       </div>
@@ -242,7 +242,7 @@ export default function RunPage() {
   const active = isActive(run.status);
 
   return (
-    <div className="mx-auto max-w-[1280px] space-y-5 px-4 py-6 max-lg:pt-14 sm:px-6">
+    <div className="mx-auto max-w-[1280px] space-y-5 px-4 py-8 max-lg:pt-14 sm:px-8">
       <RunHeader data={data} actions={<Actions data={data} />} />
       {active && <StageTrack status={run.status} />}
       {run.error && <RunError error={run.error} />}

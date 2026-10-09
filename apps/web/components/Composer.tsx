@@ -88,7 +88,7 @@ export function Composer({ draft, setDraft }: { draft: Draft; setDraft: (d: Draf
         </Popover>
       </div>
 
-      <div className="rounded-2xl border border-line-strong bg-surface shadow-2xl shadow-black/40 transition-[border-color,box-shadow] duration-150 focus-within:border-accent/40 focus-within:ring-3 focus-within:ring-accent/10">
+      <div className="rounded-[24px] border border-line-strong bg-card shadow-[0_16px_40px_-16px_rgb(0_0_0/0.25)] transition-[border-color,box-shadow] duration-150 focus-within:border-accent focus-within:shadow-[0_0_0_4px_var(--accent-soft),0_16px_40px_-16px_rgb(0_0_0/0.25)]">
         <label htmlFor="goal" className="sr-only">{t("goal")}</label>
         <textarea
           id="goal"

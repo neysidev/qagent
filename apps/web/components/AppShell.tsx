@@ -68,14 +68,15 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <WorkspaceContext.Provider value={value}>
-      <div className="flex h-dvh overflow-hidden bg-canvas print:block print:h-auto print:overflow-visible">
+      {/* Dark shell (sidebar + frame) around a white content panel, same black/white/orange as the landing. */}
+      <div className="theme-dark flex h-dvh overflow-hidden bg-canvas text-fg [color-scheme:dark] print:block print:h-auto print:overflow-visible">
         {drawer && <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setDrawer(false)} aria-hidden />}
         <aside
-          className={`no-print drawer flex w-[272px] shrink-0 flex-col border-e border-line bg-shell max-lg:fixed max-lg:inset-y-0 max-lg:start-0 max-lg:z-50 ${drawer ? "" : "max-lg:translate-x-full"} ${collapsed ? "lg:hidden" : ""}`}
+          className={`no-print drawer flex w-[272px] shrink-0 flex-col bg-canvas max-lg:fixed max-lg:inset-y-0 max-lg:start-0 max-lg:z-50 ${drawer ? "" : "max-lg:translate-x-full"} ${collapsed ? "lg:hidden" : ""}`}
         >
           <Sidebar onHide={() => (drawer ? setDrawer(false) : setCollapsed(true))} />
         </aside>
-        <main className="print-flat relative min-w-0 flex-1 overflow-y-auto">
+        <main className={`theme-light print-flat relative min-w-0 flex-1 overflow-y-auto bg-canvas text-fg [color-scheme:light] lg:my-2 lg:me-2 lg:rounded-[24px] lg:shadow-[0_0_0_1px_rgb(255_255_255/0.04)] ${collapsed ? "lg:ms-2" : ""}`}>
           <button
             onClick={() => {
               setDrawer(true);
@@ -96,7 +97,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 /* ---------- Sidebar: nav on top, task history grouped by day, account at the bottom ---------- */
 
 const navItem =
-  "flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm text-fg-2 transition-colors duration-100 hover:bg-card hover:text-fg aria-[current=page]:bg-card aria-[current=page]:text-fg";
+  "flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-sm text-fg-2 transition-colors duration-150 hover:bg-fg/[0.06] hover:text-fg aria-[current=page]:bg-fg/[0.09] aria-[current=page]:text-fg";
 
 function Sidebar({ onHide }: { onHide: () => void }) {
   const t = useTranslations("shell");
@@ -106,10 +107,10 @@ function Sidebar({ onHide }: { onHide: () => void }) {
 
   return (
     <>
-      <div className="flex h-14 shrink-0 items-center gap-1 px-3">
+      <div className="flex h-16 shrink-0 items-center gap-1 px-3">
         <Link href="/dashboard" className="group me-auto flex items-center gap-2 rounded-lg px-1 font-semibold">
           <LogoBox size={24} />
-          <span className="text-sm">{tc("brand")}</span>
+          <span className="font-bold">{tc("brand")}</span>
         </Link>
         <Notifications />
         <button onClick={onHide} aria-label={t("hideSidebar")} className={`${button.icon} border-0 bg-transparent`}>
@@ -119,10 +120,10 @@ function Sidebar({ onHide }: { onHide: () => void }) {
       </div>
 
       <nav aria-label={t("mainNav")} className="space-y-0.5 px-2">
-        <Link href="/dashboard" aria-current={pathname === "/dashboard" ? "page" : undefined} className={navItem}>
-          <span className="grid size-5 place-items-center rounded-full bg-accent text-on-accent">
-            <Plus className="size-3.5" strokeWidth={2.5} />
-          </span>
+        <Link href="/dashboard" aria-current={pathname === "/dashboard" ? "page" : undefined}
+          className="mb-2 flex h-10 w-full items-center justify-center gap-2 rounded-full bg-accent text-sm font-medium text-white shadow-[0_8px_20px_-10px_var(--accent)] transition-[transform,background-color] duration-150 ease-out hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.97]"
+        >
+          <Plus className="size-4" strokeWidth={2.25} />
           {t("newTask")}
         </Link>
         <label className={`${navItem} focus-within:bg-card focus-within:text-fg`}>
@@ -171,7 +172,7 @@ function History({ query, pathname }: { query: string; pathname: string }) {
   return (
     <div className="mt-4 min-h-0 flex-1 overflow-y-auto px-2 pb-3">
       {project && (
-        <div className="mx-1 mb-2 flex items-center gap-2 rounded-lg border border-line bg-card px-2 py-1.5 text-xs text-fg-2">
+        <div className="mx-1 mb-2 flex items-center gap-2 rounded-xl border border-line bg-fg/[0.04] px-2.5 py-2 text-xs text-fg-2">
           <ProjectAvatar name={project.name} small />
           <span dir="auto" className="min-w-0 flex-1 truncate">{project.name}</span>
           <ClearFilter />
@@ -294,13 +295,13 @@ function Account() {
   const viewer = useQuery(api.runs.viewer);
   const { signOut } = useAuthActions();
   return (
-    <div className="border-t border-line p-2">
+    <div className="border-t border-line p-2.5">
       <Popover
         align="up"
         className="w-full"
         trigger={({ toggle, open }) => (
           <button onClick={toggle} aria-expanded={open} aria-label={t("account")} className={`${navItem} h-11`}>
-            <span className="grid size-7 shrink-0 place-items-center rounded-full bg-card-hover font-mono text-xs text-fg uppercase ring-1 ring-line-strong">
+            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-accent font-mono text-xs font-bold text-white uppercase">
               {viewer?.email?.[0] ?? "·"}
             </span>
             <span className="min-w-0 flex-1 text-start">
@@ -359,7 +360,7 @@ function Notifications() {
       trigger={({ toggle, open }) => (
         <button onClick={toggle} aria-expanded={open} aria-label={t("notifications")} className={`${button.icon} relative border-0 bg-transparent`}>
           <Bell className="size-4" strokeWidth={1.75} />
-          {unread && <span className="absolute top-1.5 end-1.5 size-2 rounded-full bg-accent ring-2 ring-shell" aria-hidden />}
+          {unread && <span className="absolute top-1.5 end-1.5 size-2 rounded-full bg-accent ring-2 ring-canvas" aria-hidden />}
         </button>
       )}
     >

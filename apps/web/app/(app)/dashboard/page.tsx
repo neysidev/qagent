@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useWorkspace } from "@/components/AppShell";
 import { LogoBox } from "@/components/brand/LogoBox";
 import { Composer, DEMO_URL, TEMPLATES, type Draft } from "@/components/Composer";
+import { segment, segmented } from "@/components/ui";
 import { formatUsd, hostOf, nf } from "@/lib/format";
 
 type RunRow = NonNullable<ReturnType<typeof useWorkspace>["runs"]>[number];
@@ -32,13 +33,13 @@ export default function Home() {
   return (
     <div className="flex min-h-full flex-col">
       <div className="mx-auto w-full max-w-[680px] flex-1 px-4 pt-16 pb-8 sm:pt-[12vh]">
-        <h1 className="flex items-center gap-3 text-2xl font-medium tracking-tight sm:text-[28px]">
+        <h1 className="flex items-center gap-3 text-[26px] leading-[1.3] font-bold sm:text-[32px]">
           <LogoBox size={30} />
           {name ? t("greeting", { name }) : t("greetingAnon")}
         </h1>
         <div className="mt-8">
           {runs === undefined ? (
-            <div className="h-[300px] animate-pulse rounded-xl bg-surface" />
+            <div className="h-[300px] animate-pulse rounded-[28px] bg-fg/[0.05]" />
           ) : runs.length === 0 ? (
             <Starters onPick={(d) => setDraft(d)} />
           ) : (
@@ -64,13 +65,13 @@ function Starters({ onPick }: { onPick: (d: Draft) => void }) {
       {DEMO_URL && (
         <button
           onClick={() => onPick({ url: DEMO_URL, goal: t("demoGoal"), template: "cart" })}
-          className="group flex items-start gap-3 rounded-xl border border-accent/30 bg-accent-soft p-4 text-start transition-[transform,background-color] duration-150 hover:bg-accent/20 active:scale-[0.99] sm:col-span-2"
+          className="group flex items-start gap-3.5 rounded-[22px] border border-accent/30 bg-accent-soft p-5 text-start transition-[transform,background-color] duration-150 hover:bg-accent/15 active:scale-[0.99] sm:col-span-2"
         >
-          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent text-on-accent">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-accent text-on-accent">
             <Play className="size-4" />
           </span>
           <span>
-            <span className="block text-sm font-medium text-fg">{t("demoTitle")}</span>
+            <span className="block font-bold text-fg">{t("demoTitle")}</span>
             <span className="mt-0.5 block text-xs text-pretty text-fg-2">{t("demoBody")}</span>
           </span>
         </button>
@@ -79,9 +80,9 @@ function Starters({ onPick }: { onPick: (d: Draft) => void }) {
         <button
           key={key}
           onClick={() => onPick({ url: "", goal: tc(`tplGoal.${key}`), template: key })}
-          className="rounded-xl border border-line bg-surface p-4 text-start transition-[transform,background-color,border-color] duration-150 hover:border-line-strong hover:bg-card active:scale-[0.99]"
+          className="rounded-[22px] border border-line bg-card p-5 text-start shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-[transform,border-color,box-shadow] duration-150 hover:border-line-strong hover:shadow-[0_12px_28px_-14px_rgb(0_0_0/0.2)] active:scale-[0.99]"
         >
-          <span className="block text-sm text-fg">{tc(`tpl.${key}`)}</span>
+          <span className="block text-sm font-bold text-fg">{tc(`tpl.${key}`)}</span>
           <span className="mt-1 block text-xs text-pretty text-fg-3">{tc(`tplGoal.${key}`)}</span>
         </button>
       ))}
@@ -89,7 +90,6 @@ function Starters({ onPick }: { onPick: (d: Draft) => void }) {
   );
 }
 
-const tab = "h-7 rounded-md px-2.5 text-xs text-fg-3 transition-colors hover:text-fg aria-pressed:bg-card-hover aria-pressed:text-fg";
 
 function Stats({ runs }: { runs: RunRow[] }) {
   const t = useTranslations("home");
@@ -99,18 +99,18 @@ function Stats({ runs }: { runs: RunRow[] }) {
   const scoped = range === "all" ? runs : runs.filter((r) => r.createdAt >= now - Number(range) * DAY);
 
   return (
-    <section className="rounded-xl border border-line bg-surface p-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex gap-0.5" role="group" aria-label={t("view")}>
+    <section className="rounded-[28px] border border-line bg-surface p-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 p-1">
+        <div className={segmented} role="group" aria-label={t("view")}>
           {(["overview", "projects"] as const).map((v) => (
-            <button key={v} aria-pressed={view === v} onClick={() => setView(v)} className={tab}>
+            <button key={v} aria-pressed={view === v} onClick={() => setView(v)} className={segment}>
               {t(v)}
             </button>
           ))}
         </div>
-        <div className="flex gap-0.5" role="group" aria-label={t("range")}>
+        <div className={segmented} role="group" aria-label={t("range")}>
           {RANGES.map((r) => (
-            <button key={r} aria-pressed={range === r} onClick={() => setRange(r)} className={tab}>
+            <button key={r} aria-pressed={range === r} onClick={() => setRange(r)} className={segment}>
               {t(`range_${r}`)}
             </button>
           ))}
@@ -139,18 +139,18 @@ function Overview({ runs, all, now }: { runs: RunRow[]; all: RunRow[]; now: numb
 
   return (
     <>
-      <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+      <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
         {tiles.map((s) => (
-          <div key={s.label} className="rounded-lg bg-card px-2.5 py-2">
+          <div key={s.label} className="rounded-[18px] bg-card px-4 py-3.5 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
             <p className="text-xs text-fg-3">{s.label}</p>
-            <p className="mt-0.5 font-mono text-[15px] font-medium text-fg" dir={s.ltr ? "ltr" : undefined}>
+            <p className="mt-1 text-2xl font-bold text-fg" dir={s.ltr ? "ltr" : undefined}>
               {s.value}
             </p>
           </div>
         ))}
       </div>
       <Heatmap runs={all} now={now} />
-      <p className="mt-3 text-xs text-pretty text-fg-3">
+      <p className="px-3 pt-3 pb-2 text-xs text-pretty text-fg-3">
         {bugs ? t("insight", { tasks: nf.format(runs.length), bugs: nf.format(bugs) }) : t("insightClean", { tasks: nf.format(runs.length) })}
       </p>
     </>
@@ -174,7 +174,7 @@ function Heatmap({ runs, now }: { runs: RunRow[]; now: number }) {
   return (
     <div
       dir="ltr"
-      className="mt-3 grid grid-flow-col grid-rows-7 gap-[3px]"
+      className="mt-1.5 grid grid-flow-col grid-rows-7 gap-[3px] rounded-[18px] bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]"
       style={{ gridTemplateColumns: `repeat(${WEEKS}, minmax(0, 1fr))` }}
       role="img"
       aria-label={t("heatmap")}
@@ -202,10 +202,10 @@ function Projects({ runs }: { runs: RunRow[] }) {
 
   if (!rows.length) return <p className="py-10 text-center text-sm text-fg-3">{t("noProjectsInRange")}</p>;
   return (
-    <ul className="mt-3 space-y-1">
+    <ul className="mt-2 space-y-1.5">
       {rows.map(({ p, tasks, bugs }) => (
         <li key={p._id}>
-          <button onClick={() => setProjectId(p._id)} className="w-full rounded-lg bg-card px-3 py-2 text-start transition-colors hover:bg-card-hover">
+          <button onClick={() => setProjectId(p._id)} className="w-full rounded-[18px] bg-card px-4 py-3 text-start shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-colors hover:bg-card-hover">
             <span className="flex items-center justify-between gap-3 text-sm">
               <span dir="auto" className="truncate text-fg">{p.name}</span>
               <span className="shrink-0 font-mono text-xs text-fg-3">

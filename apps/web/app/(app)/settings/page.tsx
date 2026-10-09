@@ -35,9 +35,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 px-4 py-6 max-lg:pt-14 sm:px-6">
+    <div className="mx-auto max-w-3xl space-y-4 px-4 py-8 max-lg:pt-14 sm:px-8">
       <div className="pb-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+        <h1 className="text-[28px] leading-[1.3] font-bold">{t("title")}</h1>
         <p className="mt-1 text-sm text-fg-3">{t("subtitle")}</p>
       </div>
 

@@ -43,7 +43,7 @@ export function Popover({
       })}
       {open && (
         <div
-          className={`pop absolute z-50 rounded-xl border border-line-strong bg-card p-1 shadow-2xl shadow-black/50 ${placement[align]} ${className}`}
+          className={`pop absolute z-50 rounded-xl border border-line-strong bg-card p-1 shadow-[0_16px_40px_-16px_rgb(0_0_0/0.25)] ${placement[align]} ${className}`}
         >
           {children(() => setOpen(false))}
         </div>
@@ -92,7 +92,7 @@ export function ConfirmDialog({
       ref={ref}
       onClose={onClose}
       onClick={(e) => e.target === ref.current && onClose()}
-      className="modal m-auto w-[min(400px,calc(100vw-32px))] rounded-2xl border border-line-strong bg-surface p-0 text-fg shadow-2xl shadow-black/60"
+      className="modal m-auto w-[min(400px,calc(100vw-32px))] rounded-2xl border border-line-strong bg-surface p-0 text-fg shadow-[0_16px_40px_-16px_rgb(0_0_0/0.25)]"
     >
       <div className="p-5">
         <h2 className="font-semibold">{title}</h2>
