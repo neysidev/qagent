@@ -137,7 +137,7 @@ function ProjectCard({ project: p }: { project: ProjectRow }) {
         className="group flex h-full flex-col rounded-[22px] bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-shadow duration-200 hover:shadow-[0_12px_28px_-14px_rgb(0_0_0/0.22)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
         <span className="flex items-center gap-3">
-          <ProjectAvatar name={p.name} url={p.baseUrl} />
+          <ProjectAvatar name={p.name} url={p.baseUrl} favicon={p.faviconUrl} />
           <span className="min-w-0 flex-1">
             <span className="block truncate font-bold"><bdi>{p.name}</bdi></span>
             {p.name !== hostOf(p.baseUrl) && <span className="font-url mt-0.5 block truncate text-xs text-fg-3"><bdi>{hostOf(p.baseUrl)}</bdi></span>}

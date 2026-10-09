@@ -78,6 +78,7 @@ export default defineSchema({
     userId: v.id("users"),
     name: v.string(),
     baseUrl: v.string(),
+    faviconUrl: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
 

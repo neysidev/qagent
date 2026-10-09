@@ -57,7 +57,7 @@ function Project({ data }: { data: Overview }) {
           {t("back")}
         </Link>
         <div className="flex flex-wrap items-center gap-4">
-          <ProjectAvatar name={project.name} url={project.baseUrl} size="lg" />
+          <ProjectAvatar name={project.name} url={project.baseUrl} favicon={project.faviconUrl} size="lg" />
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-[26px] leading-[1.3] font-bold"><bdi>{project.name}</bdi></h1>
             <a href={project.baseUrl} target="_blank" rel="noreferrer" dir="ltr"

@@ -13,6 +13,7 @@ import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as lib from "../lib.js";
 import type * as runs from "../runs.js";
+import type * as siteMeta from "../siteMeta.js";
 import type * as worker from "../worker.js";
 
 import type {
@@ -27,6 +28,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   lib: typeof lib;
   runs: typeof runs;
+  siteMeta: typeof siteMeta;
   worker: typeof worker;
 }>;
 

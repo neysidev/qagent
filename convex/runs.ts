@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { ACTIVE_STATUSES, lastWorkerSeen, requireOwnedRun, requireUser, WORKER_ONLINE_MS } from "./lib";
@@ -32,7 +33,10 @@ async function ensureProject(ctx: MutationCtx, userId: Id<"users">, parsed: URL)
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect()
   ).find((p) => p.baseUrl === baseUrl);
-  return existing?._id ?? (await ctx.db.insert("projects", { userId, name: parsed.host, baseUrl, createdAt: Date.now() }));
+  if (existing) return existing._id;
+  const projectId = await ctx.db.insert("projects", { userId, name: parsed.host, baseUrl, createdAt: Date.now() });
+  await ctx.scheduler.runAfter(0, internal.siteMeta.fetchSiteMeta, { projectId, baseUrl });
+  return projectId;
 }
 
 async function insertRun(ctx: MutationCtx, userId: Id<"users">, args: NewRun) {
@@ -302,6 +306,15 @@ export const renameProject = mutation({
     const trimmed = name.trim();
     if (!trimmed || trimmed.length > 80) throw new ConvexError("INVALID_NAME");
     await ctx.db.patch(projectId, { name: trimmed });
+  },
+});
+
+/** Re-reads the site's title and favicon (a custom name is kept). */
+export const refreshProject = mutation({
+  args: { projectId: v.id("projects") },
+  handler: async (ctx, { projectId }) => {
+    const { baseUrl } = await requireOwnedProject(ctx, projectId);
+    await ctx.scheduler.runAfter(0, internal.siteMeta.fetchSiteMeta, { projectId, baseUrl });
   },
 });
 

@@ -152,7 +152,7 @@ function ProjectsNav({ query, pathname }: { query: string; pathname: string }) {
           {visible.map((p) => (
             <li key={p._id}>
               <Link href={`/projects/${p._id}`} aria-current={currentId === p._id ? "page" : undefined} className={`${navItem} h-11`}>
-                <ProjectAvatar name={p.name} url={p.baseUrl} />
+                <ProjectAvatar name={p.name} url={p.baseUrl} favicon={p.faviconUrl} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate"><bdi>{p.name}</bdi></span>
                   {p.name !== hostOf(p.baseUrl) && <span className="font-url block truncate text-[11px] text-fg-3"><bdi>{hostOf(p.baseUrl)}</bdi></span>}
@@ -183,7 +183,7 @@ const ICON_PAD = { sm: "p-0.5", md: "p-1.5", lg: "p-3" };
  * A site's identity: its own favicon, loaded straight from the site, over a colored monogram that shows
  * while it loads and stays when the site has none (or blocks it).
  */
-export function ProjectAvatar({ name, url, size = "md" }: { name: string; url: string; size?: keyof typeof SIZES }) {
+export function ProjectAvatar({ name, url, favicon, size = "md" }: { name: string; url: string; favicon?: string; size?: keyof typeof SIZES }) {
   const [icon, setIcon] = useState<"loading" | "ok" | "none">("loading");
   const host = hostOf(url).replace(/^www\./, "");
   const tone = AVATAR_TONES[[...host].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % AVATAR_TONES.length];
@@ -195,7 +195,7 @@ export function ProjectAvatar({ name, url, size = "md" }: { name: string; url: s
       {icon !== "none" && (
         // eslint-disable-next-line @next/next/no-img-element -- remote favicon of an arbitrary user site; next/image can't allowlist it
         <img
-          src={new URL("/favicon.ico", url).href}
+          src={favicon ?? new URL("/favicon.ico", url).href}
           alt=""
           referrerPolicy="no-referrer"
           loading="lazy"

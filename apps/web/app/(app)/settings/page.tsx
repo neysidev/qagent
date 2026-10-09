@@ -4,7 +4,7 @@ import { api } from "@convex/_generated/api";
 import { useAuthActions } from "@convex-dev/auth/react";
 import type { Doc } from "@convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { LogOut, Pencil, Trash2 } from "lucide-react";
+import { LogOut, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import { ProjectAvatar, useWorkspace, type ProjectRow as ProjectRowData } from "
 import { EmptyState } from "@/components/EmptyState";
 import { SitesIllustration } from "@/components/illustrations";
 import { ConfirmDialog } from "@/components/overlay";
+import { Tip } from "@/components/ui/tooltip";
 import { button, card, cardHeader, cardTitle, input, label, pill, skeleton } from "@/components/ui";
 import { errorKey, nf, planKey, timeAgo } from "@/lib/format";
 
@@ -157,6 +158,8 @@ function ProjectRow({
   const t = useTranslations("settings");
   const te = useTranslations("errors");
   const rename = useMutation(api.runs.renameProject);
+  const refresh = useMutation(api.runs.refreshProject);
+  const [refreshing, setRefreshing] = useState(false);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(project.name);
   const [error, setError] = useState<string | null>(null);
@@ -176,11 +179,21 @@ function ProjectRow({
     }
   }
 
+  async function onRefresh() {
+    setRefreshing(true);
+    try {
+      await refresh({ projectId: project._id });
+      await new Promise((r) => setTimeout(r, 1500)); // the fetch runs server-side; hold the spinner while it lands
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   if (editing)
     return (
       <li className="px-4 py-3">
         <form onSubmit={onSubmit} className="flex flex-wrap items-center gap-2">
-          <ProjectAvatar name={name || project.name} url={project.baseUrl} />
+          <ProjectAvatar name={name || project.name} url={project.baseUrl} favicon={project.faviconUrl} />
           <label className="min-w-40 flex-1">
             <span className="sr-only">{t("projectName")}</span>
             <input
@@ -207,7 +220,7 @@ function ProjectRow({
 
   return (
     <li className="group flex items-center gap-3 px-4 py-3">
-      <ProjectAvatar name={project.name} url={project.baseUrl} />
+      <ProjectAvatar name={project.name} url={project.baseUrl} favicon={project.faviconUrl} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm text-fg">{project.name}</span>
         <span className="block text-xs text-fg-3">
@@ -218,20 +231,28 @@ function ProjectRow({
       <Link href={`/projects/${project._id}`} className={`${button.secondary} h-8 text-xs`}>
         {t("focus")}
       </Link>
-      <button
-        onClick={() => {
-          setName(project.name);
-          setEditing(true);
-        }}
-        aria-label={t("rename")}
-        title={t("rename")}
-        className={button.icon}
-      >
-        <Pencil className="size-3.5" />
-      </button>
-      <button onClick={onDelete} aria-label={t("delete")} title={t("delete")} className={`${button.icon} hover:border-danger/30 hover:bg-danger-soft hover:text-danger`}>
-        <Trash2 className="size-3.5" />
-      </button>
+      <Tip label={t("rename")}>
+        <button
+          onClick={() => {
+            setName(project.name);
+            setEditing(true);
+          }}
+          aria-label={t("rename")}
+          className={button.icon}
+        >
+          <Pencil className="size-3.5" />
+        </button>
+      </Tip>
+      <Tip label={t("refreshMeta")}>
+        <button onClick={onRefresh} disabled={refreshing} aria-label={t("refreshMeta")} className={button.icon}>
+          <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} />
+        </button>
+      </Tip>
+      <Tip label={t("delete")}>
+        <button onClick={onDelete} aria-label={t("delete")} className={`${button.icon} hover:border-danger/30 hover:bg-danger-soft hover:text-danger`}>
+          <Trash2 className="size-3.5" />
+        </button>
+      </Tip>
     </li>
   );
 }
