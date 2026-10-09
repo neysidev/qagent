@@ -6,6 +6,7 @@ import {
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { LogoBox } from "@/components/brand/LogoBox";
 import Link from "next/link";
+import { Rise } from "./motion";
 import { btn } from "./ui";
 
 /** Arms `[data-reveal]` elements and marks each with `data-in` the first time it scrolls into view. */
@@ -29,7 +30,7 @@ export function RevealObserver() {
   return null;
 }
 
-type NavLabels = Record<"features" | "how" | "pricing" | "faq" | "login" | "start" | "menu" | "close" | "home", string>;
+type NavLabels = Record<"how" | "features" | "report" | "pricing" | "faq" | "login" | "start" | "menu" | "close" | "home", string>;
 
 export function Nav({ labels }: { labels: NavLabels }) {
   const [open, setOpen] = useState(false);
@@ -37,8 +38,9 @@ export function Nav({ labels }: { labels: NavLabels }) {
   const [bar, setBar] = useState<"top" | "in" | "out">("top");
   const closeRef = useRef<HTMLButtonElement>(null);
   const links = [
-    ["#features", labels.features],
     ["#how", labels.how],
+    ["#features", labels.features],
+    ["#report", labels.report],
     ["#pricing", labels.pricing],
     ["#faq", labels.faq],
   ] as const;
@@ -71,15 +73,24 @@ export function Nav({ labels }: { labels: NavLabels }) {
     <>
       <header data-bar={bar}
         onTransitionEnd={(e) => e.target === e.currentTarget && bar === "out" && setBar("top")}
-        className={`nav-bar inset-x-0 top-0 z-50 text-fg ${bar === "top" ? "theme-dark absolute" : "fixed border-b border-line-strong bg-canvas/80 shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_20px_-10px_rgb(0_0_0/0.12)] backdrop-blur-xl"}`}
+        className={`nav-bar inset-x-0 top-0 z-50 text-fg ${bar === "top" ? "theme-dark absolute" : "fixed px-3 pt-3"}`}
       >
-        <nav aria-label="ناوبری اصلی" className="mx-auto grid h-16 w-full max-w-[1200px] grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6">
+        {/* Fade behind the floating bar so content scrolling past the top melts away instead of showing in the gap. */}
+        {bar !== "top" && (
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-24 bg-gradient-to-b from-canvas via-canvas/85 to-transparent" />
+        )}
+        {/* Over the hero: a full-width transparent bar. After it: a floating frosted island. */}
+        <nav aria-label="ناوبری اصلی"
+          className={`mx-auto grid w-full grid-cols-[1fr_auto_1fr] items-center transition-[max-width,height] duration-300 ${bar === "top"
+            ? "h-16 max-w-[1200px] px-4 sm:px-6"
+            : "h-14 max-w-[1080px] rounded-full border border-line bg-canvas/75 ps-5 pe-2 shadow-[0_1px_2px_rgb(0_0_0/0.04),0_12px_32px_-12px_rgb(0_0_0/0.18)] backdrop-blur-xl backdrop-saturate-150"}`}
+        >
           <Link href="/" aria-label={labels.home} className="group flex items-center gap-2 justify-self-start rounded-lg font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
             <LogoBox size={26} />
             <span>کیوایجنت</span>
           </Link>
           <NavLinks links={links} />
-          <Link href="/signin" className="inline-flex h-10 items-center justify-self-end rounded-full border border-line-strong bg-fg/[0.06] px-5 text-sm font-medium whitespace-nowrap text-fg transition-[transform,background-color,border-color] duration-150 ease-out hover:border-fg/30 hover:bg-fg/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.97] max-md:hidden">{labels.start}</Link>
+          <Link href="/signin" className={`inline-flex h-10 items-center justify-self-end rounded-full px-5 text-sm font-medium whitespace-nowrap transition-[transform,background-color,border-color,color] duration-200 ease-out ${bar === "top" ? "border border-line-strong bg-fg/[0.06] text-fg hover:border-fg/30 hover:bg-fg/10" : "bg-fg text-canvas hover:bg-fg/85"} focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.97] max-md:hidden`}>{labels.start}</Link>
           <button type="button" onClick={() => setOpen(true)} aria-label={labels.menu} aria-expanded={open} className={`${btn.ghost("sm")} col-start-3 justify-self-end rounded-full md:hidden`}>
             <Menu size={20} strokeWidth={1.5} />
           </button>
@@ -194,7 +205,7 @@ export function AudienceCards({ items, labels }: {
           <ArrowLeft size={18} strokeWidth={1.5} />
         </button>
       </div>
-      <div className="relative col-span-full mt-12 overflow-hidden rounded-[28px] border border-line bg-surface p-1.5">
+      <Rise className="relative col-span-full mt-12 overflow-hidden rounded-[28px] border border-line bg-surface p-1.5">
         <ul ref={track} onScroll={measure} className="audience-track flex snap-x snap-proximity scroll-px-1.5 gap-1.5 overflow-x-auto">
           {items.map((it, i) => {
             const Icon = audienceIcons[i % audienceIcons.length];
@@ -216,7 +227,7 @@ export function AudienceCards({ items, labels }: {
             className={`audience-fade pointer-events-none absolute inset-y-0 w-8 md:w-14 ${side === "left" ? "left-0 bg-gradient-to-r" : "right-0 bg-gradient-to-l"} from-surface to-transparent`}
           />
         ))}
-      </div>
+      </Rise>
     </>
   );
 }
@@ -383,7 +394,7 @@ export function ReportFormats({ d, formats, label }: { d: ReportDoc; formats: { 
   }
   const action = "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium";
   return (
-    <div className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 lg:grid-cols-[300px_1fr]">
+    <Rise className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 lg:grid-cols-[300px_1fr]">
       <div role="tablist" aria-label={label} aria-orientation="vertical" onKeyDown={onKeyDown} className="flex flex-col gap-1.5">
         {formats.map((f, i) => {
           const Icon = formatIcons[i];
@@ -452,7 +463,7 @@ export function ReportFormats({ d, formats, label }: { d: ReportDoc; formats: { 
         </div>
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card to-transparent" />
       </div>
-    </div>
+    </Rise>
   );
 }
 
@@ -507,7 +518,7 @@ export function Pricing({ plans, labels, header }: {
         {header}
         <Segmented options={[labels.monthly, labels.yearly]} value={period} onChange={setPeriod} label={labels.period} idBase={id} />
       </div>
-      <ul id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-tab-${period}`}
+      <Rise as="ul" id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-tab-${period}`}
         className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 md:grid-cols-3"
       >
         {plans.map((p, i) => {
@@ -548,7 +559,7 @@ export function Pricing({ plans, labels, header }: {
             </li>
           );
         })}
-      </ul>
+      </Rise>
     </>
   );
 }

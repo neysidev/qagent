@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import agent from "@/public/hero-agent.webp";
 import { AudienceCards, Pricing, ReportFormats, type ReportDoc } from "./client";
+import { Rise, ScrollFx } from "./motion";
 import { container } from "./ui";
 
 type Item = { title: string; body: string };
@@ -38,7 +39,7 @@ export function Hero() {
   return (
     <section data-hero className="theme-dark relative overflow-hidden bg-canvas pt-32 text-fg [color-scheme:dark] md:pt-40">
       <div aria-hidden className="hero-dots absolute inset-x-0 top-0 h-[70%]" />
-      <div className={`${container} relative text-center`}>
+      <ScrollFx offset={["start start", "end start"]} y={[0, -90]} opacity={[1, 0]} className={`${container} relative text-center`}>
         <h1 className="t-display hero-in mx-auto max-w-4xl !text-[clamp(30px,4.4vw,56px)]" style={stagger(0)}>
           <span className="block font-bold">{t("titleLead")}</span>
           <span className="block font-normal text-fg-2">{t("titleRest")}</span>
@@ -47,13 +48,13 @@ export function Hero() {
         <div className="hero-in mt-10" style={stagger(2)}>
           <Link href="/signin" className="inline-flex h-13 items-center rounded-full bg-accent px-8 text-base font-medium text-on-accent shadow-[0_12px_32px_-10px_var(--accent)] transition-[transform,background-color] duration-150 ease-out hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.97]">{t("cta")}</Link>
         </div>
-      </div>
-      <div className="relative mt-10 md:mt-6">
+      </ScrollFx>
+      <ScrollFx offset={["start 0.85", "end start"]} y={[0, 110]} scale={[1, 1.06]} className="relative mt-10 md:mt-6">
         <div aria-hidden className="hero-band absolute inset-x-0 top-[34%] h-[38%]" />
         <Image src={agent} alt={t("imageAlt")} priority sizes="(min-width: 768px) 760px, 100vw"
           className="hero-in hero-image relative mx-auto w-full max-w-[760px]" style={stagger(3)}
         />
-      </div>
+      </ScrollFx>
     </section>
   );
 }
@@ -187,7 +188,7 @@ export function Problem() {
         <SectionHeading ns="landing.problem" />
       </div>
       {/* One tray holding all three cards, so they read as a single block. */}
-      <ul className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 md:grid-cols-3">
+      <Rise as="ul" className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 md:grid-cols-3">
         {items.map((it, i) => (
           <li key={it.title} data-reveal style={stagger(i)} className="flex flex-col overflow-hidden rounded-[22px] bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.04)] md:p-6">
             <h3 className="text-lg font-bold">{it.title}</h3>
@@ -195,7 +196,7 @@ export function Problem() {
             <div className="mt-auto aspect-[8/5] pt-6">{arts[i]}</div>
           </li>
         ))}
-      </ul>
+      </Rise>
     </Section>
   );
 }
@@ -297,7 +298,7 @@ export function HowItWorks() {
       <div data-reveal className="max-w-2xl">
         <SectionHeading ns="landing.how" />
       </div>
-      <ol className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 md:grid-cols-3">
+      <Rise as="ol" className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 md:grid-cols-3">
         {steps.map((s, i) => (
           <li key={s.title} data-reveal style={stagger(i)} className="flex flex-col overflow-hidden rounded-[22px] bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.04)] md:p-6">
             <h3 className="text-lg font-bold">{s.title}</h3>
@@ -305,7 +306,7 @@ export function HowItWorks() {
             <div className="mt-auto aspect-[8/5] pt-6">{arts[i]}</div>
           </li>
         ))}
-      </ol>
+      </Rise>
     </Section>
   );
 }
@@ -548,7 +549,7 @@ export function Features() {
       <div data-reveal className="max-w-2xl">
         <SectionHeading ns="landing.features" />
       </div>
-      <ul className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 sm:grid-cols-2 lg:grid-cols-3">
+      <Rise as="ul" className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((it, i) => (
           <li key={it.title} data-reveal style={stagger(i % 3)} className="flex flex-col overflow-hidden rounded-[22px] bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.04)] md:p-6">
             <h3 className="text-lg font-bold">{it.title}</h3>
@@ -556,7 +557,7 @@ export function Features() {
             <div className="mt-auto aspect-[8/5] pt-6">{arts[i]}</div>
           </li>
         ))}
-      </ul>
+      </Rise>
     </Section>
   );
 }
@@ -564,7 +565,7 @@ export function Features() {
 export function ReportShowcase() {
   const t = useTranslations("landing.report");
   return (
-    <Section>
+    <Section id="report">
       <div data-reveal className="max-w-2xl">
         <SectionHeading ns="landing.report" />
       </div>
@@ -602,7 +603,7 @@ export function Faq() {
         <div data-reveal className="lg:sticky lg:top-28 lg:self-start">
           <SectionHeading ns="landing.faq" />
         </div>
-        <div className="flex flex-col gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5">
+        <Rise as="div" className="flex flex-col gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5">
           {items.map((it, i) => (
             <details key={it.q} name="faq" open={i === 0} data-reveal style={stagger(i)}
               className="faq-item group rounded-[22px] bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]"
@@ -616,7 +617,7 @@ export function Faq() {
               <p className="px-5 pb-6 text-sm leading-[2] text-pretty text-fg-2 md:px-6">{it.a}</p>
             </details>
           ))}
-        </div>
+        </Rise>
       </div>
     </Section>
   );
@@ -629,7 +630,7 @@ export function FinalCta() {
   return (
     <section className="bg-canvas pt-16 pb-24 md:pt-24 md:pb-36">
       <div className={container}>
-        <div data-reveal className="relative overflow-hidden rounded-[32px] border border-line bg-surface px-6 pb-14 text-center sm:px-12 md:pb-20">
+        <ScrollFx offset={["start end", "start 0.5"]} y={[64, 0]} scale={[0.92, 1]} className="relative overflow-hidden rounded-[32px] border border-line bg-surface px-6 pb-14 text-center sm:px-12 md:pb-20">
           <div aria-hidden className="hero-dots absolute inset-0" />
           <div aria-hidden className="absolute inset-x-0 top-0 h-80 bg-[radial-gradient(ellipse_50%_60%_at_50%_30%,var(--accent-soft),transparent)]" />
           <div className="relative mx-auto w-full max-w-[320px]">
@@ -648,7 +649,7 @@ export function FinalCta() {
               {t("pricing")}
             </a>
           </div>
-        </div>
+        </ScrollFx>
       </div>
     </section>
   );
@@ -662,7 +663,7 @@ function FooterSkyline() {
   const mono = "ui-monospace, SFMono-Regular, Menlo, monospace";
   const code = [[34, 52, 0], [22, 38, 1], [22, 70, 0], [34, 30, 1], [22, 56, 0], [34, 44, 0], [22, 26, 1]] as const;
   return (
-    <svg viewBox="0 0 1200 140" preserveAspectRatio="xMidYMax slice" direction="ltr" className="block h-28 w-full md:h-[140px]" aria-hidden>
+    <svg viewBox="0 0 1200 140" direction="ltr" className="mx-auto block h-auto w-full max-w-[960px]" aria-hidden>
       {/* server rack */}
       <rect x="40" y="48" width="72" height="92" rx="6" className={ink} />
       {[0, 1, 2, 3, 4].map((i) => (
@@ -785,7 +786,8 @@ export function Footer() {
   const link = "rounded text-fg-2 transition-colors duration-150 hover:text-fg focus-visible:outline-2 focus-visible:outline-accent";
   return (
     <footer className="theme-dark text-fg [color-scheme:dark]">
-      <div className="bg-white">
+      {/* Whole scene scales down as one piece and stays centered, instead of being cropped at the sides. */}
+      <div className="bg-white px-4 sm:px-6">
         <FooterSkyline />
       </div>
       <div className="bg-canvas">
@@ -798,7 +800,7 @@ export function Footer() {
           <nav aria-label={t("product")}>
             <p className="font-bold">{t("product")}</p>
             <ul className="mt-5 space-y-3 text-sm">
-              {(["features", "how", "pricing", "faq"] as const).map((k) => (
+              {(["how", "features", "report", "pricing", "faq"] as const).map((k) => (
                 <li key={k}><a href={`#${k}`} className={link}>{n(k)}</a></li>
               ))}
             </ul>
