@@ -6,7 +6,9 @@
     "dev:web": "pnpm --filter web dev",
     "dev:shop": "pnpm --filter demo-shop dev",
     "convex": "cd apps/web && npx convex dev",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "worker": "cd apps/worker && python3.12 -m qagent_worker.main",
+    "dev": "concurrently -n web,shop,convex,worker -c blue,green,magenta,yellow \"pnpm dev:web\" \"pnpm dev:shop\" \"pnpm convex\" \"pnpm worker\""
   },
   "dependencies": {
     "@auth/core": "^0.41.3",
@@ -15,6 +17,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.19.1",
+    "concurrently": "^10.0.6",
     "typescript": "^5.9.3"
   }
 }
