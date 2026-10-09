@@ -17,7 +17,10 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   if (!isAuthenticated)
     return (
       <div className="theme-light grid h-dvh place-items-center bg-canvas" aria-busy>
-        <LogoBox size={44} />
+        <div className="animate-rise flex flex-col items-center gap-3">
+          <LogoBox size={56} className="logo-loading" />
+          <div className="logo-loading-shadow h-1 w-8 rounded-full bg-fg/10" />
+        </div>
       </div>
     );
   return <>{children}</>;

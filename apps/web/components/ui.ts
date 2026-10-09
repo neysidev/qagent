@@ -21,7 +21,7 @@ export const input = `${field} h-10 px-3.5`;
 export const textarea = `${field} px-3 py-2.5 leading-relaxed resize-none`;
 export const label = "text-xs font-medium text-fg-2";
 
-export const skeleton = "animate-pulse rounded-xl bg-fg/[0.06]";
+export const skeleton = "skeleton rounded-xl bg-fg/[0.06]";
 
 /** Small uppercase-feel meta label used above metrics, like the reference's "TOTAL REVENUE". */
 export const eyebrow = "text-xs text-fg-3";
