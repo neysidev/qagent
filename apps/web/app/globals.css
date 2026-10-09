@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
-/* QAgent design tokens (dark only). Components use the Tailwind names mapped below, never raw hex. */
-:root {
+/* QAgent design tokens (dark by default). `.theme-dark` restores them inside a light page. Components use the Tailwind names mapped below, never raw hex. */
+:root,
+.theme-dark {
   --bg-canvas: #141414;
   --bg-shell: #1a1a1a;
   --bg-surface: #1f1f1f;
@@ -28,6 +29,32 @@
   --dur-slow: 450ms;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Light theme, opted into by any page rendering `.theme-light` (landing for now). Same token names, so components re-skin untouched. */
+:root:has(.theme-light) {
+  --bg-canvas: #ffffff;
+  --bg-shell: #fafafa;
+  --bg-surface: #f7f7f6;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f3f3f2;
+  --pixel-off: #e8e8e6;
+  --border: rgba(0, 0, 0, 0.07);
+  --border-strong: rgba(0, 0, 0, 0.14);
+  --text-primary: #0b0b0b;
+  --text-secondary: #5c5c5c;
+  --text-muted: #8f8f8f;
+  --accent: #f26b1d;
+  --accent-hover: #e35f12;
+  --accent-soft: rgba(242, 107, 29, 0.1);
+  --on-accent: #ffffff;
+  --success: #16a36a;
+  --success-soft: rgba(22, 163, 106, 0.1);
+  --warning: #c98a0b;
+  --warning-soft: rgba(201, 138, 11, 0.12);
+  --danger: #dc3b3b;
+  --danger-soft: rgba(220, 59, 59, 0.1);
+  color-scheme: light;
 }
 
 @theme inline {
@@ -276,5 +303,146 @@ dialog.modal::backdrop {
 @media (prefers-reduced-motion: reduce) {
   .pixel-twinkle {
     animation: none;
+  }
+}
+
+/* ---- Landing hero ---- */
+/* Faint dot field behind the headline, fading out toward the edges. */
+.hero-dots {
+  background-image: radial-gradient(var(--border-strong) 1px, transparent 1.2px);
+  background-size: 14px 14px;
+  mask-image: radial-gradient(ellipse 60% 70% at 50% 30%, black 10%, transparent 75%);
+}
+/* Orange LED band behind the helmet, echoing its visor. */
+.hero-band {
+  background-image: radial-gradient(var(--accent) 1.6px, transparent 2px);
+  background-size: 9px 9px;
+  opacity: 0.55;
+  mask-image:
+    linear-gradient(to right, transparent 8%, black 35%, black 65%, transparent 92%),
+    linear-gradient(to bottom, transparent, black 25%, black 75%, transparent);
+  mask-composite: intersect;
+}
+/* Cut-out photo; mask fades the crop at the bottom into the canvas. */
+.hero-image {
+  mask-image: linear-gradient(to bottom, black 70%, transparent);
+}
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(4px);
+  }
+}
+.hero-in {
+  animation: hero-in 700ms var(--ease-out-strong) both;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+
+/* ---- Landing nav: one shared highlight slides to the hovered link; siblings recede. ---- */
+.nav-pill {
+  transition:
+    transform 260ms var(--ease-out-strong),
+    width 260ms var(--ease-out-strong),
+    opacity 160ms ease;
+}
+.nav-pill[data-snap] {
+  transition: opacity 160ms ease;
+}
+.nav-link {
+  transition: color 200ms ease;
+}
+.nav-links[data-hovering] .nav-link:not([data-active]) {
+  color: var(--text-muted);
+}
+
+/* ---- Audience cards: horizontal photo scroller, equal-size cards; the active one reveals body + CTA. ---- */
+.audience-track {
+  scrollbar-width: none;
+}
+.audience-card {
+  width: 80vw;
+  cursor: pointer;
+}
+.audience-card[data-on] {
+  cursor: default;
+}
+@media (min-width: 768px) {
+  .audience-card {
+    width: 360px;
+  }
+}
+.audience-photo {
+  transition: transform 600ms var(--ease-out-strong);
+}
+.audience-shade {
+  background: linear-gradient(to top, rgb(0 0 0 / 0.72), rgb(0 0 0 / 0.1) 55%, transparent);
+  transition: opacity 300ms ease;
+}
+.audience-card[data-on] .audience-shade {
+  background: linear-gradient(to top, rgb(0 0 0 / 0.85), rgb(0 0 0 / 0.25) 65%, transparent);
+}
+/* grid-rows trick: animates height from 0 without measuring. */
+.audience-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 450ms var(--ease-in-out-strong),
+    opacity 200ms ease;
+}
+.audience-more > div {
+  overflow: hidden;
+}
+.audience-card[data-on] .audience-more {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition-delay: 0s, 120ms;
+}
+/* Edge fades hint that more cards sit past the viewport edge. */
+.audience-fade {
+  opacity: 0;
+  transition: opacity 250ms ease;
+}
+.audience-fade[data-show] {
+  opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .audience-card:not([data-on]):hover .audience-photo {
+    transform: scale(1.04);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .audience-card,
+  .audience-more,
+  .audience-photo {
+    transition: none;
+  }
+}
+
+/* Nav returning as a fixed bar after the hero: slides down from above. */
+@keyframes nav-drop {
+  from {
+    transform: translateY(-100%);
+  }
+}
+@utility nav-drop {
+  animation: nav-drop 320ms var(--ease-out-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes nav-drop {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes hero-in {
+    from {
+      opacity: 0;
+    }
+  }
+  .nav-pill,
+  .nav-pill[data-snap] {
+    transition: opacity 160ms ease;
   }
 }

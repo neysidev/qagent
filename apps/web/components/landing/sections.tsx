@@ -1,11 +1,13 @@
-import { Briefcase, ChevronDown, Link2, MousePointer2, Rocket, Store } from "lucide-react";
+import { ChevronDown, Link2, MousePointer2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 import { LogoBox } from "@/components/brand/LogoBox";
 import { PixelGrid } from "@/components/brand/PixelGrid";
+import Image from "next/image";
 import Link from "next/link";
+import agent from "@/public/hero-agent.webp";
 import { benchmark } from "@/lib/benchmark";
-import { Pricing, UseCaseTabs } from "./client";
+import { AudienceCards, Pricing, UseCaseTabs } from "./client";
 import { badge, btn, card, container } from "./ui";
 
 type Item = { title: string; body: string };
@@ -48,120 +50,50 @@ function Cursor({ className = "" }: { className?: string }) {
   return <MousePointer2 aria-hidden size={20} strokeWidth={1.5} className={`fill-accent text-fg ${className}`} />;
 }
 
-/** Static final frame of the live demo (phase 3 turns this into the scripted loop). */
-function LiveDemo() {
-  const t = useTranslations("landing.demo");
-  const scenarios = t.raw("scenarioList") as string[];
-  const items = t.raw("items") as string[];
-  const steps = t.raw("steps") as string[];
-  return (
-    <AppFrame url={t("url")}>
-      <div className="flex items-center gap-3 border-b border-line px-4 py-2 text-xs">
-        <LogoBox state="bug" size={18} />
-        <span className={badge("neutral")}>{t("status")}</span>
-        <span className="ms-auto flex gap-4 font-mono text-fg-3">
-          <span>{t("elapsed")} <span className="text-fg">00:41</span></span>
-          <span>{t("cost")} <span className="text-fg">$0.031</span></span>
-        </span>
-      </div>
-      <div className="grid md:grid-cols-[200px_1fr]">
-        <aside className="border-e border-line p-3 max-md:hidden">
-          <p className="t-label px-2 pb-2 text-fg-3">{t("scenarios")}</p>
-          <ul className="space-y-1 text-sm">
-            {scenarios.map((s, i) => (
-              <li key={s} className={`flex items-center justify-between gap-2 rounded-lg px-2 py-2 ${i === 2 ? "bg-card" : ""}`}>
-                <span className="truncate">{s}</span>
-                <span className={badge(i === 2 ? "bug" : "pass")}>{i === 2 ? t("bugs") : t("passed")}</span>
-              </li>
-            ))}
-          </ul>
-        </aside>
-        <div className="relative min-h-[300px] bg-canvas p-5 sm:p-8">
-          <p className="font-semibold">{t("cart")}</p>
-          <div className="mt-4 space-y-2 text-sm">
-            {items.map((name, i) => (
-              <div key={name} className="flex items-center justify-between rounded-lg border border-line bg-surface p-3">
-                <span>{name}</span>
-                <span className="flex items-center gap-3">
-                  <span className="rounded border border-line px-2 font-mono text-xs">{i ? 1 : 2}</span>
-                  <span className={`relative rounded-md border px-2.5 py-1 text-xs ${i ? "border-line" : "border-accent"}`}>
-                    {t("remove")}
-                    {!i && <Cursor className="absolute -bottom-4 -end-3" />}
-                  </span>
-                </span>
-              </div>
-            ))}
-          </div>
-          <p dir="ltr" className="mt-4 inline-flex rounded-md bg-danger-soft px-2 py-1 font-mono text-xs text-danger">500 DELETE /api/cart/12</p>
-          <div className="absolute end-4 bottom-4 w-[min(300px,calc(100%-2rem))] rounded-xl border border-line bg-card p-4 sm:end-6 sm:bottom-6">
-            <div className="flex items-center gap-2">
-              <LogoBox state="bug" size={18} />
-              <span className={badge("bug")}>{t("high")}</span>
-            </div>
-            <p className="mt-2 text-sm font-medium">{t("bugTitle")}</p>
-            <p className="mt-1 text-xs text-fg-2">{t("bugBody")}</p>
-          </div>
-        </div>
-      </div>
-      <ol className="flex gap-2 overflow-hidden border-t border-line px-4 py-3 text-xs">
-        {steps.map((s, i) => (
-          <li key={s} className={`shrink-0 rounded-full border px-2.5 py-1 ${i === 3 ? "border-danger/40 text-danger" : "border-line text-fg-2"}`}>
-            <span className="me-1.5 font-mono text-fg-3">{i + 1}</span>{s}
-          </li>
-        ))}
-      </ol>
-    </AppFrame>
-  );
-}
-
 export function Hero() {
   const t = useTranslations("landing.hero");
   return (
-    <section className="relative overflow-hidden bg-canvas pt-36 pb-24 md:pt-44 md:pb-32">
-      {/* ponytail: pixel texture stands in for the public-domain painting until it's sourced and credited in docs/credits.md. */}
-      <div aria-hidden className="absolute inset-0">
-        <PixelGrid cols={200} rows={110} cell={4} gap={4} density={0} twinkle={0.1} className="size-full" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,var(--bg-canvas)_0%,transparent_55%,var(--bg-canvas)_100%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_40%,transparent_20%,var(--bg-canvas)_85%)]" />
-      </div>
+    <section data-hero className="theme-dark relative overflow-hidden bg-canvas pt-32 text-fg [color-scheme:dark] md:pt-40">
+      <div aria-hidden className="hero-dots absolute inset-x-0 top-0 h-[70%]" />
       <div className={`${container} relative text-center`}>
-        <p className="t-label inline-flex rounded-full border border-line bg-shell px-3 py-1 text-fg-2">{t("eyebrow")}</p>
-        <h1 className="t-display mx-auto mt-6 max-w-4xl">{t("title")}</h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-[1.7] text-pretty text-fg-2">{t("subtitle")}</p>
-        <div className="mt-10 flex flex-wrap justify-center gap-3">
-          <Link href="/signin" className={btn.primary("lg")}>{t("start")}</Link>
-          <Link href="/signin" className={btn.secondary("lg")}>{t("demo")}</Link>
+        <h1 className="t-display hero-in mx-auto max-w-4xl !text-[clamp(30px,4.4vw,56px)]" style={stagger(0)}>
+          <span className="block font-bold">{t("titleLead")}</span>
+          <span className="block font-normal text-fg-2">{t("titleRest")}</span>
+        </h1>
+        <p className="hero-in mx-auto mt-5 max-w-xl text-base leading-[1.8] text-pretty text-fg-2" style={stagger(1)}>{t("subtitle")}</p>
+        <div className="hero-in mt-10" style={stagger(2)}>
+          <Link href="/signin" className="inline-flex h-13 items-center rounded-full bg-accent px-8 text-base font-medium text-on-accent shadow-[0_12px_32px_-10px_var(--accent)] transition-[transform,background-color] duration-150 ease-out hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.97]">{t("cta")}</Link>
         </div>
-        <p dir="ltr" className="mt-6 text-sm text-fg-3">{t("trust")}</p>
       </div>
-      <div className="relative mx-auto mt-16 w-full max-w-[1320px] px-4 sm:px-6 md:mt-20">
-        <p className="sr-only">{t("demoSummary")}</p>
-        <div aria-hidden><LiveDemo /></div>
+      <div className="relative mt-10 md:mt-6">
+        <div aria-hidden className="hero-band absolute inset-x-0 top-[34%] h-[38%]" />
+        <Image src={agent} alt={t("imageAlt")} priority sizes="(min-width: 768px) 760px, 100vw"
+          className="hero-in hero-image relative mx-auto w-full max-w-[760px]" style={stagger(3)}
+        />
       </div>
     </section>
   );
 }
 
+const unsplash = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=900&q=75`;
+// Same order as landing.builtFor.items (stores, agencies, startups, SaaS, fintech, dev teams, product teams).
+const audienceImages = [
+  "1556742049-0cfed4f6a45d", "1522202176988-66273c2fd55f", "1559136555-9303baea8ebd", "1460925895917-afdab827c52f",
+  "1563013544-824ae1b704d3", "1498050108023-c5249f4df085", "1521737604893-d14cc237f11d",
+].map(unsplash);
+
 export function BuiltFor() {
   const t = useTranslations("landing.builtFor");
-  const items = t.raw("items") as Item[];
-  const icons = [Store, Briefcase, Rocket];
+  const items = (t.raw("items") as Item[]).map((it, i) => ({ ...it, image: audienceImages[i] }));
   return (
-    <Section>
-      <SectionHeader eyebrow={t("eyebrow")} title={t("title")} />
-      <ul className="grid gap-4 md:grid-cols-3">
-        {items.map((it, i) => {
-          const Icon = icons[i];
-          return (
-            <li key={it.title} data-reveal style={stagger(i)} className={`${card} p-6`}>
-              <Icon size={24} strokeWidth={1.5} className="text-fg-2" aria-hidden />
-              <h3 className="mt-5 text-xl font-medium">{it.title}</h3>
-              <p className="mt-2 text-fg-2">{it.body}</p>
-            </li>
-          );
-        })}
-      </ul>
-    </Section>
+    <section className="scroll-mt-20 border-t border-line bg-canvas py-24 md:py-32">
+      <div className={`${container} grid grid-cols-[1fr_auto] items-end`}>
+        <div data-reveal className="max-w-xl">
+          <h2 className="t-h2">{t("title")}</h2>
+        </div>
+        <AudienceCards items={items} labels={{ cta: t("cta"), prev: t("prev"), next: t("next") }} />
+      </div>
+    </section>
   );
 }
 

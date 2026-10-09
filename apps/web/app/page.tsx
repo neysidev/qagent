@@ -11,7 +11,7 @@ export default function Landing() {
   ) as Parameters<typeof Nav>[0]["labels"];
 
   return (
-    <div className="min-h-dvh bg-canvas text-fg [color-scheme:dark]">
+    <div className="min-h-dvh theme-light bg-canvas text-fg">
       <Nav labels={labels} />
       <main>
         <Hero />
