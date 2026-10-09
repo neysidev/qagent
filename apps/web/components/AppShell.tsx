@@ -8,7 +8,8 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { hostOf, planKey, timeAgo } from "@/lib/format";
+import { hostOf, nf, planKey, timeAgo } from "@/lib/format";
+import { useNotifications } from "@/lib/useNotifications";
 import { LogoBox } from "./brand/LogoBox";
 import { menuItem, Popover } from "./overlay";
 import { EmptyState } from "./EmptyState";
@@ -28,8 +29,6 @@ type Workspace = {
 
 const WorkspaceContext = createContext<Workspace | null>(null);
 export const useWorkspace = () => useContext(WorkspaceContext)!;
-
-const SEEN_KEY = "qagent.notifSeen";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const t = useTranslations("shell");
@@ -54,7 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <Sidebar onHide={() => (drawer ? setDrawer(false) : setCollapsed(true))} />
         </aside>
-        <main className={`theme-light print-flat relative min-w-0 flex-1 overflow-y-auto bg-canvas text-fg [color-scheme:light] lg:my-2 lg:me-2 lg:rounded-[24px] lg:shadow-[0_0_0_1px_rgb(255_255_255/0.04)] ${collapsed ? "lg:ms-2" : ""}`}>
+        <main className={`theme-light print-flat relative min-w-0 flex-1 overflow-y-auto bg-canvas text-fg [color-scheme:light] lg:rounded-r-[24px]`}>
           <button
             onClick={() => {
               setDrawer(true);
@@ -82,6 +81,7 @@ function Sidebar({ onHide }: { onHide: () => void }) {
   const tc = useTranslations("common");
   const pathname = usePathname();
   const [query, setQuery] = useState("");
+  const { unread } = useNotifications();
 
   return (
     <>
@@ -115,6 +115,11 @@ function Sidebar({ onHide }: { onHide: () => void }) {
             className="min-w-0 flex-1 bg-transparent placeholder:text-fg-2 focus:outline-none"
           />
         </label>
+        <Link href="/notifications" aria-current={pathname === "/notifications" ? "page" : undefined} className={navItem}>
+          <Bell className="size-4" strokeWidth={1.75} />
+          {t("notifications")}
+          {unread > 0 && <span className="ms-auto rounded-full bg-accent px-1.5 text-[11px] leading-5 font-medium text-on-accent">{nf.format(unread)}</span>}
+        </Link>
         <Link href="/settings" aria-current={pathname === "/settings" ? "page" : undefined} className={navItem}>
           <Settings className="size-4" strokeWidth={1.75} />
           {t("settings")}
@@ -251,53 +256,38 @@ function Account() {
 
 function Notifications() {
   const t = useTranslations("shell");
-  const { runs } = useWorkspace();
-  const [seen, setSeen] = useState(Number.POSITIVE_INFINITY);
-  useEffect(() => {
-    try {
-      setSeen(Number(localStorage.getItem(SEEN_KEY) ?? 0));
-    } catch {
-      setSeen(0);
-    }
-  }, []);
-
-  const finished = (runs ?? []).filter((r) => r.finishedAt && r.status !== "canceled").slice(0, 6);
-  const unread = finished.some((r) => r.finishedAt! > seen);
-  const markSeen = () => {
-    const now = Date.now();
-    setSeen(now);
-    try {
-      localStorage.setItem(SEEN_KEY, String(now));
-    } catch {}
-  };
+  const { items, unread, setRead } = useNotifications();
+  const recent = items.slice(0, 6);
 
   return (
     <Popover
       align="start"
       className="w-80"
-      onOpen={markSeen}
       trigger={({ toggle, open }) => (
         <button onClick={toggle} aria-expanded={open} aria-label={t("notifications")} className={`${button.icon} relative border-0 bg-transparent`}>
           <Bell className="size-4" strokeWidth={1.75} />
-          {unread && <span className="absolute top-1.5 end-1.5 size-2 rounded-full bg-accent ring-2 ring-canvas" aria-hidden />}
+          {unread > 0 && <span className="absolute top-1.5 end-1.5 size-2 rounded-full bg-accent ring-2 ring-canvas" aria-hidden />}
         </button>
       )}
     >
       {(close) => (
         <>
-          <p className="px-2.5 pt-1.5 pb-2 text-sm font-medium">{t("notifications")}</p>
-          {finished.length === 0 ? (
+          <div className="flex items-center justify-between px-2.5 pt-1.5 pb-2">
+            <p className="text-sm font-medium">{t("notifications")}</p>
+            <Link href="/notifications" onClick={close} className="text-xs text-accent hover:underline">{t("viewAll")}</Link>
+          </div>
+          {recent.length === 0 ? (
             <EmptyState art={<QuietBellIllustration className="w-28" />} title={t("noNotifications")} body={t("noNotificationsBody")} compact />
           ) : (
-            finished.map((r) => (
-              <Link key={r._id} href={`/runs/${r._id}`} onClick={close} className={`${menuItem} items-start`}>
+            recent.map(({ run: r, read, at }) => (
+              <Link key={r._id} href={`/runs/${r._id}`} onClick={() => (setRead(r._id, true), close())} className={`${menuItem} items-start`}>
                 <span className="mt-0.5">
                   <TaskIcon status={r.status} bugs={r.summary?.bugs} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-fg">{r.goal}</span>
+                  <span className={`block truncate ${read ? "text-fg-2" : "font-bold text-fg"}`}>{r.goal}</span>
                   <span className="mt-0.5 block text-xs text-fg-3">
-                    {r.status === "failed" ? t("notifFailed") : t("notifDone", { count: r.summary?.bugs ?? 0 })} · {timeAgo(r.finishedAt!)}
+                    {r.status === "failed" ? t("notifFailed") : t("notifDone", { count: r.summary?.bugs ?? 0 })} · {timeAgo(at)}
                   </span>
                 </span>
               </Link>
