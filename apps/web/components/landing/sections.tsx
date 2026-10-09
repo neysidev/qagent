@@ -2,12 +2,10 @@ import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 import { LogoBox } from "@/components/brand/LogoBox";
-import { PixelGrid } from "@/components/brand/PixelGrid";
 import Image from "next/image";
 import Link from "next/link";
 import agent from "@/public/hero-agent.webp";
-import { benchmark } from "@/lib/benchmark";
-import { AudienceCards, Pricing, ReportFormats, UseCaseTabs, type ReportDoc } from "./client";
+import { AudienceCards, Pricing, ReportFormats, type ReportDoc } from "./client";
 import { btn, card, container } from "./ui";
 
 type Item = { title: string; body: string };
@@ -594,54 +592,25 @@ export function ReportShowcase() {
   );
 }
 
-export function Numbers() {
-  const t = useTranslations("landing.numbers");
-  const b = benchmark;
-  const metrics = [
-    b.detectionRate != null && { label: t("detection"), value: `${b.detectionRate}%` },
-    b.avgRunSeconds != null && { label: t("runTime"), value: `${b.avgRunSeconds}s` },
-    b.avgCostUsd != null && { label: t("cost"), value: `$${b.avgCostUsd.toFixed(2)}` },
-    { label: t("templates"), value: String(b.templates) },
-    { label: t("parallel"), value: String(b.parallelScenarios) },
-  ].filter((m) => !!m);
-  const measured = b.detectionRate != null;
-  return (
-    <section className="relative overflow-hidden border-t border-line bg-surface py-24 md:py-32">
-      <PixelGrid cols={80} rows={24} cell={10} gap={6} density={0.05} className="absolute inset-0 size-full opacity-40" />
-      <div className={`${container} relative`}>
-        <SectionHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={measured ? t("subtitle") : undefined} />
-        <dl className="mx-auto flex max-w-4xl flex-wrap justify-center gap-4">
-          {metrics.map((m, i) => (
-            <div key={m.label} data-reveal style={stagger(i)} className={`${card} min-w-[200px] flex-1 p-6 text-center`}>
-              <dd dir="ltr" className="t-metric text-[clamp(40px,5vw,64px)]">{m.value}</dd>
-              <dt className="mt-2 text-sm text-fg-2">{m.label}</dt>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </section>
-  );
-}
-
-export function UseCases() {
-  const t = useTranslations("landing.useCases");
-  return (
-    <Section>
-      <SectionHeader eyebrow={t("eyebrow")} title={t("title")} />
-      <div data-reveal>
-        <UseCaseTabs items={t.raw("items")} labels={{ tabs: t("tabs"), pain: t("pain"), goal: t("goal"), outcome: t("outcome") }} />
-      </div>
-    </Section>
-  );
-}
-
 export function PricingSection() {
   const t = useTranslations("landing.pricing");
   return (
     <Section id="pricing" tone="surface">
-      <SectionHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
-      <Pricing plans={t.raw("plans")}
-        labels={{ period: t("period"), monthly: t("monthly"), yearly: t("yearly"), perMonth: t("perMonth"), billedYearly: t("billedYearly"), popular: t("popular") }}
+      <Pricing
+        plans={t.raw("plans")}
+        header={
+          <div className="max-w-2xl">
+            <p className="inline-flex rounded-full border border-line bg-card px-3 py-1 text-sm text-fg-2">{t("eyebrow")}</p>
+            <h2 className="mt-5 text-[clamp(24px,2.6vw,34px)] leading-[1.3] font-bold text-balance">
+              {t.rich("title", { hl: (c) => <span className="text-accent">{c}</span> })}
+            </h2>
+            <p className="mt-3 text-pretty text-fg-2">{t("subtitle")}</p>
+          </div>
+        }
+        labels={{
+          period: t("period"), monthly: t("monthly"), yearly: t("yearly"), perMonth: t("perMonth"),
+          billedYearly: t("billedYearly"), popular: t("popular"), includes: t("includes"),
+        }}
       />
     </Section>
   );

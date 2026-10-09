@@ -161,13 +161,6 @@ dialog.modal::backdrop {
   line-height: 1.4;
   font-weight: 500;
 }
-@utility t-metric {
-  font-family: var(--font-mono);
-  font-size: clamp(28px, 3vw, 40px);
-  font-weight: 500;
-  line-height: 1.1;
-}
-
 /* ---- Reveal on view: fade + rise, once. Hidden only after RevealObserver arms it, so no-JS still shows content. ---- */
 .reveal-armed [data-reveal]:not([data-in]) {
   opacity: 0;

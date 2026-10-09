@@ -2,10 +2,10 @@
 
 import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Copy, Download, FileText, Hash, Link2, Menu, X } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { LogoBox } from "@/components/brand/LogoBox";
 import Link from "next/link";
-import { btn, card } from "./ui";
+import { btn } from "./ui";
 
 /** Arms `[data-reveal]` elements and marks each with `data-in` the first time it scrolls into view. */
 export function RevealObserver() {
@@ -500,79 +500,63 @@ function Segmented({ options, value, onChange, label, idBase }: {
   );
 }
 
-type UseCase = { label: string; pain: string; goal: string; outcome: string };
-
-export function UseCaseTabs({ items, labels }: { items: UseCase[]; labels: { tabs: string; pain: string; goal: string; outcome: string } }) {
-  const [i, setI] = useState(0);
-  const id = useId();
-  const item = items[i];
-  return (
-    <div className="flex flex-col items-center gap-8">
-      <Segmented options={items.map((x) => x.label)} value={i} onChange={setI} label={labels.tabs} idBase={id} />
-      <div key={i} id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-tab-${i}`}
-        className={`${card} animate-rise grid w-full gap-6 p-6 md:grid-cols-3 md:p-8`}
-      >
-        <div>
-          <p className="t-label text-fg-3">{labels.pain}</p>
-          <p className="mt-3 text-fg-2">{item.pain}</p>
-        </div>
-        <div>
-          <p className="t-label text-fg-3">{labels.goal}</p>
-          <p className="mt-3 rounded-lg border border-line bg-shell p-3 font-mono text-sm text-fg">
-            <span className="text-accent" aria-hidden>{"> "}</span>
-            {item.goal}
-          </p>
-        </div>
-        <div>
-          <p className="t-label text-fg-3">{labels.outcome}</p>
-          <p className="mt-3 text-fg-2">{item.outcome}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 type Plan = { name: string; desc: string; monthly: string; yearly: string; features: string[]; cta: string };
 
-export function Pricing({ plans, labels }: {
+export function Pricing({ plans, labels, header }: {
   plans: Plan[];
-  labels: { period: string; monthly: string; yearly: string; perMonth: string; billedYearly: string; popular: string };
+  header: ReactNode;
+  labels: { period: string; monthly: string; yearly: string; perMonth: string; billedYearly: string; popular: string; includes: string };
 }) {
   const [period, setPeriod] = useState(0);
   const id = useId();
   return (
-    <div className="flex flex-col items-center gap-10">
-      <Segmented options={[labels.monthly, labels.yearly]} value={period} onChange={setPeriod} label={labels.period} idBase={id} />
-      <div id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-tab-${period}`} className="grid w-full gap-4 md:grid-cols-3">
+    <>
+      <div data-reveal className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        {header}
+        <Segmented options={[labels.monthly, labels.yearly]} value={period} onChange={setPeriod} label={labels.period} idBase={id} />
+      </div>
+      <ul id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-tab-${period}`}
+        className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 md:grid-cols-3"
+      >
         {plans.map((p, i) => {
           const pro = i === 1;
+          const free = i === 0;
           return (
-            <div key={p.name} data-reveal style={{ "--i": i } as React.CSSProperties}
-              className={`relative flex flex-col rounded-xl border bg-card p-6 ${pro ? "border-accent" : "border-line"}`}
+            <li key={p.name} data-reveal style={{ "--i": i } as React.CSSProperties}
+              className={`flex flex-col rounded-[22px] p-6 md:p-7 ${pro ? "theme-dark bg-canvas text-fg shadow-[0_20px_40px_-20px_rgb(0_0_0/0.45)]" : "bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]"}`}
             >
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-xl font-medium">{p.name}</h3>
-                {pro && <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent">{labels.popular}</span>}
+                <h3 className="text-lg font-bold">{p.name}</h3>
+                {pro && <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-white">{labels.popular}</span>}
               </div>
-              <p className="mt-2 text-sm text-fg-2">{p.desc}</p>
-              <p className="mt-6 flex items-baseline gap-1.5">
-                <span key={period} className="animate-rise text-4xl font-semibold">{period ? p.yearly : p.monthly}</span>
+              <p className="mt-1.5 text-sm text-fg-2">{p.desc}</p>
+              <div className="mt-8 flex items-baseline gap-1.5">
+                <span key={period} className="animate-rise text-3xl font-bold md:text-[34px]">{period ? p.yearly : p.monthly}</span>
                 <span className="text-sm text-fg-3">{labels.perMonth}</span>
-              </p>
-              <p className={`mt-1 h-5 text-xs text-fg-3 transition-opacity duration-200 ${period && i ? "opacity-100" : "opacity-0"}`}>{labels.billedYearly}</p>
-              <ul className="mt-6 space-y-3 text-sm">
-                {p.features.map((f) => (
-                  <li key={f} className="flex gap-2.5 text-fg-2">
-                    <Check size={16} strokeWidth={1.5} className="mt-0.5 shrink-0 text-fg" aria-hidden />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/signin" className={`${pro ? btn.primary("md") : btn.secondary("md")} mt-8`}>{p.cta}</Link>
-            </div>
+              </div>
+              <p className={`mt-1.5 h-5 text-xs text-fg-3 transition-opacity duration-200 ${period && !free ? "opacity-100" : "opacity-0"}`}>{labels.billedYearly}</p>
+              <Link href="/signin"
+                className={`mt-6 inline-flex h-11 items-center justify-center rounded-full text-sm font-medium transition-[transform,background-color,border-color] duration-150 ease-out active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${pro ? "bg-accent text-white hover:bg-accent-hover" : "border border-line-strong text-fg hover:bg-fg/5"}`}
+              >
+                {p.cta}
+              </Link>
+              <div className="mt-7 border-t border-line pt-6">
+                <p className="text-xs font-medium text-fg-3">{labels.includes}</p>
+                <ul className="mt-4 space-y-3 text-sm">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-center gap-2.5 text-fg-2">
+                      <span className={`grid size-5 shrink-0 place-items-center rounded-full ${pro ? "bg-accent text-white" : "bg-accent-soft text-accent"}`}>
+                        <Check size={12} strokeWidth={2.5} aria-hidden />
+                      </span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </li>
           );
         })}
-      </div>
-    </div>
+      </ul>
+    </>
   );
 }

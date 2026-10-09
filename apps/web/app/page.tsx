@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Nav, RevealObserver } from "@/components/landing/client";
 import {
-  BuiltFor, Faq, Features, FinalCta, Footer, Hero, HowItWorks, Numbers, PricingSection, Problem, ReportShowcase, UseCases,
+  BuiltFor, Faq, Features, FinalCta, Footer, Hero, HowItWorks, PricingSection, Problem, ReportShowcase,
 } from "@/components/landing/sections";
 
 export default function Landing() {
@@ -20,8 +20,6 @@ export default function Landing() {
         <HowItWorks />
         <Features />
         <ReportShowcase />
-        <Numbers />
-        <UseCases />
         <PricingSection />
         <Faq />
         <FinalCta />
