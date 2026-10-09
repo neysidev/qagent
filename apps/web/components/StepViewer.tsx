@@ -8,6 +8,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { actionValue, type Scenario, type Step } from "@/lib/format";
 import { NoStepsIllustration } from "./illustrations";
 import { button } from "./ui";
+import { ZoomImage } from "./ZoomImage";
 
 /** The selected step on a stage (screenshot + moving cursor), its details, and a scrubbable step list. */
 export function StepViewer({ steps, scenarios, live }: { steps: Step[]; scenarios: Scenario[]; live: boolean }) {
@@ -212,15 +213,14 @@ function Stage({ steps, step, label }: { steps: Step[]; step: Step; label: strin
         <img src={prev.screenshotUrl} alt="" aria-hidden className="absolute inset-0 size-full object-contain" />
       )}
       {shown.screenshotUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img key={shown._id} src={shown.screenshotUrl} alt={shown.thought} decoding="async"
+        <ZoomImage imgKey={shown._id} src={shown.screenshotUrl} alt={shown.thought}
           className="stage-in absolute inset-0 size-full object-contain" />
       )}
 
       {t && landed && (
         <div
           key={`hl-${shown._id}`}
-          className="target-in absolute rounded-md border-2 border-accent bg-accent/10"
+          className="target-in pointer-events-none absolute rounded-md border-2 border-accent bg-accent/10"
           style={{
             left: `${(t.x / shown.viewport.w) * 100}%`,
             top: `${(t.y / shown.viewport.h) * 100}%`,

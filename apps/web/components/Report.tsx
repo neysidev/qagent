@@ -8,6 +8,7 @@ import type { Bug } from "@/lib/format";
 import { CleanRunIllustration, NoScenariosIllustration } from "./illustrations";
 import { ScenarioList } from "./ScenarioList";
 import { StepViewer } from "./StepViewer";
+import { ZoomImage } from "./ZoomImage";
 import { card, cardHeader, cardTitle, pill, type Tone } from "./ui";
 
 const severityTone: Record<Bug["severity"], Tone> = { critical: "danger", high: "danger", medium: "warning", low: "neutral" };
@@ -116,10 +117,7 @@ function BugCard({ bug }: { bug: Bug }) {
           <p className="mb-2 text-xs font-medium text-fg-3">{t("screenshots")}</p>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {bug.screenshotUrls.map((u, i) => (
-              <a key={u} href={u} target="_blank" rel="noreferrer" className="shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={u} alt={`${bug.title} ${i + 1}`} className="h-28 rounded-lg border border-line transition-[border-color] hover:border-line-strong" />
-              </a>
+              <ZoomImage key={u} src={u} alt={`${bug.title} ${i + 1}`} className="h-28 shrink-0 rounded-lg border border-line transition-[border-color] hover:border-line-strong" />
             ))}
           </div>
         </div>

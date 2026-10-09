@@ -45,6 +45,7 @@ async def screenshot(page: Page, ref: str | None = None) -> bytes:
     loc = page.locator(f'[data-qa-ref="{ref}"]').first if ref else None
     if loc is not None:
         try:
+            await loc.scroll_into_view_if_needed(timeout=1_000)
             await loc.evaluate(_HIGHLIGHT_ON, timeout=1_000)
         except Exception:
             loc = None
