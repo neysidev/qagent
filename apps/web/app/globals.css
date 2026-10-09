@@ -436,6 +436,22 @@ dialog.modal::backdrop {
   }
 }
 
+/* Footer road: dashes drift slowly, like data flowing between the machines above. */
+@keyframes footer-road {
+  to {
+    background-position-x: -52px;
+  }
+}
+.footer-road {
+  background: repeating-linear-gradient(to right, var(--border-strong) 0 28px, transparent 28px 52px);
+  animation: footer-road 2.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .footer-road {
+    animation: none;
+  }
+}
+
 /* Nav after the hero: slides down softly on enter, glides up a little faster on exit. */
 @keyframes nav-drop {
   from {

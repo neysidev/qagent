@@ -9,15 +9,4 @@ export const btn = {
     `${base} ${sizes[s]} border border-line bg-card text-fg hover:border-line-strong hover:bg-card-hover`,
   ghost: (s: keyof typeof sizes = "md") => `${base} ${sizes[s]} text-fg-2 hover:bg-card hover:text-fg`,
 };
-
-export const card = "rounded-xl border border-line bg-card";
 export const container = "mx-auto w-full max-w-[1200px] px-4 sm:px-6";
-
-const badgeTone = {
-  pass: "bg-success-soft text-success",
-  running: "bg-warning-soft text-warning",
-  bug: "bg-danger-soft text-danger",
-  neutral: "bg-card-hover text-fg-2",
-};
-export const badge = (tone: keyof typeof badgeTone) =>
-  `inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium before:size-1.5 before:rounded-full before:bg-current ${badgeTone[tone]}`;

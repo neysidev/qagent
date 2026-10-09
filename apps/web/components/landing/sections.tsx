@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import agent from "@/public/hero-agent.webp";
 import { AudienceCards, Pricing, ReportFormats, type ReportDoc } from "./client";
-import { btn, card, container } from "./ui";
+import { container } from "./ui";
 
 type Item = { title: string; body: string };
 const stagger = (i: number) => ({ "--i": i }) as CSSProperties;
@@ -629,54 +629,206 @@ export function Faq() {
   );
 }
 
+/** Closing CTA: a light, centered panel so it stands apart from the dark footer below; the agent leads the eye down to the action. */
 export function FinalCta() {
   const t = useTranslations("landing.cta");
   const h = useTranslations("landing.hero");
   return (
-    <section className="border-t border-line bg-surface py-24 md:py-32">
-      <div data-reveal className={`${container} flex flex-col items-center text-center`}>
-        <LogoBox state="pass" size={96} />
-        <h2 className="t-display mt-8 max-w-3xl text-[clamp(32px,4vw,52px)]">{t("title")}</h2>
-        <p className="mt-4 max-w-xl text-lg text-fg-2">{t("subtitle")}</p>
-        <div className="mt-10 flex flex-wrap justify-center gap-3">
-          <Link href="/signin" className={btn.primary("lg")}>{h("start")}</Link>
-          <Link href="/signin" className={btn.secondary("lg")}>{h("demo")}</Link>
+    <section className="bg-canvas pt-16 pb-24 md:pt-24 md:pb-36">
+      <div className={container}>
+        <div data-reveal className="relative overflow-hidden rounded-[32px] border border-line bg-surface px-6 pb-14 text-center sm:px-12 md:pb-20">
+          <div aria-hidden className="hero-dots absolute inset-0" />
+          <div aria-hidden className="absolute inset-x-0 top-0 h-80 bg-[radial-gradient(ellipse_50%_60%_at_50%_30%,var(--accent-soft),transparent)]" />
+          <div className="relative mx-auto w-full max-w-[320px]">
+            <div aria-hidden className="hero-band absolute inset-x-[-40%] top-[30%] h-[42%]" />
+            <Image src={agent} alt={h("imageAlt")} sizes="320px" className="hero-image relative w-full" />
+          </div>
+          <h2 className="relative mx-auto -mt-4 max-w-2xl text-[clamp(28px,3.6vw,46px)] leading-[1.25] font-bold text-balance">
+            {t.rich("title", { hl: (c) => <span className="text-accent">{c}</span> })}
+          </h2>
+          <p className="relative mx-auto mt-4 max-w-md leading-[1.9] text-pretty text-fg-2">{t("subtitle")}</p>
+          <div className="relative mt-9 flex flex-wrap justify-center gap-3">
+            <Link href="/signin" className="inline-flex h-12 items-center rounded-full bg-accent px-8 font-medium text-white shadow-[0_12px_32px_-10px_var(--accent)] transition-[transform,background-color] duration-150 ease-out hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.97]">
+              {t("start")}
+            </Link>
+            <a href="#pricing" className="inline-flex h-12 items-center rounded-full border border-line-strong bg-card px-8 font-medium text-fg transition-[transform,background-color] duration-150 ease-out hover:bg-card-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.97]">
+              {t("pricing")}
+            </a>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
+/** Skyline above the footer: a dev & QA scene — server rack, code editor, CI board, a bug under the
+ * magnifier, a terminal run, a phone, the site under test with the agent's cursor, and a filed bug ticket. */
+function FooterSkyline() {
+  const ink = "fill-canvas";
+  const cut = "#fff";
+  const mono = "ui-monospace, SFMono-Regular, Menlo, monospace";
+  const code = [[34, 52, 0], [22, 38, 1], [22, 70, 0], [34, 30, 1], [22, 56, 0], [34, 44, 0], [22, 26, 1]] as const;
+  return (
+    <svg viewBox="0 0 1200 140" preserveAspectRatio="xMidYMax slice" direction="ltr" className="block h-28 w-full md:h-[140px]" aria-hidden>
+      {/* server rack */}
+      <rect x="40" y="48" width="72" height="92" rx="6" className={ink} />
+      {[0, 1, 2, 3, 4].map((i) => (
+        <g key={i}>
+          <rect x="48" y={56 + i * 16} width="56" height="11" rx="2" fill={cut} opacity="0.14" />
+          {[0, 1, 2, 3].map((v) => <rect key={v} x={53 + v * 6} y={59 + i * 16} width="2.5" height="5" rx="1" fill={cut} opacity="0.7" />)}
+          <circle cx="97" cy={61.5 + i * 16} r="2.4" className="fill-accent">
+            <animate attributeName="opacity" values="1;0.2;1" dur={`${1.2 + i * 0.45}s`} repeatCount="indefinite" />
+          </circle>
+          <circle cx="90" cy={61.5 + i * 16} r="1.6" fill={cut} opacity="0.6" />
+        </g>
+      ))}
+      <path d="M112 132 C122 132 124 136 134 136 H186" fill="none" className="stroke-canvas" strokeWidth="3" strokeLinecap="round" />
+
+      {/* code editor monitor */}
+      <rect x="130" y="22" width="172" height="92" rx="8" className={ink} />
+      <rect x="138" y="30" width="156" height="76" rx="3" fill={cut} />
+      <rect x="138" y="30" width="16" height="76" rx="3" className="fill-shell" />
+      {code.map(([indent, w, hot], i) => (
+        <g key={i}>
+          <rect x="143" y={36 + i * 10} width="6" height="3" rx="1.5" className="fill-pixel-off" />
+          <rect x={158 + indent - 22} y={35.5 + i * 10} width={w} height="4" rx="2" className={hot ? "fill-accent" : ink} opacity={hot ? 1 : 0.75} />
+          {i % 2 === 0 && <rect x={158 + indent - 22 + w + 4} y={35.5 + i * 10} width={18} height="4" rx="2" className="fill-pixel-off" />}
+        </g>
+      ))}
+      <rect x="226" y="95" width="2" height="7" className="fill-accent"><animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite" /></rect>
+      <rect x="208" y="114" width="16" height="18" className={ink} />
+      <rect x="186" y="132" width="60" height="8" rx="3" className={ink} />
+
+      {/* CI pipeline board */}
+      <rect x="324" y="28" width="156" height="62" rx="8" className={ink} />
+      <rect x="340" y="90" width="6" height="50" className={ink} />
+      <rect x="458" y="90" width="6" height="50" className={ink} />
+      <path d="M362 52 H442" stroke={cut} strokeWidth="2" opacity="0.5" />
+      {[352, 402, 452].map((cx, i) => (
+        <g key={cx}>
+          <circle cx={cx} cy="52" r="10" className={i === 2 ? "fill-accent" : ""} fill={i === 2 ? undefined : cut} />
+          {i < 2 ? (
+            <path d={`M${cx - 4} 52 l3 3 l5.5 -6`} fill="none" className="stroke-canvas" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          ) : (
+            <circle cx={cx} cy="52" r="5" fill="none" stroke={cut} strokeWidth="2" strokeDasharray="20 12" strokeLinecap="round">
+              <animateTransform attributeName="transform" type="rotate" from={`0 ${cx} 52`} to={`360 ${cx} 52`} dur="1.2s" repeatCount="indefinite" />
+            </circle>
+          )}
+          <text x={cx} y="78" textAnchor="middle" fontFamily={mono} fontSize="9" fill={cut} opacity="0.85">{["build", "test", "deploy"][i]}</text>
+        </g>
+      ))}
+
+      {/* magnifier over a bug */}
+      <path d="M570 86 L600 136" className="stroke-canvas" strokeWidth="12" strokeLinecap="round" />
+      <circle cx="548" cy="58" r="32" fill={cut} className="stroke-canvas" strokeWidth="9" />
+      <path d="M528 44 a24 24 0 0 1 14 -10" fill="none" className="stroke-pixel-off" strokeWidth="3" strokeLinecap="round" />
+      <g className="stroke-accent" strokeWidth="2.2" strokeLinecap="round">
+        <path d="M539 56 l-8 -4 M539 63 l-9 1 M539 70 l-7 5 M557 56 l8 -4 M557 63 l9 1 M557 70 l7 5 M545 47 l-3 -6 M551 47 l3 -6" />
+      </g>
+      <ellipse cx="548" cy="63" rx="9" ry="12" className="fill-accent" />
+      <circle cx="548" cy="49" r="5.5" className="fill-accent" />
+      <path d="M548 53 v21" stroke={cut} strokeWidth="1.5" />
+
+      {/* terminal */}
+      <rect x="626" y="44" width="156" height="96" rx="8" className={ink} />
+      {[640, 650, 660].map((cx) => <circle key={cx} cx={cx} cy="55" r="3" fill={cut} opacity="0.55" />)}
+      <path d="M626 64 H782" stroke={cut} strokeOpacity="0.15" />
+      <g fontFamily={mono} fontSize="10">
+        <text x="638" y="82"><tspan className="fill-accent">$</tspan><tspan fill={cut}> qagent run</tspan></text>
+        <text x="638" y="98" fill={cut} opacity="0.85">✓ 12 passed</text>
+        <text x="638" y="114" className="fill-accent">✗ 1 failed</text>
+      </g>
+      <rect x="638" y="122" width="6" height="10" fill={cut}><animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite" /></rect>
+
+      {/* phone */}
+      <rect x="806" y="58" width="54" height="82" rx="10" className={ink} />
+      <rect x="812" y="68" width="42" height="64" rx="4" fill={cut} />
+      <rect x="826" y="62" width="14" height="3" rx="1.5" fill={cut} opacity="0.35" />
+      <rect x="817" y="74" width="20" height="4" rx="2" className={ink} opacity="0.8" />
+      {[0, 1].map((i) => (
+        <g key={i}>
+          <rect x="817" y={84 + i * 14} width="32" height="10" rx="2" className="fill-shell" />
+          <rect x="820" y={87 + i * 14} width="6" height="4" rx="1" className="fill-pixel-off" />
+          <rect x="829" y={88 + i * 14} width="16" height="2.5" rx="1.25" className="fill-pixel-off" />
+        </g>
+      ))}
+      <rect x="817" y="114" width="32" height="10" rx="5" className="fill-accent" />
+
+      {/* site under test, with the agent's cursor on the CTA */}
+      <rect x="884" y="12" width="222" height="128" rx="8" className={ink} />
+      {[896, 906, 916].map((cx) => <circle key={cx} cx={cx} cy="24" r="3" fill={cut} opacity="0.6" />)}
+      <rect x="930" y="19" width="160" height="10" rx="5" fill={cut} opacity="0.2" />
+      <text x="1010" y="27" textAnchor="middle" fontFamily={mono} fontSize="7.5" fill={cut} opacity="0.85">myshop.ir</text>
+      <rect x="892" y="36" width="206" height="104" fill={cut} />
+      <rect x="900" y="44" width="22" height="6" rx="3" className={ink} />
+      {[0, 1, 2].map((i) => <rect key={i} x={1040 + i * 18} y="45" width="12" height="4" rx="2" className="fill-pixel-off" />)}
+      <rect x="900" y="62" width="104" height="7" rx="3.5" className={ink} />
+      <rect x="900" y="74" width="80" height="7" rx="3.5" className={ink} />
+      <rect x="900" y="88" width="96" height="3.5" rx="1.75" className="fill-pixel-off" />
+      <rect x="900" y="95" width="70" height="3.5" rx="1.75" className="fill-pixel-off" />
+      <rect x="900" y="106" width="52" height="14" rx="7" className="fill-accent" />
+      <rect x="895" y="101" width="62" height="24" rx="10" fill="none" className="stroke-accent" strokeWidth="1.5" strokeDasharray="4 3" />
+      <rect x="1018" y="58" width="72" height="68" rx="6" className="fill-shell" />
+      <path d="M1024 120 l18 -24 l12 14 l8 -9 l22 19 z" className="fill-pixel-off" />
+      <circle cx="1072" cy="74" r="6" className="fill-pixel-off" />
+      <path d="M944 112 l0 17 l4.5 -4.2 l3.2 7.4 l3 -1.3 l-3.2 -7.3 l6.2 -0.4 z" className="fill-accent stroke-canvas" strokeWidth="1.4" strokeLinejoin="round" />
+
+      {/* filed bug ticket */}
+      <rect x="1150" y="84" width="5" height="56" className={ink} />
+      <rect x="1118" y="30" width="70" height="56" rx="6" className={ink} />
+      <rect x="1118" y="30" width="70" height="13" rx="6" className="fill-accent" />
+      <rect x="1118" y="37" width="70" height="6" className="fill-accent" />
+      <text x="1126" y="40" fontFamily={mono} fontSize="8" fontWeight="700" className="fill-canvas">BUG-12</text>
+      <rect x="1126" y="52" width="50" height="4" rx="2" fill={cut} opacity="0.8" />
+      <rect x="1126" y="61" width="38" height="4" rx="2" fill={cut} opacity="0.45" />
+      <rect x="1126" y="72" width="22" height="8" rx="4" fill={cut} opacity="0.2" />
+    </svg>
+  );
+}
+
 export function Footer() {
   const t = useTranslations("landing.footer");
   const n = useTranslations("landing.nav");
-  const link = "text-fg-2 hover:text-fg focus-visible:outline-2 focus-visible:outline-accent rounded";
+  const link = "rounded text-fg-2 transition-colors duration-150 hover:text-fg focus-visible:outline-2 focus-visible:outline-accent";
   return (
-    <footer className="border-t border-line bg-shell py-16">
-      <div className={`${container} grid gap-10 md:grid-cols-[2fr_1fr_1fr]`}>
-        <div>
-          <p className="flex items-center gap-2 font-semibold"><LogoBox size={26} />کیوایجنت</p>
-          <p className="mt-3 max-w-xs text-sm text-fg-2">{t("tagline")}</p>
-        </div>
-        <nav aria-label={t("product")}>
-          <p className="t-label text-fg-3">{t("product")}</p>
-          <ul className="mt-4 space-y-2 text-sm">
-            {(["features", "how", "pricing", "faq"] as const).map((k) => (
-              <li key={k}><a href={`#${k}`} className={link}>{n(k)}</a></li>
-            ))}
-          </ul>
-        </nav>
-        <nav aria-label={t("start")}>
-          <p className="t-label text-fg-3">{t("start")}</p>
-          <ul className="mt-4 space-y-2 text-sm">
-            <li><Link href="/signin" className={link}>{n("start")}</Link></li>
-            <li><Link href="/signin" className={link}>{n("login")}</Link></li>
-          </ul>
-        </nav>
+    <footer className="theme-dark text-fg [color-scheme:dark]">
+      <div className="bg-white">
+        <FooterSkyline />
       </div>
-      <div className={`${container} mt-12 flex flex-wrap justify-between gap-4 border-t border-line pt-6 text-xs text-fg-3`}>
-        <span>{t("rights")}</span>
-        <span>{t("built")}</span>
+      <div className="bg-canvas">
+        <div aria-hidden className="footer-road h-1.5" />
+        <div className={`${container} grid gap-12 pt-16 pb-10 md:grid-cols-[1.4fr_1fr_1fr_1.4fr]`}>
+          <div>
+            <p className="flex items-center gap-2.5 text-lg font-bold"><LogoBox size={30} />کیوایجنت</p>
+            <p className="mt-4 max-w-xs text-sm leading-[1.9] text-fg-2">{t("tagline")}</p>
+          </div>
+          <nav aria-label={t("product")}>
+            <p className="font-bold">{t("product")}</p>
+            <ul className="mt-5 space-y-3 text-sm">
+              {(["features", "how", "pricing", "faq"] as const).map((k) => (
+                <li key={k}><a href={`#${k}`} className={link}>{n(k)}</a></li>
+              ))}
+            </ul>
+          </nav>
+          <nav aria-label={t("start")}>
+            <p className="font-bold">{t("start")}</p>
+            <ul className="mt-5 space-y-3 text-sm">
+              <li><Link href="/signin" className={link}>{n("start")}</Link></li>
+              <li><Link href="/signin" className={link}>{n("login")}</Link></li>
+            </ul>
+          </nav>
+          <div>
+            <p className="font-bold">{t("ready")}</p>
+            <p className="mt-5 max-w-xs text-sm leading-[1.9] text-fg-2">{t("readyBody")}</p>
+            <Link href="/signin" className="mt-6 inline-flex h-11 items-center rounded-full bg-accent px-6 text-sm font-medium text-white transition-[transform,background-color] duration-150 ease-out hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.97]">
+              {n("start")}
+            </Link>
+          </div>
+        </div>
+        <div className={`${container} flex flex-wrap justify-between gap-4 border-t border-line py-6 text-xs text-fg-3`}>
+          <span>{t("rights")}</span>
+          <span>{t("built")}</span>
+        </div>
       </div>
     </footer>
   );
