@@ -349,68 +349,16 @@ dialog.modal::backdrop {
   color: var(--text-muted);
 }
 
-/* ---- Audience cards: horizontal photo scroller, equal-size cards; the active one reveals body + CTA. ---- */
+/* ---- Audience cards: horizontal scroller with edge fades that hint at more cards. ---- */
 .audience-track {
   scrollbar-width: none;
 }
-.audience-card {
-  width: 80vw;
-  cursor: pointer;
-}
-.audience-card[data-on] {
-  cursor: default;
-}
-@media (min-width: 768px) {
-  .audience-card {
-    width: 360px;
-  }
-}
-.audience-photo {
-  transition: transform 600ms var(--ease-out-strong);
-}
-.audience-shade {
-  background: linear-gradient(to top, rgb(0 0 0 / 0.72), rgb(0 0 0 / 0.1) 55%, transparent);
-  transition: opacity 300ms ease;
-}
-.audience-card[data-on] .audience-shade {
-  background: linear-gradient(to top, rgb(0 0 0 / 0.85), rgb(0 0 0 / 0.25) 65%, transparent);
-}
-/* grid-rows trick: animates height from 0 without measuring. */
-.audience-more {
-  display: grid;
-  grid-template-rows: 0fr;
-  opacity: 0;
-  transition:
-    grid-template-rows 450ms var(--ease-in-out-strong),
-    opacity 200ms ease;
-}
-.audience-more > div {
-  overflow: hidden;
-}
-.audience-card[data-on] .audience-more {
-  grid-template-rows: 1fr;
-  opacity: 1;
-  transition-delay: 0s, 120ms;
-}
-/* Edge fades hint that more cards sit past the viewport edge. */
 .audience-fade {
   opacity: 0;
   transition: opacity 250ms ease;
 }
 .audience-fade[data-show] {
   opacity: 1;
-}
-@media (hover: hover) and (pointer: fine) {
-  .audience-card:not([data-on]):hover .audience-photo {
-    transform: scale(1.04);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .audience-card,
-  .audience-more,
-  .audience-photo {
-    transition: none;
-  }
 }
 
 /* FAQ: answers slide open where the browser can animate details content; others just toggle. */

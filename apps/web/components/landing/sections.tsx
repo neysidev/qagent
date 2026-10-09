@@ -58,23 +58,16 @@ export function Hero() {
   );
 }
 
-const unsplash = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=900&q=75`;
-// Same order as landing.builtFor.items (stores, agencies, startups, SaaS, fintech, dev teams, product teams).
-const audienceImages = [
-  "1556742049-0cfed4f6a45d", "1522202176988-66273c2fd55f", "1559136555-9303baea8ebd", "1460925895917-afdab827c52f",
-  "1563013544-824ae1b704d3", "1498050108023-c5249f4df085", "1521737604893-d14cc237f11d",
-].map(unsplash);
-
 export function BuiltFor() {
   const t = useTranslations("landing.builtFor");
-  const items = (t.raw("items") as Item[]).map((it, i) => ({ ...it, image: audienceImages[i] }));
+  const items = t.raw("items") as Item[];
   return (
     <section className="scroll-mt-20 border-t border-line bg-canvas py-24 md:py-32">
-      <div className={`${container} grid grid-cols-[1fr_auto] items-end`}>
-        <div data-reveal className="max-w-xl">
-          <h2 className="t-h2">{t("title")}</h2>
+      <div className={`${container} grid grid-cols-[1fr_auto] items-end gap-6`}>
+        <div data-reveal className="max-w-2xl">
+          <SectionHeading ns="landing.builtFor" />
         </div>
-        <AudienceCards items={items} labels={{ cta: t("cta"), prev: t("prev"), next: t("next") }} />
+        <AudienceCards items={items} labels={{ prev: t("prev"), next: t("next") }} />
       </div>
     </section>
   );

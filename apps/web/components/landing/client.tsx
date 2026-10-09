@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Copy, Download, FileText, Hash, Link2, Menu, X } from "lucide-react";
-import Image from "next/image";
+import {
+  ArrowLeft, ArrowRight, Check, Code2, Copy, CreditCard, Download, FileText, Hash, LayoutDashboard, Link2, Menu, Palette, Rocket, Store, Users, X,
+} from "lucide-react";
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { LogoBox } from "@/components/brand/LogoBox";
 import Link from "next/link";
@@ -147,15 +148,15 @@ function NavLinks({ links }: { links: readonly (readonly [string, string])[] }) 
   );
 }
 
-/** "Built for" carousel: photo cards in a horizontal scroller; the active card reveals body + CTA. */
+const audienceIcons = [Store, Palette, Rocket, LayoutDashboard, CreditCard, Code2, Users];
+
+/** "Built for" carousel: icon cards in a horizontal scroller; arrows step one card, edge fades hint at more. */
 export function AudienceCards({ items, labels }: {
-  items: { title: string; body: string; image: string }[];
-  labels: { cta: string; prev: string; next: string };
+  items: { title: string; body: string }[];
+  labels: { prev: string; next: string };
 }) {
-  const [active, setActive] = useState(0);
-  const [edge, setEdge] = useState({ left: false, right: false });
+  const [edge, setEdge] = useState({ left: false, right: false, start: true, end: false });
   const track = useRef<HTMLUListElement>(null);
-  const refs = useRef<(HTMLLIElement | null)[]>([]);
 
   // Which sides still have content to scroll to (direction-aware, so it works in RTL).
   const measure = () => {
@@ -166,7 +167,7 @@ export function AudienceCards({ items, labels }: {
     const pos = Math.abs(el.scrollLeft);
     const more = pos < max - 2;
     const back = pos > 2;
-    setEdge({ left: rtl ? more : back, right: rtl ? back : more });
+    setEdge({ left: rtl ? more : back, right: rtl ? back : more, start: !back, end: !more });
   };
   useEffect(() => {
     measure();
@@ -174,54 +175,45 @@ export function AudienceCards({ items, labels }: {
     return () => removeEventListener("resize", measure);
   }, []);
 
-  const center = (i: number) => refs.current[i]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  const go = (i: number) => {
-    const n = Math.max(0, Math.min(items.length - 1, i));
-    setActive(n);
-    center(n);
-      };
+  // Step one card toward the inline end (dir 1) or start (dir -1); scrollBy is physical, so flip in RTL.
+  const step = (dir: 1 | -1) => {
+    const el = track.current;
+    const card = el?.firstElementChild as HTMLElement | null;
+    if (!el || !card) return;
+    const rtl = getComputedStyle(el).direction === "rtl";
+    el.scrollBy({ left: dir * (rtl ? -1 : 1) * (card.offsetWidth + 6), behavior: "smooth" });
+  };
   const arrow = "grid size-11 place-items-center rounded-full border border-line-strong text-fg transition-[transform,background-color,opacity] duration-150 ease-out hover:bg-fg/5 active:scale-[0.95] disabled:pointer-events-none disabled:opacity-35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
   return (
     <>
       <div className="flex gap-2 max-md:hidden">
-        <button type="button" aria-label={labels.prev} disabled={active === 0} onClick={() => go(active - 1)} className={arrow}>
+        <button type="button" aria-label={labels.prev} disabled={edge.start} onClick={() => step(-1)} className={arrow}>
           <ArrowRight size={18} strokeWidth={1.5} />
         </button>
-        <button type="button" aria-label={labels.next} disabled={active === items.length - 1} onClick={() => go(active + 1)} className={arrow}>
+        <button type="button" aria-label={labels.next} disabled={edge.end} onClick={() => step(1)} className={arrow}>
           <ArrowLeft size={18} strokeWidth={1.5} />
         </button>
       </div>
-      <div className="relative col-span-full mt-10 md:mt-12">
-        <ul ref={track} onScroll={measure} className="audience-track flex snap-x snap-proximity gap-4 overflow-x-auto pb-2">
-          {items.map((it, i) => (
-            <li key={it.title} ref={(el) => { refs.current[i] = el; }} data-on={i === active || undefined}
-              onClick={() => i !== active && go(i)}
-              className="audience-card relative h-[420px] shrink-0 snap-center overflow-hidden rounded-3xl bg-shell md:h-[480px]"
-            >
-              <Image src={it.image} alt="" fill sizes="(min-width: 768px) 360px, 80vw" className="audience-photo object-cover" />
-              <div aria-hidden className="audience-shade absolute inset-0" />
-              <div className="absolute inset-x-0 bottom-0 p-6 text-white md:p-7">
-                <h3 className="text-2xl font-bold">{it.title}</h3>
-                <div className="audience-more">
-                  <div>
-                    <p className="mt-3 max-w-[34ch] leading-[1.8] text-white/85">{it.body}</p>
-                    <Link href="/signin" tabIndex={i === active ? 0 : -1}
-                      className="mt-5 inline-flex h-12 items-center gap-3 rounded-full bg-white ps-5 pe-1.5 text-sm font-medium text-black transition-transform duration-150 ease-out active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                    >
-                      {labels.cta}
-                      <span className="grid size-9 place-items-center rounded-full bg-black text-white">
-                        <ArrowUpRight size={16} strokeWidth={1.5} className="-scale-x-100" aria-hidden />
-                      </span>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </li>
-          ))}
+      <div className="relative col-span-full mt-12 overflow-hidden rounded-[28px] border border-line bg-surface p-1.5">
+        <ul ref={track} onScroll={measure} className="audience-track flex snap-x snap-proximity scroll-px-1.5 gap-1.5 overflow-x-auto">
+          {items.map((it, i) => {
+            const Icon = audienceIcons[i % audienceIcons.length];
+            return (
+              <li key={it.title}
+                className="group flex min-h-[320px] w-[78vw] shrink-0 snap-start flex-col rounded-[22px] bg-card p-6 shadow-[0_1px_2px_rgb(0_0_0/0.04)] sm:w-[300px] md:min-h-[360px] md:p-7"
+              >
+                <span className="grid size-12 place-items-center rounded-2xl bg-accent-soft text-accent transition-[background-color,color] duration-200 group-hover:bg-accent group-hover:text-white">
+                  <Icon size={22} strokeWidth={1.75} aria-hidden />
+                </span>
+                <h3 className="mt-auto pt-10 text-lg font-bold">{it.title}</h3>
+                <p className="mt-2 text-sm leading-[1.9] text-pretty text-fg-2">{it.body}</p>
+              </li>
+            );
+          })}
         </ul>
         {(["left", "right"] as const).map((side) => (
           <span key={side} aria-hidden data-show={edge[side] || undefined}
-            className={`audience-fade pointer-events-none absolute inset-y-0 w-8 md:w-14 ${side === "left" ? "left-0 bg-gradient-to-r" : "right-0 bg-gradient-to-l"} from-canvas to-transparent`}
+            className={`audience-fade pointer-events-none absolute inset-y-0 w-8 md:w-14 ${side === "left" ? "left-0 bg-gradient-to-r" : "right-0 bg-gradient-to-l"} from-surface to-transparent`}
           />
         ))}
       </div>
