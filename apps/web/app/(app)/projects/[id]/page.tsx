@@ -173,20 +173,58 @@ function Severity({ severity }: { severity: Overview["recentBugs"][number]["seve
   return <span className={pill(severityTone[severity])}>{t(`severity.${severity}`)}</span>;
 }
 
+/** Mirrors Project's returning-user layout (header, tabs, composer) box for box so the swap doesn't shift anything. */
 function ProjectSkeleton() {
+  const bar = `${skeleton} rounded-md`;
   return (
     <div className="mx-auto w-full max-w-[1080px] space-y-8 px-4 py-8 max-lg:pt-14 sm:px-8" aria-busy>
-      <div className={`${skeleton} h-4 w-20`} />
-      <div className="flex items-center gap-4">
-        <div className={`${skeleton} size-14 rounded-xl`} />
-        <div className="space-y-2">
-          <div className={`${skeleton} h-6 w-48`} />
-          <div className={`${skeleton} h-4 w-32`} />
+      <header className="space-y-5">
+        <div className="flex h-5 items-center gap-1.5">
+          <div className={`${bar} size-4`} />
+          <div className={`${bar} h-3.5 w-16`} />
         </div>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className={`${skeleton} size-14 shrink-0`} />
+          <div className="min-w-0 flex-1">
+            <div className={`${bar} h-[34px] w-48 max-w-full`} />
+            <div className={`${bar} mt-1 h-5 w-32`} />
+          </div>
+          <div className={`${skeleton} h-9 w-[104px] rounded-full`} />
+        </div>
+      </header>
+
+      <div className="-mt-3 flex gap-1 border-b border-line">
+        {[112, 124, 108].map((w) => (
+          <div key={w} className="flex h-11 shrink-0 items-center px-4" style={{ width: w }}>
+            <div className={`${bar} h-4 w-full`} />
+          </div>
+        ))}
       </div>
-      <div className={`${skeleton} h-24 rounded-xl`} />
-      <div className={`${skeleton} h-56 rounded-xl`} />
-      <div className={`${skeleton} h-72 rounded-xl`} />
+
+      <section>
+        <div className="flex h-7 items-center"><div className={`${bar} h-5 w-28`} /></div>
+        <div className="mt-1 mb-4 flex h-5 items-center"><div className={`${bar} h-3.5 w-64 max-w-full`} /></div>
+        <div className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
+          <div className="space-y-3 px-5 py-5">
+            <div>
+              <div className="flex h-6 items-center"><div className={`${bar} h-4 w-40`} /></div>
+              <div className="mt-1 flex h-[25.2px] items-center"><div className={`${bar} h-3.5 w-72 max-w-full`} /></div>
+            </div>
+            <div className={`${skeleton} h-[76px] rounded-lg`} />
+          </div>
+          <div className="px-5 py-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className={`${bar} me-1 h-4 w-20`} />
+              <div className={`${skeleton} h-9 w-28 rounded-full`} />
+              <div className={`${skeleton} h-9 w-36 rounded-full`} />
+            </div>
+          </div>
+          <div className="flex items-center gap-3 bg-surface px-5 py-4">
+            <div className={`${skeleton} h-11 w-32 rounded-full`} />
+            <div className={`${bar} h-3.5 w-24`} />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

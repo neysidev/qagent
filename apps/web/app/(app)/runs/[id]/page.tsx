@@ -14,10 +14,9 @@ import { ConfirmDialog, menuItem, Popover } from "@/components/overlay";
 import { LostIllustration } from "@/components/illustrations";
 import { PendingScene } from "@/components/PendingScene";
 import { Report } from "@/components/Report";
-import { PageSkeleton } from "@/components/RequireAuth";
 import { isActive, StatusBadge } from "@/components/StatusBadge";
 import { StepViewer } from "@/components/StepViewer";
-import { button, card } from "@/components/ui";
+import { button, card, cardHeader, skeleton } from "@/components/ui";
 import { useWorkerOnline } from "@/lib/useWorkerOnline";
 import { errorKey, formatDuration, hostOf, runDuration, runErrorKey, toMarkdown } from "@/lib/format";
 
@@ -303,11 +302,68 @@ function RunError({ error }: { error: string }) {
   );
 }
 
+/** Mirrors the finished-run layout: header boxes are exact, the report body is a stand-in for data-driven content. */
+function RunSkeleton() {
+  const bar = `${skeleton} rounded-md`;
+  return (
+    <div className="mx-auto max-w-[1280px] space-y-5 px-4 py-8 max-lg:pt-14 sm:px-8" aria-busy>
+      <div className="space-y-4">
+        <div className="flex h-5 items-center gap-1.5">
+          <div className={`${bar} size-4`} />
+          <div className={`${bar} h-3.5 w-32`} />
+        </div>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="flex h-5 items-center gap-2">
+              <div className={`${skeleton} h-5 w-16 rounded-full`} />
+              <div className={`${bar} h-3.5 w-56 max-w-full`} />
+            </div>
+            <div className="flex h-[27px] items-center sm:h-[35.1px]"><div className={`${bar} h-5 w-3/4 sm:h-6`} /></div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className={`${skeleton} h-9 w-24 rounded-full`} />
+            <div className={`${skeleton} h-9 w-28 rounded-full`} />
+            <div className={`${skeleton} size-9 rounded-full`} />
+          </div>
+        </div>
+        <div className={`${skeleton} h-[30px] w-36 rounded-lg`} />
+      </div>
+
+      <div className="space-y-4">
+        <section className={card}>
+          <header className={cardHeader}><div className={`${bar} h-4 w-24`} /></header>
+          <div className="space-y-2 p-4">
+            <div className={`${bar} h-4 w-full`} />
+            <div className={`${bar} h-4 w-2/3`} />
+          </div>
+        </section>
+        <section className="grid gap-4 lg:grid-cols-[320px_1fr]">
+          <div className={`${card} h-fit`}>
+            <header className={cardHeader}><div className={`${bar} h-4 w-20`} /></header>
+            <div className="space-y-1 p-1.5">
+              {[0, 1, 2, 3].map((i) => <div key={i} className={`${skeleton} h-14 rounded-lg`} />)}
+            </div>
+          </div>
+          <div className={`${card} min-w-0 p-4`}>
+            <div className={`${bar} mb-3 h-5 w-24`} />
+            <div className="@container">
+              <div className="grid gap-4 @3xl:grid-cols-[minmax(0,1fr)_300px]">
+                <div className={`${skeleton} aspect-[16/10]`} />
+                <div className={`${skeleton} min-h-72 @3xl:min-h-0`} />
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
 export default function RunPage() {
   const { id } = useParams<{ id: string }>();
   const t = useTranslations("report");
   const data = useQuery(api.runs.get, { runId: id as Id<"runs"> });
-  if (!data) return <PageSkeleton />;
+  if (!data) return <RunSkeleton />;
   const { run } = data;
   const active = isActive(run.status);
 
