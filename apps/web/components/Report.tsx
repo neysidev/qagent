@@ -1,81 +1,83 @@
 "use client";
 
 import type { RunDetails } from "@convex/runs";
-import { useLocale, useTranslations } from "next-intl";
-import { useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { CircleCheck, Sparkles } from "lucide-react";
 import { formatDuration, formatUsd, runDuration, type Bug } from "@/lib/format";
 import { ScenarioList } from "./ScenarioList";
 import { StepViewer } from "./StepViewer";
-import { card } from "./ui";
+import { card, cardHeader, cardTitle, eyebrow, pill, type Tone } from "./ui";
 
-const severityColor: Record<Bug["severity"], string> = {
-  critical: "bg-red-600 text-white",
-  high: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
-  medium: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  low: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-};
+const severityTone: Record<Bug["severity"], Tone> = { critical: "danger", high: "danger", medium: "warning", low: "neutral" };
 
-export function Report({ data, actions }: { data: RunDetails; actions?: ReactNode }) {
+export function Report({ data }: { data: RunDetails }) {
   const t = useTranslations("report");
-  const locale = useLocale();
   const { run, scenarios, steps, bugs } = data;
   const [scenarioId, setScenarioId] = useState<string | null>(null);
   const passed = scenarios.filter((s) => s.status === "passed").length;
 
   const stats = [
-    { label: t("scenarios"), value: new Intl.NumberFormat(locale).format(scenarios.length) },
-    { label: t("passed"), value: new Intl.NumberFormat(locale).format(passed), tone: "text-green-600 dark:text-green-400" },
-    { label: t("bugs"), value: new Intl.NumberFormat(locale).format(bugs.length), tone: bugs.length ? "text-red-600 dark:text-red-400" : "" },
-    { label: t("duration"), value: formatDuration(runDuration(run, Date.now()), locale) },
+    { label: t("scenarios"), value: new Intl.NumberFormat("fa-IR").format(scenarios.length) },
+    { label: t("passed"), value: new Intl.NumberFormat("fa-IR").format(passed), tone: "text-success" },
+    { label: t("bugs"), value: new Intl.NumberFormat("fa-IR").format(bugs.length), tone: bugs.length ? "text-warning" : "" },
+    { label: t("duration"), value: formatDuration(runDuration(run, Date.now())) },
     { label: t("cost"), value: formatUsd(run.cost?.usd ?? 0), ltr: true },
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-xl font-semibold">{t("title")}</h2>
-          {run.replayOf && scenarios.length > 0 && (run.cost?.llmCalls ?? 0) === 0 && (
-            <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-300">
-              {t("replayedBadge")}
-            </span>
-          )}
-        </div>
-        {actions && <div className="no-print flex flex-wrap gap-2">{actions}</div>}
-      </div>
-
+    <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {stats.map((s) => (
           <div key={s.label} className={`${card} p-4`}>
-            <p className="text-xs text-zinc-500">{s.label}</p>
-            <p className={`mt-1 text-2xl font-semibold tabular-nums ${s.tone ?? ""}`} dir={s.ltr ? "ltr" : undefined}>
+            <p className={eyebrow}>{s.label}</p>
+            <p className={`mt-2 font-mono text-2xl leading-none font-medium ${s.tone ?? ""}`} dir={s.ltr ? "ltr" : undefined}>
               {s.value}
             </p>
           </div>
         ))}
       </div>
 
-      {run.summaryText && <p className={`${card} p-5 leading-relaxed text-pretty`}>{run.summaryText}</p>}
+      {run.summaryText && (
+        <section className={card}>
+          <header className={cardHeader}>
+            <h2 className={cardTitle}>
+              <Sparkles className="size-4 text-accent" strokeWidth={1.75} /> {t("title")}
+            </h2>
+            {run.replayOf && scenarios.length > 0 && (run.cost?.llmCalls ?? 0) === 0 && (
+              <span className={pill("accent")}>{t("replayedBadge")}</span>
+            )}
+          </header>
+          <p className="p-4 text-sm leading-7 text-pretty text-fg-2">{run.summaryText}</p>
+        </section>
+      )}
 
       <section className="space-y-3">
-        <h3 className="font-semibold">{t("bugs")}</h3>
+        <h3 className="flex items-center gap-2 pt-2 text-sm font-medium text-fg-2">
+          {t("bugs")} <span className="font-mono text-fg-3">{bugs.length}</span>
+        </h3>
         {bugs.length === 0 ? (
-          <div className={`${card} p-6 text-center`}>
-            <p className="font-medium text-green-700 dark:text-green-400">{t("noBugs")}</p>
-            <p className="mt-1 text-sm text-zinc-500">{t("noBugsBody")}</p>
+          <div className={`${card} flex flex-col items-center p-8 text-center`}>
+            <CircleCheck className="size-8 text-success" strokeWidth={1.5} />
+            <p className="mt-3 font-medium">{t("noBugs")}</p>
+            <p className="mt-1 text-sm text-fg-3">{t("noBugsBody")}</p>
           </div>
         ) : (
           bugs.map((b) => <BugCard key={b._id} bug={b} />)
         )}
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[320px_1fr]">
-        <div>
-          <h3 className="mb-2 font-semibold">{t("verdicts")}</h3>
-          <ScenarioList scenarios={scenarios} selected={scenarioId} onSelect={setScenarioId} showReasons />
+      <section className="grid gap-4 lg:grid-cols-[320px_1fr]">
+        <div className={`${card} h-fit`}>
+          <header className={cardHeader}>
+            <h3 className={cardTitle}>{t("verdicts")}</h3>
+          </header>
+          <div className="p-1.5">
+            <ScenarioList scenarios={scenarios} selected={scenarioId} onSelect={setScenarioId} showReasons />
+          </div>
         </div>
-        <div className="min-w-0">
-          <h3 className="mb-2 font-semibold">{t("timeline")}</h3>
+        <div className={`${card} min-w-0 p-4`}>
+          <h3 className={`${cardTitle} mb-3`}>{t("timeline")}</h3>
           <StepViewer
             key={scenarioId ?? "all"}
             steps={scenarioId ? steps.filter((s) => s.scenarioId === scenarioId) : steps}
@@ -94,24 +96,24 @@ function BugCard({ bug }: { bug: Bug }) {
   return (
     <article className={`${card} animate-rise space-y-4 p-5`}>
       <header className="flex items-start gap-3">
-        <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${severityColor[bug.severity]}`}>
+        <span className={pill(severityTone[bug.severity])}>
           {t(`severity.${bug.severity}`)}
         </span>
-        <h4 className="font-semibold text-pretty">{bug.title}</h4>
+        <h4 className="font-medium text-pretty">{bug.title}</h4>
       </header>
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-lg bg-green-50 p-3 dark:bg-green-950/40">
-          <p className="text-xs font-semibold text-green-800 dark:text-green-300">{t("expected")}</p>
-          <p className="mt-1 text-sm text-pretty">{bug.expected}</p>
+        <div className="rounded-lg border border-success/15 bg-success-soft/50 p-3">
+          <p className="text-xs font-medium text-success">{t("expected")}</p>
+          <p className="mt-1 text-sm text-pretty text-fg-2">{bug.expected}</p>
         </div>
-        <div className="rounded-lg bg-red-50 p-3 dark:bg-red-950/40">
-          <p className="text-xs font-semibold text-red-800 dark:text-red-300">{t("actual")}</p>
-          <p className="mt-1 text-sm text-pretty">{bug.actual}</p>
+        <div className="rounded-lg border border-danger/15 bg-danger-soft/50 p-3">
+          <p className="text-xs font-medium text-danger">{t("actual")}</p>
+          <p className="mt-1 text-sm text-pretty text-fg-2">{bug.actual}</p>
         </div>
       </div>
       <div>
-        <p className="text-sm font-semibold">{t("repro")}</p>
-        <ol className="mt-1 list-decimal space-y-1 ps-5 text-sm">
+        <p className="text-xs font-medium text-fg-3">{t("repro")}</p>
+        <ol className="mt-1.5 list-decimal space-y-1 ps-5 text-sm text-fg-2 marker:font-mono marker:text-fg-3">
           {bug.reproSteps.map((s, i) => (
             <li key={i}>{s}</li>
           ))}
@@ -119,12 +121,12 @@ function BugCard({ bug }: { bug: Bug }) {
       </div>
       {bug.screenshotUrls.length > 0 && (
         <div>
-          <p className="mb-2 text-sm font-semibold">{t("screenshots")}</p>
+          <p className="mb-2 text-xs font-medium text-fg-3">{t("screenshots")}</p>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {bug.screenshotUrls.map((u, i) => (
               <a key={u} href={u} target="_blank" rel="noreferrer" className="shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={u} alt={`${bug.title} ${i + 1}`} className="h-28 rounded-lg border border-zinc-200 dark:border-zinc-800" />
+                <img src={u} alt={`${bug.title} ${i + 1}`} className="h-28 rounded-lg border border-line transition-[border-color] hover:border-line-strong" />
               </a>
             ))}
           </div>
@@ -132,16 +134,16 @@ function BugCard({ bug }: { bug: Bug }) {
       )}
       {networkErrors.length > 0 && (
         <details>
-          <summary className="cursor-pointer text-sm font-semibold">{t("network", { n: networkErrors.length })}</summary>
-          <pre dir="ltr" className="mt-2 overflow-x-auto rounded-lg bg-zinc-100 p-3 text-xs dark:bg-zinc-950">
+          <summary className="cursor-pointer text-xs font-medium text-fg-3 hover:text-fg">{t("network", { n: networkErrors.length })}</summary>
+          <pre dir="ltr" className="mt-2 overflow-x-auto rounded-lg border border-line bg-canvas p-3 font-mono text-xs text-fg-2">
             {networkErrors.map((n) => `${n.method} ${n.url} → ${n.status || "failed"}`).join("\n")}
           </pre>
         </details>
       )}
       {consoleErrors.length > 0 && (
         <details>
-          <summary className="cursor-pointer text-sm font-semibold">{t("console", { n: consoleErrors.length })}</summary>
-          <pre dir="ltr" className="mt-2 overflow-x-auto rounded-lg bg-zinc-100 p-3 text-xs dark:bg-zinc-950">
+          <summary className="cursor-pointer text-xs font-medium text-fg-3 hover:text-fg">{t("console", { n: consoleErrors.length })}</summary>
+          <pre dir="ltr" className="mt-2 overflow-x-auto rounded-lg border border-line bg-canvas p-3 font-mono text-xs text-fg-2">
             {consoleErrors.join("\n")}
           </pre>
         </details>

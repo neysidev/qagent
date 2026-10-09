@@ -29,7 +29,7 @@ async def verify(
         f"\n\nFailed network requests:\n{network}\n\nFinal page:\n" + (final_obs.render(secrets) if final_obs else "(unavailable)")
     )
     user = prompts.image_message(text, base64.b64encode(final_shot).decode()) if final_shot else text
-    msgs = prompts.messages(prompts.VERIFIER_SYSTEM, run["locale"], user)
+    msgs = prompts.messages(prompts.VERIFIER_SYSTEM, user)
 
     verdict = await structured("fast", Verdict, msgs, cost)
     escalate = model_name("smart") != model_name("fast")

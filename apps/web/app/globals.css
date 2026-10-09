@@ -1,26 +1,212 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* QAgent design tokens (dark only). Components use the Tailwind names mapped below, never raw hex. */
+:root {
+  --bg-canvas: #141414;
+  --bg-shell: #1a1a1a;
+  --bg-surface: #1f1f1f;
+  --bg-card: #272727;
+  --bg-card-hover: #2e2e2e;
+  --pixel-off: #2f2f2f;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --text-primary: #ededed;
+  --text-secondary: #a1a1a1;
+  --text-muted: #6e6e6e;
+  --accent: #f26b1d;
+  --accent-hover: #ff7a2e;
+  --accent-soft: rgba(242, 107, 29, 0.12);
+  --on-accent: #141414;
+  --success: #3dd68c;
+  --success-soft: rgba(61, 214, 140, 0.12);
+  --warning: #f5b83d;
+  --warning-soft: rgba(245, 184, 61, 0.12);
+  --danger: #f05252;
+  --danger-soft: rgba(240, 82, 82, 0.12);
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+  --dur-slow: 450ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@theme inline {
+  --color-canvas: var(--bg-canvas);
+  --color-shell: var(--bg-shell);
+  --color-surface: var(--bg-surface);
+  --color-card: var(--bg-card);
+  --color-card-hover: var(--bg-card-hover);
+  --color-pixel-off: var(--pixel-off);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-fg: var(--text-primary);
+  --color-fg-2: var(--text-secondary);
+  --color-fg-3: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-mono: var(--font-peyda), ui-sans-serif, system-ui, sans-serif;
+}
 
 @theme {
-  --font-sans: var(--font-vazirmatn), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-peyda), ui-sans-serif, system-ui, sans-serif;
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
-html[lang="en"] {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-}
-
 html {
-  color-scheme: light;
-}
-html.dark {
   color-scheme: dark;
+  scrollbar-color: var(--border-strong) transparent;
 }
 
 body {
-  @apply bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100;
+  @apply bg-canvas text-fg;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+/* Popovers & dialogs: scale in from their trigger edge, exit faster than enter. */
+.pop {
+  transition:
+    opacity 150ms var(--ease-out),
+    transform 150ms var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.97) translateY(-4px);
+  }
+}
+dialog.modal {
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 200ms var(--ease-out),
+    overlay 200ms allow-discrete,
+    display 200ms allow-discrete;
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+dialog.modal::backdrop {
+  background: rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(2px);
+}
+/* Mobile workspace drawer */
+.drawer {
+  transition: transform 260ms var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pop,
+  dialog.modal {
+    @starting-style {
+      transform: none;
+    }
+  }
+  .drawer {
+    transition: none;
+  }
+}
+
+/* ---- Marketing type scale ---- */
+@utility t-display {
+  font-size: clamp(40px, 6vw, 76px);
+  line-height: 1.05;
+  font-weight: 600;
+  text-wrap: balance;
+}
+@utility t-h2 {
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1.15;
+  font-weight: 600;
+  text-wrap: balance;
+}
+@utility t-label {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+@utility t-metric {
+  font-family: var(--font-mono);
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+/* ---- Reveal on view: fade + rise, once. Hidden only after RevealObserver arms it, so no-JS still shows content. ---- */
+.reveal-armed [data-reveal]:not([data-in]) {
+  opacity: 0;
+  transform: translateY(16px);
+}
+[data-reveal] {
+  transition:
+    opacity var(--dur-slow) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 60ms);
+}
+
+/* ---- LogoBox ---- */
+@keyframes logo-breathe {
+  50% {
+    opacity: 0.6;
+  }
+}
+.logo-pixel {
+  animation: logo-breathe 2.4s ease-in-out infinite;
+}
+.logo-lid {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .group:hover .logo-lid {
+    transform: translateY(-3px);
+  }
+}
+.logo-check {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  transition: stroke-dashoffset 600ms var(--ease-out) 200ms;
+}
+[data-in] .logo-check,
+.logo-check[data-static] {
+  stroke-dashoffset: 0;
+}
+
+/* Mobile nav sheet: staggered link reveal */
+.sheet-item {
+  transition:
+    opacity 300ms var(--ease-out),
+    transform 300ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 40ms);
+  @starting-style {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-item {
+    @starting-style {
+      transform: none;
+    }
+  }
+  .reveal-armed [data-reveal]:not([data-in]) {
+    transform: none;
+  }
+  .logo-pixel {
+    animation: none;
+  }
+  .logo-check {
+    transition: none;
+  }
 }
 
 /* Entering content: fade + small rise. Opacity-only for reduced motion. */
@@ -49,7 +235,46 @@ body {
     background: white;
     color: black;
   }
+  .print-flat {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
   details > *:not(summary) {
     display: block;
+  }
+}
+
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+.caret {
+  animation: caret 1s steps(1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    animation: none;
+  }
+}
+
+/* PixelGrid twinkle: each cell eases on and off on its own offset, so the field never pulses in unison. */
+@keyframes pixel-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+.pixel-twinkle {
+  opacity: 0;
+  animation: pixel-twinkle 6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pixel-twinkle {
+    animation: none;
   }
 }

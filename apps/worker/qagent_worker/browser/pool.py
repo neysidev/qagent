@@ -36,7 +36,7 @@ class BrowserPool:
 
     async def new_context(self) -> BrowserContext:
         assert self._browser, "BrowserPool.start() not called"
-        context = await self._browser.new_context(viewport=VIEWPORT, ignore_https_errors=True, locale="en-US")
+        context = await self._browser.new_context(viewport=VIEWPORT, ignore_https_errors=True, locale="fa-IR")
         context.set_default_timeout(20_000)
         await context.route("**/*", _guard)
         return context

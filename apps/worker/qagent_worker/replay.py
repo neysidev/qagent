@@ -50,7 +50,6 @@ async def replay(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]) -> S
     api = deps.api
     creds = run.get("credentials") or {}
     secrets = {"username": creds.get("username", ""), "password": creds.get("password", "")}
-    fa = run["locale"] == "fa"
 
     await api.mutation("updateScenario", scenarioId=scenario["_id"], status="running")
     context = await deps.pool.new_context()
@@ -84,7 +83,7 @@ async def replay(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]) -> S
                     "runId": run["_id"], "scenarioId": scenario["_id"], "index": i,
                     "action": {k: v for k, v in {"type": action.type, "ref": action.ref, "value": action.text,
                                                   "url": action.url, "key": action.key}.items() if v is not None},
-                    "thought": f"بازپخش مرحله {i + 1} بدون مدل" if fa else f"Replaying step {i + 1} (no LLM)",
+                    "thought": f"بازپخش مرحله {i + 1} بدون مدل",
                     "viewport": {"w": VIEWPORT["width"], "h": VIEWPORT["height"]},
                     "pageUrl": url_before, "ok": error is None,
                     "durationMs": int((time.monotonic() - started) * 1000),
@@ -109,11 +108,7 @@ async def replay(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]) -> S
 
     if not reproduced:
         return None
-    reason = (
-        "به‌صورت قطعی بازپخش شد و همان نتیجه موفق تکرار شد (بدون هزینه مدل)."
-        if fa
-        else "Replayed deterministically and reproduced the passing result ($0.00 LLM cost)."
-    )
+    reason = "به‌صورت قطعی بازپخش شد و همان نتیجه موفق تکرار شد (بدون هزینه مدل)."
     await api.mutation(
         "updateScenario", scenarioId=scenario["_id"], status="passed", verdictReason=reason, replayed=True, trace=trace
     )

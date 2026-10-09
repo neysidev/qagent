@@ -10,7 +10,7 @@ need engineers to write and maintain tests; manual QA is slow and expensive.
 
 "Tell QAgent what to check. It uses your site like a real user and tells you exactly what broke, where, and why."
 
-- **No code:** goals in plain Persian or English, or one-click templates.
+- **No code:** goals in plain Persian, or one-click templates.
 - **Evidence, not guesses:** severity, reproduction steps, screenshots, console and network errors.
 - **Watchable:** the run is visible live, step by step.
 - **Cheap re-runs:** passed flows replay deterministically at $0 LLM cost and self-heal when the UI changes.
@@ -19,7 +19,7 @@ need engineers to write and maintain tests; manual QA is slow and expensive.
 ## Market
 
 Primary: Iranian startups, agencies and online shops (WooCommerce, custom shops) that have no QA role. Secondary:
-any small team worldwide via the English UI. Agencies are a multiplier: each manages many client sites.
+any small team that works in Persian. Agencies are a multiplier: each manages many client sites.
 
 ## Competitors and differentiation
 

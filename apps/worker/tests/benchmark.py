@@ -70,7 +70,7 @@ async def one_run(
 ) -> tuple[MemoryApi, float, float]:
     api = MemoryApi(replay_of)
     deps = Deps(api=api, pool=pool, scenario_slots=asyncio.Semaphore(int(os.environ.get("SCENARIO_PARALLELISM", "3"))))
-    run = {"_id": "run", "url": url, "goal": goal, "locale": "en", **({"replayOf": "prev"} if replay_of else {})}
+    run = {"_id": "run", "url": url, "goal": goal, **({"replayOf": "prev"} if replay_of else {})}
     started = time.monotonic()
     await build_graph(deps).ainvoke(RunState(run=run))
     return api, time.monotonic() - started, deps.cost.usd

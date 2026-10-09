@@ -13,6 +13,6 @@ async def plan(run: dict[str, Any], obs: Observation, cost: Cost) -> Plan:
         f"Start URL: {run['url']}\nGoal: {run['goal']}\n{template}{creds}\n\n"
         f"First observation of the start page:\n{obs.render([])}"
     )
-    result = await structured("fast", Plan, prompts.messages(prompts.PLANNER_SYSTEM, run["locale"], user), cost)
+    result = await structured("fast", Plan, prompts.messages(prompts.PLANNER_SYSTEM, user), cost)
     result.scenarios = result.scenarios[:5]
     return result

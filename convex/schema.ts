@@ -65,7 +65,6 @@ export default defineSchema({
     phone: v.optional(v.string()),
     phoneVerificationTime: v.optional(v.number()),
     isAnonymous: v.optional(v.boolean()),
-    locale: v.optional(v.union(v.literal("fa"), v.literal("en"))),
     plan: v.optional(v.string()),
   }).index("email", ["email"]),
 
@@ -82,7 +81,7 @@ export default defineSchema({
     url: v.string(),
     goal: v.string(),
     templateKey: v.optional(v.string()),
-    locale: v.union(v.literal("fa"), v.literal("en")),
+    locale: v.optional(v.string()), // legacy: the app is Persian-only now
     credentials: v.optional(v.object({ username: v.string(), password: v.string() })),
     status: runStatus,
     replayOf: v.optional(v.id("runs")),

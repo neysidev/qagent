@@ -1,11 +1,8 @@
-"""Prompt templates. Natural-language output follows the run locale; JSON keys stay English."""
+"""Prompt templates. Natural-language output is always Persian; JSON keys stay English."""
 
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 
-LANGUAGE = {
-    "fa": "Write every natural-language field (titles, thoughts, reasons, steps) in Persian (Farsi).",
-    "en": "Write every natural-language field (titles, thoughts, reasons, steps) in English.",
-}
+LANGUAGE = "Write every natural-language field (titles, thoughts, reasons, steps) in Persian (Farsi)."
 
 COMMON_RULES = """\
 - Stay on the target website. Never visit other sites.
@@ -56,8 +53,8 @@ REPORTER_SYSTEM = """You are QAgent. Write a short, plain-language summary of a 
 what was tested, what passed, and the most important problems found. No markdown headings."""
 
 
-def system(prompt: str, locale: str) -> SystemMessage:
-    return SystemMessage(content=f"{prompt}\n\n{LANGUAGE.get(locale, LANGUAGE['en'])}")
+def system(prompt: str) -> SystemMessage:
+    return SystemMessage(content=f"{prompt}\n\n{LANGUAGE}")
 
 
 def image_message(text: str, jpeg_b64: str) -> HumanMessage:
@@ -69,5 +66,5 @@ def image_message(text: str, jpeg_b64: str) -> HumanMessage:
     )
 
 
-def messages(system_prompt: str, locale: str, user: str | HumanMessage) -> list[BaseMessage]:
-    return [system(system_prompt, locale), user if isinstance(user, HumanMessage) else HumanMessage(content=user)]
+def messages(system_prompt: str, user: str | HumanMessage) -> list[BaseMessage]:
+    return [system(system_prompt), user if isinstance(user, HumanMessage) else HumanMessage(content=user)]

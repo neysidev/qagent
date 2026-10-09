@@ -151,7 +151,7 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
                         + f"\n\nCurrent page:\n{obs.render(secret_values)}"
                     )
                     decision = await structured(
-                        "fast", Decision, prompts.messages(prompts.EXECUTOR_SYSTEM, run["locale"], user), cost
+                        "fast", Decision, prompts.messages(prompts.EXECUTOR_SYSTEM, user), cost
                     )
                     thought = scrub(decision.thought, secret_values)
                     if decision.done:

@@ -1,13 +1,13 @@
 # QAgent — Technical document
 
-QAgent is an AI agent that tests web user flows as a black box: give it a URL and a goal in Persian or English,
+QAgent is an AI agent that tests web user flows as a black box: give it a URL and a goal in Persian,
 and it plans scenarios, drives a real browser, and returns an evidence-backed bug report.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  U[User browser] -->|Next.js app, fa/en| W[Vercel: apps/web]
+  U[User browser] -->|Next.js app, Persian/RTL| W[Vercel: apps/web]
   W <-->|reactive queries / mutations| C[(Convex: DB, auth, file storage, cron)]
   K[Railway: Python worker] -->|claimNextRun, addStep, addBug… WORKER_SECRET| C
   K -->|screenshots| C
@@ -22,7 +22,7 @@ flowchart LR
   `WORKER_SECRET`, and a 30 s cron that re-queues (1 retry) or fails runs whose heartbeat is older than 90 s.
 - **apps/worker** — Python 3.12, LangGraph, Playwright (async Chromium), Pydantic v2. One warm browser per worker;
   a fresh context per scenario.
-- **apps/demo-shop** — bilingual shop with five switchable bugs (B1–B5) used for the demo and the benchmark.
+- **apps/demo-shop** — Persian shop with five switchable bugs (B1–B5) used for the demo and the benchmark.
 
 ## Agent flow
 
@@ -35,7 +35,7 @@ START → plan → fan-out execute_scenario (≤ SCENARIO_PARALLELISM) → repor
 | plan | fast | Observes the start page, returns 2–5 scenarios (≥1 happy path, ≥1 negative/edge). On a re-run it reuses the original scenarios with no LLM call. |
 | execute_scenario | fast | Observe → decide (thought + 1–4 batched actions, or `done`) → act loop. Limits: 25 steps, 20 s/action, 3 min/scenario. Captcha → `error` ("blocked by captcha"), never a bug. |
 | verify (inside execute_scenario) | fast → smart | Judges `passed` / `failed` (site bug) / `agent_error` (agent stuck). Escalates to the smart model when not passed or confidence < 0.7. |
-| report | fast | Run summary in the run's locale; counts, cost. Skipped (template text) when the run made no LLM calls. |
+| report | fast | Run summary in Persian; counts, cost. Skipped (template text) when the run made no LLM calls. |
 
 **Observation.** An injected script tags visible interactive and meaningful elements (`a, button, input, select,
 textarea, [role=…], headings, alerts`) with stable `data-qa-ref` ids and returns one compact line per element.

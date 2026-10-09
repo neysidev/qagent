@@ -66,11 +66,7 @@ def build_graph(deps: Deps) -> Any:
         await deps.api.mutation("setRunStatus", runId=run["_id"], status="reporting")
         if deps.cost.llmCalls == 0:  # everything replayed: keep it at $0
             n = len(results)
-            text = (
-                f"{n} سناریو به‌صورت قطعی و بدون فراخوانی مدل بازپخش شد و همه موفق بودند. هزینه مدل: ۰ دلار."
-                if run["locale"] == "fa"
-                else f"Replayed {n} scenarios deterministically with no LLM calls; all passed. LLM cost: $0.00."
-            )
+            text = f"{n} سناریو به‌صورت قطعی و بدون فراخوانی مدل بازپخش شد و همه موفق بودند. هزینه مدل: ۰ دلار."
         else:
             text = await reporter.summarize(run, state.scenarios, results, deps.cost)
         await deps.api.mutation(

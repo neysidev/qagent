@@ -38,7 +38,7 @@ export function StepViewer({ steps, scenarios, live }: { steps: Step[]; scenario
 
   if (!step) {
     return (
-      <div className="grid aspect-[16/10] place-items-center rounded-xl border border-dashed border-zinc-300 text-sm text-zinc-500 dark:border-zinc-700">
+      <div className="grid aspect-[16/10] place-items-center rounded-xl border border-dashed border-line-strong text-sm text-fg-3">
         {t("noSteps")}
       </div>
     );
@@ -50,7 +50,7 @@ export function StepViewer({ steps, scenarios, live }: { steps: Step[]; scenario
     <div className="space-y-3">
       <div
         dir="ltr"
-        className="relative overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900"
+        className="relative overflow-hidden rounded-xl border border-line bg-canvas"
         style={{ aspectRatio: `${step.viewport.w} / ${step.viewport.h}` }}
       >
         {step.screenshotUrl && (
@@ -60,7 +60,7 @@ export function StepViewer({ steps, scenarios, live }: { steps: Step[]; scenario
         {step.target && (
           <div
             key={step._id}
-            className="animate-rise absolute rounded-md border-2 border-rose-500 bg-rose-500/10"
+            className="animate-rise absolute rounded-md border-2 border-accent bg-accent/10"
             style={{
               left: `${(step.target.x / step.viewport.w) * 100}%`,
               top: `${(step.target.y / step.viewport.h) * 100}%`,
@@ -78,7 +78,7 @@ export function StepViewer({ steps, scenarios, live }: { steps: Step[]; scenario
             <path d="M3 2l7.5 19 2.6-7.9L21 10.5z" fill="#111" stroke="#fff" strokeWidth="1.5" strokeLinejoin="round" />
           </svg>
           <span
-            className={`absolute top-6 rounded-full bg-zinc-900 px-2.5 py-1 text-xs whitespace-nowrap text-white shadow-lg ${cursor.x > 65 ? "right-0" : "left-4"}`}
+            className={`absolute top-6 rounded-full bg-card px-2.5 py-1 text-xs whitespace-nowrap text-fg shadow-lg ring-1 ring-line-strong ${cursor.x > 65 ? "right-0" : "left-4"}`}
           >
             {label}
           </span>
@@ -87,35 +87,35 @@ export function StepViewer({ steps, scenarios, live }: { steps: Step[]; scenario
 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-fg-3">
             {t("step", { n: selectedIndex + 1 })} · {scenarioTitle(step.scenarioId)}
           </p>
-          <p className="mt-1 text-pretty">{step.thought}</p>
-          {step.error && <p className="mt-1 text-sm text-red-600 dark:text-red-400" dir="ltr">{step.error}</p>}
+          <p className="mt-1 text-sm text-pretty text-fg">{step.thought}</p>
+          {step.error && <p className="mt-1 text-sm text-danger" dir="ltr">{step.error}</p>}
         </div>
         {live && !following && (
           <button onClick={() => setSelectedId(null)} className={button.secondary}>
-            <span className="size-2 animate-pulse rounded-full bg-red-500" aria-hidden />
+            <span className="size-2 animate-pulse rounded-full bg-accent" aria-hidden />
             {t("followLive")}
           </button>
         )}
       </div>
 
       <div>
-        <h3 className="mb-2 text-sm font-semibold">{t("steps")}</h3>
-        <ol className="max-h-72 space-y-0.5 overflow-y-auto rounded-xl border border-zinc-200 p-1 dark:border-zinc-800">
+        <h3 className="mb-2 text-xs font-medium text-fg-3">{t("steps")}</h3>
+        <ol className="max-h-72 space-y-0.5 overflow-y-auto rounded-lg border border-line bg-shell/50 p-1">
           {steps.map((s, i) => (
             <li key={s._id}>
               <button
                 ref={i === selectedIndex ? activeRow : undefined}
                 onClick={() => setSelectedId(s._id)}
                 aria-current={i === selectedIndex}
-                className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-start text-sm hover:bg-zinc-100 aria-[current=true]:bg-blue-50 dark:hover:bg-zinc-800 dark:aria-[current=true]:bg-blue-950"
+                className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-start text-sm text-fg-2 transition-colors duration-100 hover:bg-card aria-[current=true]:bg-accent-soft aria-[current=true]:text-fg"
               >
-                <span className="w-6 shrink-0 text-xs text-zinc-400 tabular-nums">{i + 1}</span>
-                <span className={`size-1.5 shrink-0 rounded-full ${s.ok ? "bg-green-500" : "bg-red-500"}`} aria-hidden />
+                <span className="w-6 shrink-0 font-mono text-[11px] text-fg-3">{i + 1}</span>
+                <span className={`size-1.5 shrink-0 rounded-full ${s.ok ? "bg-success" : "bg-danger"}`} aria-hidden />
                 <span className="shrink-0 font-medium">{t(`action.${s.action.type}` as "action.click")}</span>
-                <span className="truncate text-zinc-500">{s.thought}</span>
+                <span className="truncate text-fg-3">{s.thought}</span>
               </button>
             </li>
           ))}

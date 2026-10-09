@@ -6,7 +6,7 @@ export type Scenario = RunDetails["scenarios"][number];
 export type Bug = RunDetails["bugs"][number];
 export type Run = RunDetails["run"];
 
-const ERROR_CODES = ["INVALID_URL", "INVALID_GOAL", "DAILY_LIMIT"] as const;
+const ERROR_CODES = ["INVALID_URL", "INVALID_GOAL", "DAILY_LIMIT", "INVALID_NAME", "PROJECT_BUSY"] as const;
 
 /** Translation key under `errors` for a thrown mutation error. */
 export function errorKey(e: unknown): string {
@@ -22,10 +22,10 @@ export function runErrorKey(error: string): string | null {
   return null;
 }
 
-export function formatDuration(ms: number, locale: string): string {
+export function formatDuration(ms: number): string {
   const s = Math.max(0, Math.round(ms / 1000));
-  const nf = new Intl.NumberFormat(locale, { minimumIntegerDigits: 2 });
-  return `${new Intl.NumberFormat(locale).format(Math.floor(s / 60))}:${nf.format(s % 60)}`;
+  const nf = new Intl.NumberFormat("fa-IR", { minimumIntegerDigits: 2 });
+  return `${new Intl.NumberFormat("fa-IR").format(Math.floor(s / 60))}:${nf.format(s % 60)}`;
 }
 
 export const formatUsd = (usd: number) => `$${usd < 0.01 && usd > 0 ? usd.toFixed(4) : usd.toFixed(2)}`;
@@ -47,32 +47,52 @@ export function actionValue(step: Step): string | undefined {
 export function toMarkdown(data: RunDetails, labels: { duration: string; cost: string }): string {
   const { run, scenarios, bugs } = data;
   const lines = [
-    `# QAgent report — ${run.url}`,
+    `# گزارش کیوایجنت — ${run.url}`,
     "",
-    `**Goal:** ${run.goal}`,
+    `**هدف:** ${run.goal}`,
     "",
-    `- Scenarios: ${run.summary?.passed ?? 0}/${run.summary?.total ?? scenarios.length} passed`,
-    `- Bugs: ${bugs.length}`,
-    `- ${labels.duration}: ${formatDuration(runDuration(run, Date.now()), "en")}`,
+    `- سناریوها: ${run.summary?.passed ?? 0}/${run.summary?.total ?? scenarios.length} موفق`,
+    `- باگ‌ها: ${bugs.length}`,
+    `- ${labels.duration}: ${formatDuration(runDuration(run, Date.now()))}`,
     `- ${labels.cost}: ${formatUsd(run.cost?.usd ?? 0)}`,
     "",
   ];
   if (run.summaryText) lines.push(run.summaryText, "");
-  lines.push("## Bugs", "");
-  if (!bugs.length) lines.push("No bugs found.", "");
+  lines.push("## باگ‌ها", "");
+  if (!bugs.length) lines.push("باگی پیدا نشد.", "");
   for (const b of bugs) {
-    lines.push(`### [${b.severity.toUpperCase()}] ${b.title}`, "", "**Steps to reproduce:**", "");
+    lines.push(`### [${b.severity.toUpperCase()}] ${b.title}`, "", "**مراحل بازتولید:**", "");
     b.reproSteps.forEach((s, i) => lines.push(`${i + 1}. ${s}`));
-    lines.push("", `**Expected:** ${b.expected}`, "", `**Actual:** ${b.actual}`, "");
+    lines.push("", `**انتظار:** ${b.expected}`, "", `**نتیجه:** ${b.actual}`, "");
     const evidence = [
       ...b.evidence.networkErrors.map((n) => `${n.method} ${n.url} → ${n.status || "failed"}`),
       ...b.evidence.consoleErrors,
     ];
     if (evidence.length) lines.push("```", ...evidence, "```", "");
-    b.screenshotUrls.forEach((u, i) => lines.push(`![screenshot ${i + 1}](${u})`));
+    b.screenshotUrls.forEach((u, i) => lines.push(`![اسکرین‌شات ${i + 1}](${u})`));
     lines.push("");
   }
-  lines.push("## Scenarios", "");
+  lines.push("## سناریوها", "");
   for (const s of scenarios) lines.push(`- **${s.status.toUpperCase()}** ${s.title} — ${s.verdictReason ?? ""}`);
   return lines.join("\n") + "\n";
 }
+
+const rtf = new Intl.RelativeTimeFormat("fa", { numeric: "auto", style: "short" });
+/** "۵ دقیقه پیش" style relative time. */
+export function timeAgo(ts: number, now = Date.now()): string {
+  const s = Math.round((ts - now) / 1000);
+  const abs = Math.abs(s);
+  if (abs < 60) return rtf.format(0, "minute");
+  if (abs < 3600) return rtf.format(Math.round(s / 60), "minute");
+  if (abs < 86400) return rtf.format(Math.round(s / 3600), "hour");
+  return rtf.format(Math.round(s / 86400), "day");
+}
+
+export const nf = new Intl.NumberFormat("fa-IR");
+export const hostOf = (url: string) => {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+};

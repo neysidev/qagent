@@ -5,7 +5,7 @@ import { ACTIVE_STATUSES, requireOwnedRun, requireUser } from "./lib";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-type NewRun = Pick<Doc<"runs">, "url" | "goal" | "templateKey" | "locale" | "credentials" | "replayOf">;
+type NewRun = Pick<Doc<"runs">, "url" | "goal" | "templateKey" | "credentials" | "replayOf">;
 
 const dailyLimit = () => Number(process.env.DAILY_RUN_LIMIT ?? 10);
 
@@ -45,7 +45,6 @@ async function insertRun(ctx: MutationCtx, userId: Id<"users">, args: NewRun) {
     url: parsed.href,
     goal,
     templateKey: args.templateKey,
-    locale: args.locale,
     credentials: args.credentials,
     replayOf: args.replayOf,
     status: "queued",
@@ -58,7 +57,6 @@ export const create = mutation({
     url: v.string(),
     goal: v.string(),
     templateKey: v.optional(v.string()),
-    locale: v.union(v.literal("fa"), v.literal("en")),
     credentials: v.optional(v.object({ username: v.string(), password: v.string() })),
   },
   handler: async (ctx, args) => insertRun(ctx, await requireUser(ctx), args),
@@ -173,5 +171,76 @@ export const getShared = query({
       .withIndex("by_shareToken", (q) => q.eq("shareToken", token))
       .unique();
     return run ? details(ctx, run) : null;
+  },
+});
+
+export const projects = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await requireUser(ctx);
+    return await ctx.db
+      .query("projects")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+  },
+});
+
+export const viewer = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await ctx.db.get(await requireUser(ctx));
+    return user && { email: user.email ?? "", plan: user.plan ?? "free" };
+  },
+});
+
+async function requireOwnedProject(ctx: QueryCtx, projectId: Id<"projects">) {
+  const userId = await requireUser(ctx);
+  const project = await ctx.db.get(projectId);
+  if (!project || project.userId !== userId) throw new Error("Project not found");
+  return project;
+}
+
+export const renameProject = mutation({
+  args: { projectId: v.id("projects"), name: v.string() },
+  handler: async (ctx, { projectId, name }) => {
+    await requireOwnedProject(ctx, projectId);
+    const trimmed = name.trim();
+    if (!trimmed || trimmed.length > 80) throw new ConvexError("INVALID_NAME");
+    await ctx.db.patch(projectId, { name: trimmed });
+  },
+});
+
+/** Deletes a project with all its runs, scenarios, steps, bugs and screenshots. */
+export const deleteProject = mutation({
+  args: { projectId: v.id("projects") },
+  handler: async (ctx, { projectId }) => {
+    const project = await requireOwnedProject(ctx, projectId);
+    // ponytail: full scan of the user's runs in one transaction; batch via scheduler if projects grow past a few hundred runs.
+    const runs = (
+      await ctx.db
+        .query("runs")
+        .withIndex("by_user", (q) => q.eq("userId", project.userId))
+        .collect()
+    ).filter((r) => r.projectId === projectId);
+    if (runs.some((r) => r.status === "queued" || (ACTIVE_STATUSES as readonly string[]).includes(r.status)))
+      throw new ConvexError("PROJECT_BUSY");
+
+    for (const run of runs) {
+      const [scenarios, steps, bugs] = await Promise.all([
+        ctx.db.query("scenarios").withIndex("by_run", (q) => q.eq("runId", run._id)).collect(),
+        ctx.db.query("steps").withIndex("by_run", (q) => q.eq("runId", run._id)).collect(),
+        ctx.db.query("bugs").withIndex("by_run", (q) => q.eq("runId", run._id)).collect(),
+      ]);
+      const files = new Set([
+        ...steps.flatMap((s) => (s.screenshotId ? [s.screenshotId] : [])),
+        ...bugs.flatMap((b) => b.evidence.screenshotIds),
+      ]);
+      await Promise.all([
+        ...[...files].map((id) => ctx.storage.delete(id)),
+        ...[...scenarios, ...steps, ...bugs].map((d) => ctx.db.delete(d._id)),
+      ]);
+      await ctx.db.delete(run._id);
+    }
+    await ctx.db.delete(projectId);
   },
 });
