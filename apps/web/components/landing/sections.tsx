@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 import { LogoBox } from "@/components/brand/LogoBox";
@@ -19,13 +19,17 @@ function Section({ id, tone = "canvas", children }: { id?: string; tone?: "canva
   );
 }
 
-function SectionHeader({ eyebrow, title, subtitle, center = true }: { eyebrow: string; title: string; subtitle?: string; center?: boolean }) {
+/** Section heading: rounded badge, title with an optional orange <hl> span, subtitle. */
+function SectionHeading({ ns }: { ns: string }) {
+  const t = useTranslations(ns);
   return (
-    <div data-reveal className={`mb-12 max-w-2xl md:mb-16 ${center ? "mx-auto text-center" : ""}`}>
-      <p className="t-label text-accent">{eyebrow}</p>
-      <h2 className="t-h2 mt-3">{title}</h2>
-      {subtitle && <p className="mt-4 text-lg text-pretty text-fg-2">{subtitle}</p>}
-    </div>
+    <>
+      <p className="inline-flex rounded-full border border-line bg-card px-3 py-1 text-sm text-fg-2">{t("eyebrow")}</p>
+      <h2 className="mt-5 text-[clamp(24px,2.6vw,34px)] leading-[1.3] font-bold text-balance">
+        {t.rich("title", { hl: (c) => <span className="text-accent">{c}</span> })}
+      </h2>
+      <p className="mt-3 text-pretty text-fg-2">{t("subtitle")}</p>
+    </>
   );
 }
 
@@ -187,11 +191,7 @@ export function Problem() {
   return (
     <Section tone="surface">
       <div data-reveal className="max-w-2xl">
-        <p className="inline-flex rounded-full border border-line bg-card px-3 py-1 text-sm text-fg-2">{t("eyebrow")}</p>
-        <h2 className="mt-5 text-[clamp(24px,2.6vw,34px)] leading-[1.3] font-bold text-balance">
-          {t.rich("title", { hl: (c) => <span className="text-accent">{c}</span> })}
-        </h2>
-        <p className="mt-3 text-pretty text-fg-2">{t("subtitle")}</p>
+        <SectionHeading ns="landing.problem" />
       </div>
       {/* One tray holding all three cards, so they read as a single block. */}
       <ul className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 md:grid-cols-3">
@@ -302,11 +302,7 @@ export function HowItWorks() {
   return (
     <Section id="how">
       <div data-reveal className="max-w-2xl">
-        <p className="inline-flex rounded-full border border-line bg-card px-3 py-1 text-sm text-fg-2">{t("eyebrow")}</p>
-        <h2 className="mt-5 text-[clamp(24px,2.6vw,34px)] leading-[1.3] font-bold text-balance">
-          {t.rich("title", { hl: (c) => <span className="text-accent">{c}</span> })}
-        </h2>
-        <p className="mt-3 text-pretty text-fg-2">{t("subtitle")}</p>
+        <SectionHeading ns="landing.how" />
       </div>
       <ol className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 md:grid-cols-3">
         {steps.map((s, i) => (
@@ -557,11 +553,7 @@ export function Features() {
   return (
     <Section id="features" tone="surface">
       <div data-reveal className="max-w-2xl">
-        <p className="inline-flex rounded-full border border-line bg-card px-3 py-1 text-sm text-fg-2">{t("eyebrow")}</p>
-        <h2 className="mt-5 text-[clamp(24px,2.6vw,34px)] leading-[1.3] font-bold text-balance">
-          {t.rich("title", { hl: (c) => <span className="text-accent">{c}</span> })}
-        </h2>
-        <p className="mt-3 text-pretty text-fg-2">{t("subtitle")}</p>
+        <SectionHeading ns="landing.features" />
       </div>
       <ul className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((it, i) => (
@@ -581,11 +573,7 @@ export function ReportShowcase() {
   return (
     <Section>
       <div data-reveal className="max-w-2xl">
-        <p className="inline-flex rounded-full border border-line bg-card px-3 py-1 text-sm text-fg-2">{t("eyebrow")}</p>
-        <h2 className="mt-5 text-[clamp(24px,2.6vw,34px)] leading-[1.3] font-bold text-balance">
-          {t.rich("title", { hl: (c) => <span className="text-accent">{c}</span> })}
-        </h2>
-        <p className="mt-3 text-pretty text-fg-2">{t("subtitle")}</p>
+        <SectionHeading ns="landing.report" />
       </div>
       <ReportFormats d={t.raw("doc") as ReportDoc} formats={t.raw("formats") as Item[]} label={t("formatsLabel")} />
     </Section>
@@ -600,11 +588,7 @@ export function PricingSection() {
         plans={t.raw("plans")}
         header={
           <div className="max-w-2xl">
-            <p className="inline-flex rounded-full border border-line bg-card px-3 py-1 text-sm text-fg-2">{t("eyebrow")}</p>
-            <h2 className="mt-5 text-[clamp(24px,2.6vw,34px)] leading-[1.3] font-bold text-balance">
-              {t.rich("title", { hl: (c) => <span className="text-accent">{c}</span> })}
-            </h2>
-            <p className="mt-3 text-pretty text-fg-2">{t("subtitle")}</p>
+            <SectionHeading ns="landing.pricing" />
           </div>
         }
         labels={{
@@ -621,17 +605,25 @@ export function Faq() {
   const items = t.raw("items") as { q: string; a: string }[];
   return (
     <Section id="faq">
-      <SectionHeader eyebrow={t("eyebrow")} title={t("title")} />
-      <div className="mx-auto max-w-3xl divide-y divide-line border-y border-line">
-        {items.map((it, i) => (
-          <details key={it.q} name="faq" data-reveal style={stagger(i)} className="group">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-lg font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
-              {it.q}
-              <ChevronDown size={20} strokeWidth={1.5} aria-hidden className="shrink-0 text-fg-3 transition-transform duration-200 group-open:rotate-180" />
-            </summary>
-            <p className="pb-5 text-fg-2">{it.a}</p>
-          </details>
-        ))}
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,340px)_1fr] lg:gap-16">
+        <div data-reveal className="lg:sticky lg:top-28 lg:self-start">
+          <SectionHeading ns="landing.faq" />
+        </div>
+        <div className="flex flex-col gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5">
+          {items.map((it, i) => (
+            <details key={it.q} name="faq" open={i === 0} data-reveal style={stagger(i)}
+              className="faq-item group rounded-[22px] bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]"
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[22px] px-5 py-5 font-bold md:px-6 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
+                {it.q}
+                <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-shell text-fg-2 transition-[background-color,color,transform] duration-300 ease-[var(--ease-out-strong)] group-open:rotate-45 group-open:bg-accent group-open:text-white">
+                  <Plus size={16} strokeWidth={2} />
+                </span>
+              </summary>
+              <p className="px-5 pb-6 text-sm leading-[2] text-pretty text-fg-2 md:px-6">{it.a}</p>
+            </details>
+          ))}
+        </div>
       </div>
     </Section>
   );

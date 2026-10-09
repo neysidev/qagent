@@ -413,6 +413,29 @@ dialog.modal::backdrop {
   }
 }
 
+/* FAQ: answers slide open where the browser can animate details content; others just toggle. */
+.faq-item {
+  interpolate-size: allow-keywords;
+}
+.faq-item::details-content {
+  block-size: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    block-size 320ms var(--ease-out-strong),
+    opacity 240ms ease,
+    content-visibility 320ms allow-discrete;
+}
+.faq-item[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-item::details-content {
+    transition: opacity 200ms ease, content-visibility 200ms allow-discrete;
+  }
+}
+
 /* Nav after the hero: slides down softly on enter, glides up a little faster on exit. */
 @keyframes nav-drop {
   from {
