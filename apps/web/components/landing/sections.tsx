@@ -1,4 +1,4 @@
-import { ChevronDown, Link2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { CSSProperties, ReactNode } from "react";
 import { LogoBox } from "@/components/brand/LogoBox";
@@ -7,8 +7,8 @@ import Image from "next/image";
 import Link from "next/link";
 import agent from "@/public/hero-agent.webp";
 import { benchmark } from "@/lib/benchmark";
-import { AudienceCards, Pricing, UseCaseTabs } from "./client";
-import { badge, btn, card, container } from "./ui";
+import { AudienceCards, Pricing, ReportFormats, UseCaseTabs, type ReportDoc } from "./client";
+import { btn, card, container } from "./ui";
 
 type Item = { title: string; body: string };
 const stagger = (i: number) => ({ "--i": i }) as CSSProperties;
@@ -580,67 +580,16 @@ export function Features() {
 
 export function ReportShowcase() {
   const t = useTranslations("landing.report");
-  const steps = t.raw("steps") as string[];
-  const shots = t.raw("shots") as string[];
   return (
     <Section>
-      <SectionHeader eyebrow={t("eyebrow")} title={t("title")} subtitle={t("subtitle")} />
-      <article className={`${card} mx-auto max-w-3xl p-6 md:p-8`}>
-        <div data-reveal className="flex items-center justify-between gap-3">
-          <span className={badge("bug")}>{t("high")}</span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-xs text-fg-2">
-            <Link2 size={14} strokeWidth={1.5} aria-hidden />{t("share")}
-          </span>
-        </div>
-        <h3 data-reveal style={stagger(1)} className="mt-4 text-xl font-medium md:text-2xl">{t("bugTitle")}</h3>
-        <div data-reveal style={stagger(2)} className="mt-6 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-lg border border-line bg-shell p-4">
-            <p className="t-label text-success">{t("expectedLabel")}</p>
-            <p className="mt-2 text-sm text-fg-2">{t("expected")}</p>
-          </div>
-          <div className="rounded-lg border border-line bg-shell p-4">
-            <p className="t-label text-danger">{t("actualLabel")}</p>
-            <p className="mt-2 text-sm text-fg-2">{t("actual")}</p>
-          </div>
-        </div>
-        <div data-reveal style={stagger(3)} className="mt-6">
-          <p className="t-label text-fg-3">{t("stepsLabel")}</p>
-          <ol className="mt-3 space-y-2 text-sm">
-            {steps.map((s, i) => (
-              <li key={s} className="flex gap-3">
-                <span className="font-mono text-fg-3">{i + 1}.</span>
-                <span className="text-fg-2">{s}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-        <div data-reveal style={stagger(4)} className="mt-6">
-          <p className="t-label text-fg-3">{t("screenshotsLabel")}</p>
-          <ul className="mt-3 grid grid-cols-3 gap-2">
-            {shots.map((s, i) => (
-              <li key={s}>
-                <div aria-hidden className={`aspect-[4/3] rounded-lg border bg-canvas p-2 ${i === 1 ? "border-danger/40" : "border-line"}`}>
-                  <div className="h-1.5 w-1/2 rounded bg-pixel-off" />
-                  <div className="mt-2 h-3 rounded bg-pixel-off" />
-                  <div className="mt-1.5 h-3 rounded bg-pixel-off" />
-                </div>
-                <p className="mt-1.5 text-xs text-fg-3">{s}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <details data-reveal style={stagger(5)} className="group mt-6 rounded-lg border border-line bg-shell">
-          <summary className="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-accent">
-            {t("technical")}
-            <ChevronDown size={16} strokeWidth={1.5} aria-hidden className="text-fg-3 transition-transform duration-200 group-open:rotate-180" />
-          </summary>
-          <pre dir="ltr" className="overflow-x-auto border-t border-line px-4 py-3 font-mono text-xs leading-6 text-fg-2">
-            <span className="text-danger">DELETE /api/cart/12 → 500 Internal Server Error</span>{"\n"}
-            <span className="text-danger">console.error</span> Failed to remove item: Error 500{"\n"}
-            GET /api/cart → 200 (item still present)
-          </pre>
-        </details>
-      </article>
+      <div data-reveal className="max-w-2xl">
+        <p className="inline-flex rounded-full border border-line bg-card px-3 py-1 text-sm text-fg-2">{t("eyebrow")}</p>
+        <h2 className="mt-5 text-[clamp(24px,2.6vw,34px)] leading-[1.3] font-bold text-balance">
+          {t.rich("title", { hl: (c) => <span className="text-accent">{c}</span> })}
+        </h2>
+        <p className="mt-3 text-pretty text-fg-2">{t("subtitle")}</p>
+      </div>
+      <ReportFormats d={t.raw("doc") as ReportDoc} formats={t.raw("formats") as Item[]} label={t("formatsLabel")} />
     </Section>
   );
 }

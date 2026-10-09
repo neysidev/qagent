@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Menu, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Copy, Download, FileText, Hash, Link2, Menu, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { LogoBox } from "@/components/brand/LogoBox";
@@ -226,6 +226,241 @@ export function AudienceCards({ items, labels }: {
         ))}
       </div>
     </>
+  );
+}
+
+export type ReportDoc = {
+  heading: string; goalLabel: string; goal: string; dateLabel: string; date: string; durationLabel: string; duration: string;
+  scenariosLabel: string; scenarios: string; passed: string; bugs: string; high: string; bugTitle: string;
+  expectedLabel: string; expected: string; actualLabel: string; actual: string; stepsLabel: string; steps: string[];
+  screenshotsLabel: string; shots: string[]; technical: string; page: string; copy: string; download: string; share: string;
+};
+
+const formatIcons = [Link2, FileText, Hash];
+const severityPill = "inline-flex items-center gap-1.5 rounded-full bg-danger-soft px-2.5 py-0.5 text-xs font-medium text-danger before:size-1.5 before:rounded-full before:bg-current";
+
+/** The report itself, shared by the link and PDF previews. `paper` tightens it to a printed page. */
+function ReportBody({ d, paper = false }: { d: ReportDoc; paper?: boolean }) {
+  const meta = [[d.dateLabel, d.date], [d.durationLabel, d.duration], [d.scenariosLabel, d.scenarios]];
+  return (
+    <div className={paper ? "space-y-4 text-[11px]" : "space-y-5 text-sm"}>
+      <div className={`grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-line bg-line`}>
+        {meta.map(([k, v]) => (
+          <div key={k} className={`bg-card ${paper ? "px-3 py-2" : "px-4 py-3"}`}>
+            <p className="text-[11px] text-fg-3">{k}</p>
+            <p className={`mt-0.5 font-bold ${paper ? "text-xs" : "text-base"}`}>{v}</p>
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-medium text-success">
+          <Check size={12} strokeWidth={2.5} aria-hidden />{d.passed}
+        </span>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-danger-soft px-2.5 py-0.5 text-xs font-medium text-danger">
+          <X size={12} strokeWidth={2.5} aria-hidden />{d.bugs}
+        </span>
+        <span className="text-xs text-fg-3">· {d.goalLabel}: {d.goal}</span>
+      </div>
+
+      <article className="rounded-2xl border border-line">
+        <div className={`border-b border-line ${paper ? "p-3" : "p-4 md:p-5"}`}>
+          <span className={severityPill}>{d.high}</span>
+          <h4 className={`mt-2.5 font-bold ${paper ? "text-sm" : "text-base md:text-lg"}`}>{d.bugTitle}</h4>
+        </div>
+        <div className={`grid gap-px bg-line sm:grid-cols-2`}>
+          {[[d.expectedLabel, d.expected, "text-success"], [d.actualLabel, d.actual, "text-danger"]].map(([k, v, tone]) => (
+            <div key={k} className={`bg-card ${paper ? "p-3" : "p-4 md:p-5"}`}>
+              <p className={`text-xs font-medium ${tone}`}>{k}</p>
+              <p className="mt-1.5 leading-[1.8] text-fg-2">{v}</p>
+            </div>
+          ))}
+        </div>
+        <div className={`border-t border-line ${paper ? "p-3" : "p-4 md:p-5"}`}>
+          <p className="text-xs font-medium text-fg-3">{d.stepsLabel}</p>
+          <ol className="mt-3 space-y-2">
+            {d.steps.map((step, i) => (
+              <li key={step} className="flex items-start gap-2.5">
+                <span className={`grid size-5 shrink-0 place-items-center rounded-full text-[10px] font-bold ${i === d.steps.length - 1 ? "bg-danger-soft text-danger" : "bg-shell text-fg-2"}`}>
+                  {(i + 1).toLocaleString("fa-IR")}
+                </span>
+                <span className="leading-[1.7] text-fg-2">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className={`border-t border-line ${paper ? "p-3" : "p-4 md:p-5"}`}>
+          <p className="text-xs font-medium text-fg-3">{d.screenshotsLabel}</p>
+          <ul className="mt-3 grid grid-cols-3 gap-2">
+            {d.shots.map((label, i) => (
+              <li key={label}>
+                <div aria-hidden className={`relative aspect-[4/3] overflow-hidden rounded-lg border bg-shell p-2 ${i === 1 ? "border-danger/40" : "border-line"}`}>
+                  {i < 2 ? (
+                    <>
+                      <div className="h-1.5 w-2/5 rounded-full bg-pixel-off" />
+                      {[0, 1].map((r) => (
+                        <div key={r} className="mt-1.5 flex items-center gap-1 rounded bg-card p-1">
+                          <div className="h-2 w-1/2 rounded-full bg-pixel-off" />
+                          <div className={`ms-auto h-2.5 w-4 rounded-sm border ${i === 1 && r === 0 ? "border-danger" : "border-line-strong"}`} />
+                        </div>
+                      ))}
+                      {i === 1 && <span className="absolute end-1 top-4 size-6 rounded-md border border-dashed border-danger" />}
+                    </>
+                  ) : (
+                    <div dir="ltr" className="space-y-1 font-mono text-[8px] leading-none">
+                      <p className="text-success">200 GET /cart</p>
+                      <p className="rounded-sm bg-danger-soft px-0.5 py-0.5 text-danger">500 DELETE</p>
+                      <p className="text-success">200 GET /cart</p>
+                    </div>
+                  )}
+                </div>
+                <p className="mt-1.5 text-[11px] text-fg-3">{label}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className={`border-t border-line ${paper ? "p-3" : "p-4 md:p-5"}`}>
+          <p className="text-xs font-medium text-fg-3">{d.technical}</p>
+          <pre dir="ltr" className="mt-2.5 overflow-x-auto rounded-lg bg-shell px-3 py-2.5 font-mono text-[11px] leading-6 text-fg-2">
+            <span className="text-danger">DELETE /api/cart/12 → 500 Internal Server Error</span>{"\n"}
+            <span className="text-danger">console.error</span> Failed to remove item{"\n"}
+            GET /api/cart → 200 (item still present)
+          </pre>
+        </div>
+      </article>
+    </div>
+  );
+}
+
+/** Markdown export, shown as the file a developer would paste into an issue. */
+function MarkdownView({ d }: { d: ReportDoc }) {
+  const lines: [string, "h1" | "h2" | "h3" | "kv" | "li" | "code" | "blank" | "text", string?][] = [
+    [`# ${d.heading} · myshop.ir`, "h1"],
+    ["", "blank"],
+    [`${d.goalLabel}:`, "kv", d.goal],
+    [`${d.durationLabel}:`, "kv", `${d.duration} · ${d.passed} · ${d.bugs}`],
+    ["", "blank"],
+    [`## [${d.high}] ${d.bugTitle}`, "h2"],
+    ["", "blank"],
+    [`${d.expectedLabel}:`, "kv", d.expected],
+    [`${d.actualLabel}:`, "kv", d.actual],
+    ["", "blank"],
+    [`### ${d.stepsLabel}`, "h3"],
+    ...d.steps.map((step, i) => [`${i + 1}. ${step}`, "li"] as [string, "li"]),
+    ["", "blank"],
+    [`### ${d.technical}`, "h3"],
+    ["```", "code"],
+    ["DELETE /api/cart/12 → 500", "code"],
+    ["```", "code"],
+  ];
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
+        <span dir="ltr" className="font-mono text-xs text-fg-2">qagent-report.md</span>
+        <span className="inline-flex h-7 items-center gap-1.5 rounded-full border border-line-strong px-3 text-xs text-fg-2">
+          <Copy size={12} strokeWidth={1.75} aria-hidden />{d.copy}
+        </span>
+      </div>
+      <ol className="flex-1 overflow-hidden py-3 font-mono text-[12.5px] leading-7">
+        {lines.map(([text, kind, value], i) => (
+          <li key={i} className="flex gap-4 px-4">
+            <span dir="ltr" className="w-5 shrink-0 select-none text-end text-fg-3/70">{i + 1}</span>
+            {kind === "blank" ? <span>&nbsp;</span>
+              : kind === "code" ? <span dir="ltr" className="text-danger">{text}</span>
+              : kind === "kv" ? <span><span className="font-bold text-fg">**{text}**</span> <span className="text-fg-2">{value}</span></span>
+              : kind === "li" ? <span className="text-fg-2"><span className="text-accent">{text.split(" ")[0]}</span> {text.split(" ").slice(1).join(" ")}</span>
+              : <span className={`font-bold ${kind === "h1" ? "text-fg" : kind === "h2" ? "text-accent" : "text-fg-2"}`}>{text}</span>}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+/** Report showcase: pick a format on the side, see exactly what that export looks like. */
+export function ReportFormats({ d, formats, label }: { d: ReportDoc; formats: { title: string; body: string }[]; label: string }) {
+  const [active, setActive] = useState(0);
+  const id = useId();
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  function onKeyDown(e: KeyboardEvent) {
+    const dir = { ArrowDown: 1, ArrowUp: -1 }[e.key];
+    if (!dir) return;
+    e.preventDefault();
+    const next = (active + dir + formats.length) % formats.length;
+    setActive(next);
+    refs.current[next]?.focus();
+  }
+  const action = "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium";
+  return (
+    <div className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 lg:grid-cols-[300px_1fr]">
+      <div role="tablist" aria-label={label} aria-orientation="vertical" onKeyDown={onKeyDown} className="flex flex-col gap-1.5">
+        {formats.map((f, i) => {
+          const Icon = formatIcons[i];
+          const on = i === active;
+          return (
+            <button key={f.title} ref={(el) => { refs.current[i] = el; }} type="button" role="tab" id={`${id}-tab-${i}`}
+              aria-selected={on} aria-controls={`${id}-panel`} tabIndex={on ? 0 : -1} onClick={() => setActive(i)}
+              className={`group flex flex-1 items-start gap-3.5 rounded-[22px] p-5 text-start transition-[background-color,box-shadow] duration-200 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent ${on ? "bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]" : "hover:bg-card/60"}`}
+            >
+              <span className={`grid size-10 shrink-0 place-items-center rounded-xl transition-colors duration-200 ${on ? "bg-accent text-on-accent" : "bg-card text-fg-2 ring-1 ring-line"}`}>
+                <Icon size={18} strokeWidth={1.75} aria-hidden />
+              </span>
+              <span>
+                <span className={`block font-bold transition-colors duration-200 ${on ? "text-fg" : "text-fg-2"}`}>{f.title}</span>
+                <span className="mt-1 block text-sm leading-[1.8] text-fg-3">{f.body}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-tab-${active}`}
+        className="relative h-[620px] overflow-hidden rounded-[22px] bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]"
+      >
+        <div key={active} className="animate-rise h-full">
+          {active === 0 && (
+            <div className="flex h-full flex-col">
+              <div className="flex items-center gap-3 border-b border-line px-4 py-2.5">
+                <span className="flex gap-1.5" aria-hidden>{[0, 1, 2].map((i) => <span key={i} className="size-2.5 rounded-full bg-pixel-off" />)}</span>
+                <span dir="ltr" className="mx-auto flex min-w-0 items-center gap-1.5 truncate rounded-full bg-shell px-3 py-1 font-mono text-xs text-fg-2">
+                  <Link2 size={12} strokeWidth={1.75} aria-hidden className="shrink-0" />qagent.ir/share/x7k2
+                </span>
+                <span className={`${action} bg-fg text-canvas`}><Copy size={12} strokeWidth={1.75} aria-hidden />{d.copy}</span>
+              </div>
+              <div className="flex-1 overflow-hidden p-5 md:p-7">
+                <div className="mb-5 flex items-center gap-2.5">
+                  <LogoBox size={22} />
+                  <span className="font-bold">{d.heading}</span>
+                  <span dir="ltr" className="font-mono text-xs text-fg-3">myshop.ir</span>
+                </div>
+                <ReportBody d={d} />
+              </div>
+            </div>
+          )}
+          {active === 1 && (
+            <div className="flex h-full flex-col bg-shell">
+              <div className="flex items-center justify-between gap-3 border-b border-line bg-card px-4 py-2.5">
+                <span className="flex items-center gap-2 text-xs text-fg-2">
+                  <span className="grid h-6 place-items-center rounded bg-danger px-1.5 text-[10px] font-bold text-white">PDF</span>
+                  <span dir="ltr" className="font-mono">qagent-report.pdf</span>
+                </span>
+                <span className={`${action} bg-fg text-canvas`}><Download size={12} strokeWidth={1.75} aria-hidden />{d.download}</span>
+              </div>
+              <div className="flex-1 overflow-hidden px-4 pt-6 sm:px-10">
+                <div className="mx-auto max-w-[520px] rounded-t-md bg-card px-7 pt-7 pb-10 shadow-[0_1px_3px_rgb(0_0_0/0.08),0_12px_32px_-12px_rgb(0_0_0/0.18)]">
+                  <div className="mb-5 flex items-center justify-between border-b-2 border-fg pb-3">
+                    <span className="flex items-center gap-2"><LogoBox size={18} /><span className="text-sm font-bold">{d.heading}</span></span>
+                    <span className="text-[10px] text-fg-3">{d.page}</span>
+                  </div>
+                  <ReportBody d={d} paper />
+                </div>
+              </div>
+            </div>
+          )}
+          {active === 2 && <MarkdownView d={d} />}
+        </div>
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card to-transparent" />
+      </div>
+    </div>
   );
 }
 
