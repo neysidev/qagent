@@ -11,7 +11,7 @@ export const button = {
 };
 
 /** Section card: bordered surface. Pair with `cardHeader` for the reference's titled panels. */
-export const card = "rounded-[22px] border border-line bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]";
+export const card = "rounded-xl border border-line bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]";
 export const cardHeader = "flex items-center justify-between gap-3 border-b border-line px-5 h-14";
 export const cardTitle = "flex items-center gap-2 text-sm font-bold text-fg";
 

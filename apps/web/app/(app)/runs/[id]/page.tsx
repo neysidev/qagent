@@ -4,8 +4,9 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import type { RunDetails } from "@convex/runs";
 import { useMutation, useQuery } from "convex/react";
-import { Check, Clock, Coins, Download, Ellipsis, ExternalLink, Link2, Printer, RotateCcw, Square } from "lucide-react";
+import { ArrowRight, Check, Clock, Coins, Download, Ellipsis, ExternalLink, Link2, Printer, RotateCcw, Square } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ConfirmDialog, menuItem, Popover } from "@/components/overlay";
@@ -15,7 +16,7 @@ import { ScenarioList } from "@/components/ScenarioList";
 import { isActive, StatusBadge } from "@/components/StatusBadge";
 import { StepViewer } from "@/components/StepViewer";
 import { button, card, cardHeader, cardTitle } from "@/components/ui";
-import { errorKey, formatDuration, formatUsd, runDuration, runErrorKey, toMarkdown } from "@/lib/format";
+import { errorKey, formatDuration, formatUsd, hostOf, runDuration, runErrorKey, toMarkdown } from "@/lib/format";
 
 function useNow(ticking: boolean) {
   const [now, setNow] = useState(() => Date.now());
@@ -37,6 +38,10 @@ function RunHeader({ data, actions }: { data: RunDetails; actions: React.ReactNo
 
   return (
     <div className="space-y-4">
+      <Link href={`/projects/${run.projectId}`} className="no-print inline-flex items-center gap-1.5 rounded text-sm text-fg-3 transition-colors hover:text-fg focus-visible:outline-2 focus-visible:outline-accent">
+        <ArrowRight className="size-4" strokeWidth={1.75} aria-hidden />
+        <span dir="ltr">{hostOf(run.url)}</span>
+      </Link>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">

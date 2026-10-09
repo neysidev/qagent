@@ -6,8 +6,9 @@ import type { Doc } from "@convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { LogOut, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useState } from "react";
-import { ProjectAvatar, useWorkspace } from "@/components/AppShell";
+import { ProjectAvatar, useWorkspace, type ProjectRow as ProjectRowData } from "@/components/AppShell";
 import { ConfirmDialog } from "@/components/overlay";
 import { button, card, cardHeader, cardTitle, input, label, pill, skeleton } from "@/components/ui";
 import { errorKey, nf, timeAgo } from "@/lib/format";
@@ -17,18 +18,16 @@ export default function SettingsPage() {
   const viewer = useQuery(api.runs.viewer);
   const quota = useQuery(api.runs.quota);
   const te = useTranslations("errors");
-  const { projects, runs, projectId, setProjectId } = useWorkspace();
+  const { projects } = useWorkspace();
   const { signOut } = useAuthActions();
   const deleteProject = useMutation(api.runs.deleteProject);
-  const [toDelete, setToDelete] = useState<Doc<"projects"> | null>(null);
+  const [toDelete, setToDelete] = useState<ProjectRowData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const taskCount = (id: Doc<"projects">["_id"]) => runs?.filter((r) => r.projectId === id).length ?? 0;
 
-  async function onDelete(p: Doc<"projects">) {
+  async function onDelete(p: ProjectRowData) {
     setError(null);
     try {
       await deleteProject({ projectId: p._id });
-      if (projectId === p._id) setProjectId(null);
     } catch (e) {
       setError(te(errorKey(e)));
     }
@@ -110,9 +109,8 @@ export default function SettingsPage() {
               <ProjectRow
                 key={p._id}
                 project={p}
-                tasks={taskCount(p._id)}
-                lastAt={runs?.find((r) => r.projectId === p._id)?.createdAt}
-                onFocus={() => setProjectId(p._id)}
+                tasks={p.runCount}
+                lastAt={p.lastRun?.createdAt}
                 onDelete={() => setToDelete(p)}
               />
             ))}
@@ -128,7 +126,7 @@ export default function SettingsPage() {
           onClose={() => setToDelete(null)}
           onConfirm={() => toDelete && void onDelete(toDelete)}
           title={t("deleteTitle", { name: toDelete?.name ?? "" })}
-          body={t("deleteBody", { n: toDelete ? taskCount(toDelete._id) : 0 })}
+          body={t("deleteBody", { n: toDelete?.runCount ?? 0 })}
           confirmLabel={t("delete")}
           cancelLabel={t("keep")}
         />
@@ -141,13 +139,11 @@ function ProjectRow({
   project,
   tasks,
   lastAt,
-  onFocus,
   onDelete,
 }: {
   project: Doc<"projects">;
   tasks: number;
   lastAt?: number;
-  onFocus: () => void;
   onDelete: () => void;
 }) {
   const t = useTranslations("settings");
@@ -176,7 +172,7 @@ function ProjectRow({
     return (
       <li className="px-4 py-3">
         <form onSubmit={onSubmit} className="flex flex-wrap items-center gap-2">
-          <ProjectAvatar name={name || project.name} />
+          <ProjectAvatar name={name || project.name} url={project.baseUrl} />
           <label className="min-w-40 flex-1">
             <span className="sr-only">{t("projectName")}</span>
             <input
@@ -203,7 +199,7 @@ function ProjectRow({
 
   return (
     <li className="group flex items-center gap-3 px-4 py-3">
-      <ProjectAvatar name={project.name} />
+      <ProjectAvatar name={project.name} url={project.baseUrl} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm text-fg">{project.name}</span>
         <span className="block text-xs text-fg-3">
@@ -211,9 +207,9 @@ function ProjectRow({
           {lastAt && <> · {timeAgo(lastAt)}</>}
         </span>
       </span>
-      <button onClick={onFocus} className={`${button.secondary} h-8 text-xs`}>
+      <Link href={`/projects/${project._id}`} className={`${button.secondary} h-8 text-xs`}>
         {t("focus")}
-      </button>
+      </Link>
       <button
         onClick={() => {
           setName(project.name);

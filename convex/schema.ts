@@ -98,6 +98,7 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
+    .index("by_project", ["projectId"])
     .index("by_status", ["status"])
     .index("by_shareToken", ["shareToken"]),
 
