@@ -57,6 +57,13 @@ export function Nav({ labels }: { labels: NavLabels }) {
     return () => io.disconnect();
   }, []);
 
+  // Timer, not transitionend: a fast scroll can skip the transition entirely, which would strand the bar invisible in "out".
+  useEffect(() => {
+    if (bar !== "out") return;
+    const id = setTimeout(() => setBar("top"), 380);
+    return () => clearTimeout(id);
+  }, [bar]);
+
   useEffect(() => {
     if (!open) return;
     closeRef.current?.focus();
@@ -72,7 +79,6 @@ export function Nav({ labels }: { labels: NavLabels }) {
   return (
     <>
       <header data-bar={bar}
-        onTransitionEnd={(e) => e.target === e.currentTarget && bar === "out" && setBar("top")}
         className={`nav-bar inset-x-0 top-0 z-50 text-fg ${bar === "top" ? "theme-dark absolute" : "fixed px-3 pt-3"}`}
       >
         {/* Fade behind the floating bar so content scrolling past the top melts away instead of showing in the gap. */}
