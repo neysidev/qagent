@@ -130,8 +130,21 @@ dialog.modal::backdrop {
   backdrop-filter: blur(2px);
 }
 /* Mobile workspace drawer */
+/* On-screen movement: strong ease-in-out, gentle start and a soft landing. Shared so width, slide and radius move as one. */
+.drawer,
+.drawer-inner,
+.sidebar-anim {
+  transition-duration: 220ms;
+  transition-timing-function: var(--ease-in-out-strong);
+}
 .drawer {
-  transition: transform 260ms var(--ease-out);
+  transition-property: transform, width;
+}
+.drawer-inner {
+  transition-property: transform;
+}
+.sidebar-anim {
+  transition-property: border-radius;
 }
 @media (prefers-reduced-motion: reduce) {
   .pop,
@@ -140,7 +153,9 @@ dialog.modal::backdrop {
       transform: none;
     }
   }
-  .drawer {
+  .drawer,
+  .drawer-inner,
+  .sidebar-anim {
     transition: none;
   }
 }

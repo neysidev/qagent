@@ -8,7 +8,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ProjectAvatar, useWorkspace, type ProjectRow } from "@/components/AppShell";
-import { DEMO_URL } from "@/components/Composer";
 import { SitesIllustration } from "@/components/illustrations";
 import { TaskIcon } from "@/components/StatusBadge";
 import { skeleton } from "@/components/ui";
@@ -20,14 +19,26 @@ export default function Start() {
   const { projects } = useWorkspace();
 
   return (
-    <div className="mx-auto w-full max-w-[880px] px-4 pt-16 pb-16 sm:px-8 sm:pt-[12vh]">
-      <div className="mx-auto max-w-[560px] text-center">
-        <h1 className="text-[26px] leading-[1.3] font-bold sm:text-[34px]">{t("title")}</h1>
-        <p className="mt-3 text-fg-2">{t("subtitle")}</p>
+    <div className="relative isolate">
+      {/* Faint dot grid that fades out from the middle, plus a soft brand glow behind the hero. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[640px] bg-[radial-gradient(circle,var(--border-strong)_1px,transparent_1.5px)] [background-size:22px_22px] opacity-50 [mask-image:radial-gradient(ellipse_60%_70%_at_50%_40%,#000,transparent)]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] bg-[radial-gradient(ellipse_40%_50%_at_50%_35%,var(--accent-soft),transparent)] opacity-70"
+      />
+      <div className="mx-auto w-full max-w-[880px] px-4 pb-16 sm:px-8">
+      <div className="pt-16 sm:pt-[12vh]">
+        <div className="mx-auto max-w-[560px] text-center">
+          <h1 className="text-[26px] leading-[1.3] font-bold sm:text-[34px]">{t("title")}</h1>
+          <p className="mt-3 text-fg-2">{t("subtitle")}</p>
+        </div>
+        <AddressForm />
       </div>
-      <AddressForm />
 
-      <section className="mt-16" aria-labelledby="projects-heading">
+      <section className="mt-12" aria-labelledby="projects-heading">
         <h2 id="projects-heading" className="mb-4 text-sm font-bold text-fg-2">{t("yourProjects")}</h2>
         {projects === undefined ? (
           <div className="grid gap-1.5 rounded-[28px] border border-line bg-surface p-1.5 sm:grid-cols-2">
@@ -45,6 +56,7 @@ export default function Start() {
           </ul>
         )}
       </section>
+      </div>
     </div>
   );
 }
@@ -71,14 +83,21 @@ function AddressForm() {
   }
 
   return (
-    <div className="mx-auto mt-9 max-w-[560px]">
+    <div className="mx-auto mt-9 max-w-[640px]">
       <form
         onSubmit={(e) => {
           e.preventDefault();
           void open(url);
         }}
-        className="flex items-center gap-2 rounded-full border border-line-strong bg-card p-1.5 ps-5 shadow-[0_16px_40px_-16px_rgb(0_0_0/0.25)] transition-[border-color,box-shadow] duration-150 focus-within:border-accent focus-within:shadow-[0_0_0_4px_var(--accent-soft),0_16px_40px_-16px_rgb(0_0_0/0.25)]"
+        className="flex items-center gap-2 rounded-full border border-line-strong bg-card p-2 pe-6 shadow-[0_16px_40px_-16px_rgb(0_0_0/0.25)] transition-[border-color,box-shadow] duration-150 focus-within:border-accent focus-within:shadow-[0_0_0_4px_var(--accent-soft),0_16px_40px_-16px_rgb(0_0_0/0.25)]"
       >
+        <button
+          disabled={!url.trim() || pending}
+          className="inline-flex h-14 shrink-0 items-center gap-2 rounded-full bg-accent px-7 text-base font-medium text-white shadow-[0_8px_20px_-10px_var(--accent)] transition-[transform,background-color,opacity] duration-150 ease-out hover:bg-accent-hover active:scale-[0.97] disabled:opacity-40"
+        >
+          {pending ? <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" aria-hidden /> : null}
+          {t("open")}
+        </button>
         <label className="flex min-w-0 flex-1 items-center gap-2.5">
           <span className="sr-only">{t("urlLabel")}</span>
           <input
@@ -95,34 +114,14 @@ function AddressForm() {
             placeholder="example.com"
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? "address-error" : undefined}
-            className="h-11 min-w-0 flex-1 bg-transparent text-[16px] text-fg placeholder:text-fg-3 focus:outline-none"
+            className="font-url h-14 min-w-0 flex-1 bg-transparent text-[18px] text-fg placeholder:text-fg-3 focus:outline-none"
           />
-          <Globe className="size-5 shrink-0 text-fg-3" strokeWidth={1.75} aria-hidden />
+          <Globe className="size-6 shrink-0 text-fg-3" strokeWidth={1.75} aria-hidden />
         </label>
-        <button
-          disabled={!url.trim() || pending}
-          className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-white shadow-[0_8px_20px_-10px_var(--accent)] transition-[transform,background-color,opacity] duration-150 ease-out hover:bg-accent-hover active:scale-[0.97] disabled:opacity-40"
-        >
-          {pending ? <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" aria-hidden /> : null}
-          {t("open")}
-          {!pending && <ArrowLeft className="size-4" strokeWidth={2} aria-hidden />}
-        </button>
       </form>
       {error ? (
         <p id="address-error" role="alert" className="mt-3 text-center text-sm text-danger">{error}</p>
-      ) : (
-        DEMO_URL && (
-          <p className="mt-3 text-center text-sm text-fg-3">
-            {t("orDemo")}{" "}
-            <button type="button" onClick={() => void open(DEMO_URL)} disabled={pending}
-              className="rounded font-medium text-accent underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-accent"
-            >
-              {t("demo")}
-            </button>{" "}
-            {t("orDemoAfter")}
-          </p>
-        )
-      )}
+      ) : null}
     </div>
   );
 }

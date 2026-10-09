@@ -49,11 +49,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="theme-dark flex h-dvh overflow-hidden bg-canvas text-fg [color-scheme:dark] print:block print:h-auto print:overflow-visible">
         {drawer && <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setDrawer(false)} aria-hidden />}
         <aside
-          className={`no-print drawer flex w-[272px] shrink-0 flex-col bg-canvas max-lg:fixed max-lg:inset-y-0 max-lg:start-0 max-lg:z-50 ${drawer ? "" : "max-lg:translate-x-full"} ${collapsed ? "lg:hidden" : ""}`}
+          className={`no-print drawer flex w-[272px] shrink-0 flex-col bg-canvas max-lg:fixed max-lg:inset-y-0 max-lg:start-0 max-lg:z-50 lg:relative lg:z-20 ${drawer ? "" : "max-lg:translate-x-full"} ${collapsed ? "lg:w-0 lg:overflow-hidden" : ""}`}
+          inert={collapsed}
         >
-          <Sidebar onHide={() => (drawer ? setDrawer(false) : setCollapsed(true))} />
+          <div className={`drawer-inner flex h-full w-[272px] shrink-0 flex-col ${collapsed ? "lg:translate-x-full" : ""}`}>
+            <Sidebar onHide={() => (drawer ? setDrawer(false) : setCollapsed(true))} />
+          </div>
         </aside>
-        <main className={`theme-light print-flat relative min-w-0 flex-1 overflow-y-auto bg-canvas text-fg [color-scheme:light] lg:rounded-r-[24px]`}>
+        <main className={`theme-light print-flat relative min-w-0 flex-1 overflow-y-auto bg-canvas text-fg [color-scheme:light] sidebar-anim ${collapsed ? "" : "lg:rounded-r-[24px]"}`}>
           <button
             onClick={() => {
               setDrawer(true);
