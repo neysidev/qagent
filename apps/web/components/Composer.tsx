@@ -2,7 +2,7 @@
 
 import { api } from "@convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
-import { Check, KeyRound, LogIn, Mail, Play, ShoppingCart, UserPlus, X } from "lucide-react";
+import { Check, KeyRound, MapPin, Play, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -11,18 +11,7 @@ import { useWorkerOnline } from "@/lib/useWorkerOnline";
 import { input, label } from "./ui";
 
 export const DEMO_URL = process.env.NEXT_PUBLIC_DEMO_SHOP_URL ?? "";
-export const TEMPLATES = ["signup", "login", "cart", "contact"] as const;
-export type Template = (typeof TEMPLATES)[number];
-
-export type Draft = { path: string; goal: string; template: Template | null };
-
-/** Per template: icon, tile color, and whether the flow can only be tested signed in. */
-const TEMPLATE_META: Record<Template, { icon: typeof Play; tone: string; needsLogin: boolean }> = {
-  signup: { icon: UserPlus, tone: "bg-[#7c66dc]/12 text-[#6b55d0]", needsLogin: false },
-  login: { icon: LogIn, tone: "bg-[#0090ff]/12 text-[#0077d4]", needsLogin: true },
-  cart: { icon: ShoppingCart, tone: "bg-accent-soft text-accent", needsLogin: false },
-  contact: { icon: Mail, tone: "bg-success-soft text-success", needsLogin: false },
-};
+export type Draft = { path: string; goal: string };
 
 // A free-text goal that talks about signing in probably needs an account; only used to nudge, never to block.
 const LOGIN_HINT = /وارد شو|ورود|لاگین|پنل|داشبورد|پروفایل|حساب کاربری|login|sign ?in|dashboard|account/i;
@@ -41,15 +30,16 @@ export function Composer({ site, draft, setDraft }: { site: string; draft: Draft
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [accountOpen, setAccountOpen] = useState(false);
+  const [pathOpen, setPathOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   const hasAccount = !!username.trim() && !!password;
-  const needsLogin = !!draft.template && TEMPLATE_META[draft.template].needsLogin;
-  const mayNeedLogin = !needsLogin && LOGIN_HINT.test(draft.goal);
-  const showAccount = accountOpen || needsLogin || hasAccount;
+  const mayNeedLogin = LOGIN_HINT.test(draft.goal);
+  const showAccount = accountOpen || hasAccount;
+  const showPath = pathOpen || !!draft.path.trim();
   const outOfQuota = !!quota && quota.used >= quota.limit;
-  const ready = !!draft.goal.trim() && (!needsLogin || hasAccount) && !pending && !outOfQuota;
+  const ready = !!draft.goal.trim() && !pending && !outOfQuota;
 
   async function send() {
     if (!ready) return;
@@ -59,7 +49,6 @@ export function Composer({ site, draft, setDraft }: { site: string; draft: Draft
       const runId = await createRun({
         url: startUrl(site, draft.path),
         goal: draft.goal,
-        templateKey: draft.template ?? undefined,
         credentials: hasAccount ? { username: username.trim(), password } : undefined,
       });
       router.push(`/runs/${runId}`);
@@ -77,86 +66,67 @@ export function Composer({ site, draft, setDraft }: { site: string; draft: Draft
       }}
       className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]"
     >
-      <Step n={1} title={t("step1")} hint={t("step1Hint")} done={!!draft.goal.trim()}>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {TEMPLATES.map((key) => {
-            const { icon: Icon, tone } = TEMPLATE_META[key];
-            const on = draft.template === key;
-            return (
-              <button key={key} type="button" aria-pressed={on}
-                onClick={() => setDraft({ ...draft, goal: t(`tplGoal.${key}`), template: key })}
-                className={`flex items-center gap-2.5 rounded-lg border p-2.5 text-start transition-[border-color,background-color,box-shadow] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${on ? "border-accent bg-accent-soft/60 shadow-[0_0_0_3px_var(--accent-soft)]" : "border-line hover:border-line-strong hover:bg-surface"}`}
-              >
-                <span className={`grid size-8 shrink-0 place-items-center rounded-md ${tone}`}>
-                  <Icon className="size-4" strokeWidth={1.9} aria-hidden />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-medium">{t(`tpl.${key}`)}</span>
-                  <span className="block truncate text-[11px] text-fg-3">{t(`tplHint.${key}`)}</span>
-                </span>
-              </button>
-            );
-          })}
+      <div className="space-y-3 px-5 py-5">
+        <label htmlFor="goal" className="block">
+          <span className="font-bold">{t("step1")}</span>
+          <span className="mt-1 block text-sm leading-[1.8] text-fg-2">{t("step1Hint")}</span>
+        </label>
+        <textarea
+          id="goal"
+          rows={2}
+          maxLength={2000}
+          value={draft.goal}
+          onChange={(e) => setDraft({ ...draft, goal: e.target.value })}
+          onKeyDown={(e) => {
+            // Enter sends, Shift+Enter breaks the line; never while a Persian IME is composing.
+            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault();
+              void send();
+            }
+          }}
+          placeholder={t("placeholder", { site: hostOf(site) })}
+          className="block max-h-60 min-h-[76px] w-full resize-none rounded-lg border border-line-strong bg-card px-3.5 py-3 text-[15px] leading-relaxed text-fg transition-[border-color,box-shadow] duration-150 [field-sizing:content] placeholder:text-fg-3 focus:border-accent focus:shadow-[0_0_0_4px_var(--accent-soft)] focus:outline-none"
+        />
+      </div>
+
+      <div className="space-y-3 px-5 py-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="me-1 text-sm text-fg-3">{t("moreOptions")}</span>
+          <Chip on={showPath} done={!!draft.path.trim()} icon={MapPin} label={t("optionPath")} onClick={() => {
+            if (showPath) setDraft({ ...draft, path: "" });
+            setPathOpen(!showPath);
+          }} />
+          <Chip on={showAccount} done={hasAccount} icon={KeyRound} label={t("optionAccount")} onClick={() => {
+            if (showAccount) { setUsername(""); setPassword(""); }
+            setAccountOpen(!showAccount);
+          }} />
         </div>
-        <label className="block">
-          <span className="sr-only">{t("goalLabel")}</span>
-          <textarea
-            rows={2}
-            maxLength={2000}
-            value={draft.goal}
-            onChange={(e) => setDraft({ ...draft, goal: e.target.value, template: null })}
-            onKeyDown={(e) => {
-              // Enter sends, Shift+Enter breaks the line; never while a Persian IME is composing.
-              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                e.preventDefault();
-                void send();
-              }
-            }}
-            placeholder={t("placeholder", { site: hostOf(site) })}
-            className="block max-h-60 min-h-[76px] w-full resize-none rounded-lg border border-line-strong bg-card px-3.5 py-3 text-[15px] leading-relaxed text-fg transition-[border-color,box-shadow] duration-150 [field-sizing:content] placeholder:text-fg-3 focus:border-accent focus:shadow-[0_0_0_4px_var(--accent-soft)] focus:outline-none"
-          />
-        </label>
-      </Step>
-
-      <Step n={2} title={t("step2")} hint={t("step2Hint")} tag={t("optional")}>
-        <label dir="ltr" className="font-url flex h-10 items-center rounded-lg border border-line-strong bg-card ps-3.5 text-sm transition-[border-color,box-shadow] duration-150 focus-within:border-accent focus-within:shadow-[0_0_0_4px_var(--accent-soft)]">
-          <span className="sr-only">{t("startPath")}</span>
-          <span className="shrink-0 text-fg-3">{hostOf(site)}</span>
-          <input value={draft.path} onChange={(e) => setDraft({ ...draft, path: e.target.value })} placeholder="/" spellCheck={false}
-            className="h-full min-w-0 flex-1 bg-transparent px-0.5 text-fg placeholder:text-fg-3 focus:outline-none" />
-        </label>
-      </Step>
-
-      <Step n={3} title={t("step3")} hint={t("step3Hint")} tag={needsLogin ? t("required") : t("optional")} tagTone={needsLogin ? "warn" : "muted"} done={hasAccount}>
-        {needsLogin && !hasAccount && <Notice tone="warn">{t("needsLogin")}</Notice>}
         {mayNeedLogin && !showAccount && <Notice tone="info">{t("mayNeedLogin")}</Notice>}
-        {hasAccount && <Notice tone="ok">{t("accountReady")}</Notice>}
-        {showAccount ? (
+
+        <Reveal open={showPath}>
+          <p className="mb-2 text-sm text-fg-2">{t("step2Hint")}</p>
+          <label dir="ltr" className="font-url flex h-10 items-center rounded-lg border border-line-strong bg-card ps-3.5 text-sm transition-[border-color,box-shadow] duration-150 focus-within:border-accent focus-within:shadow-[0_0_0_4px_var(--accent-soft)]">
+            <span className="sr-only">{t("startPath")}</span>
+            <span className="shrink-0 text-fg-3">{hostOf(site)}</span>
+            <input value={draft.path} onChange={(e) => setDraft({ ...draft, path: e.target.value })} placeholder="/" spellCheck={false} tabIndex={showPath ? 0 : -1}
+              className="h-full min-w-0 flex-1 bg-transparent px-0.5 text-fg placeholder:text-fg-3 focus:outline-none" />
+          </label>
+        </Reveal>
+
+        <Reveal open={showAccount}>
+          <p className="mb-2 text-sm text-fg-2">{t("step3Hint")}</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block space-y-1.5">
               <span className={label}>{t("username")}</span>
-              <input dir="ltr" autoComplete="off" value={username} onChange={(e) => setUsername(e.target.value)} className={`${input} rounded-lg`} />
+              <input dir="ltr" autoComplete="off" value={username} onChange={(e) => setUsername(e.target.value)} tabIndex={showAccount ? 0 : -1} className={`${input} rounded-lg`} />
             </label>
             <label className="block space-y-1.5">
               <span className={label}>{t("password")}</span>
-              <input type="password" dir="ltr" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className={`${input} rounded-lg`} />
+              <input type="password" dir="ltr" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} tabIndex={showAccount ? 0 : -1} className={`${input} rounded-lg`} />
             </label>
-            {!needsLogin && (
-              <button type="button" onClick={() => { setAccountOpen(false); setUsername(""); setPassword(""); }}
-                className="inline-flex w-fit items-center gap-1 rounded text-xs text-fg-3 transition-colors hover:text-danger focus-visible:outline-2 focus-visible:outline-accent"
-              >
-                <X className="size-3.5" aria-hidden />{t("removeAccount")}
-              </button>
-            )}
           </div>
-        ) : (
-          <button type="button" onClick={() => setAccountOpen(true)}
-            className="inline-flex h-9 items-center gap-2 rounded-lg border border-dashed border-line-strong px-3.5 text-sm text-fg-2 transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
-          >
-            <KeyRound className="size-4" strokeWidth={1.75} aria-hidden />{t("addAccount")}
-          </button>
-        )}
-      </Step>
+        </Reveal>
+      </div>
 
       {workerOnline === false && (
         <div className="px-5 py-4">
@@ -183,29 +153,23 @@ export function Composer({ site, draft, setDraft }: { site: string; draft: Draft
   );
 }
 
-function Step({ n, title, hint, tag, tagTone = "muted", done = false, children }: {
-  n: number;
-  title: string;
-  hint: string;
-  tag?: string;
-  tagTone?: "muted" | "warn";
-  done?: boolean;
-  children: ReactNode;
-}) {
+function Chip({ on, done, icon: Icon, label, onClick }: { on: boolean; done: boolean; icon: LucideIcon; label: string; onClick: () => void }) {
   return (
-    <fieldset className="grid gap-x-4 px-5 py-5 sm:grid-cols-[28px_1fr]">
-      <span aria-hidden className={`grid size-7 place-items-center rounded-full text-xs font-bold transition-colors duration-200 max-sm:hidden ${done ? "bg-success text-white" : "bg-accent text-white"}`}>
-        {done ? <Check className="size-3.5" strokeWidth={3} /> : n.toLocaleString("fa-IR")}
-      </span>
-      <div className="min-w-0">
-        <legend className="flex items-center gap-2 font-bold">
-          {title}
-          {tag && <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${tagTone === "warn" ? "bg-warning-soft text-warning" : "bg-fg/[0.06] text-fg-3"}`}>{tag}</span>}
-        </legend>
-        <p className="mt-1 mb-3 text-sm leading-[1.8] text-fg-2">{hint}</p>
-        <div className="space-y-3">{children}</div>
-      </div>
-    </fieldset>
+    <button type="button" aria-pressed={on} onClick={onClick}
+      className={`inline-flex h-9 items-center gap-2 rounded-full border px-3.5 text-sm transition-[border-color,background-color,color,transform] duration-150 ease-out active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${on ? "border-accent bg-accent-soft/60 text-accent" : "border-dashed border-line-strong text-fg-2 hover:border-accent hover:text-accent"}`}
+    >
+      {done ? <Check className="size-4" strokeWidth={2.5} aria-hidden /> : <Icon className="size-4" strokeWidth={1.75} aria-hidden />}
+      {label}
+    </button>
+  );
+}
+
+/** Height-animated disclosure; content stays mounted so typed values survive a collapse. */
+function Reveal({ open, children }: { open: boolean; children: ReactNode }) {
+  return (
+    <div aria-hidden={!open} inert={!open} className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+      <div className="min-h-0 overflow-hidden"><div className="p-0.5">{children}</div></div>
+    </div>
   );
 }
 

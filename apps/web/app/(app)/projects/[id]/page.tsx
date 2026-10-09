@@ -2,7 +2,7 @@
 
 import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
-import { ArrowRight, Bug, ExternalLink, Gauge, ListChecks, Play, Settings2 } from "lucide-react";
+import { ArrowRight, Bug, ExternalLink, History, Play, Settings2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -38,15 +38,16 @@ export default function ProjectPage() {
 function Project({ data }: { data: Overview }) {
   const t = useTranslations("project");
   const { project, runs, totals, recentBugs } = data;
-  const [draft, setDraft] = useState<Draft>({ path: "", goal: "", template: null });
+  const [draft, setDraft] = useState<Draft>({ path: "", goal: "" });
+
+  const [tab, setTab] = useState<"new" | "history" | "bugs">("new");
 
   const fresh = runs.length === 0;
-  const stats = [
-    { label: t("statRuns"), value: nf.format(totals.runs), icon: Play, tone: "bg-accent-soft text-accent" },
-    { label: t("statScenarios"), value: totals.scenarios ? `${nf.format(totals.passed)}/${nf.format(totals.scenarios)}` : "—", icon: ListChecks, tone: "bg-[#0090ff]/10 text-[#0077d4]" },
-    { label: t("statPassRate"), value: totals.scenarios ? `${nf.format(Math.round((totals.passed / totals.scenarios) * 100))}٪` : "—", icon: Gauge, tone: "bg-success-soft text-success" },
-    { label: t("statBugs"), value: nf.format(totals.bugs), icon: Bug, tone: totals.bugs ? "bg-warning-soft text-warning" : "bg-fg/[0.06] text-fg-3" },
-  ];
+  const tabs = [
+    { key: "new", label: t("newRun"), icon: Play, count: null },
+    { key: "history", label: t("tabHistory"), icon: History, count: runs.length },
+    { key: "bugs", label: t("tabBugs"), icon: Bug, count: recentBugs.length },
+  ] as const;
 
   return (
     <div className="mx-auto w-full max-w-[1080px] space-y-8 px-4 py-8 max-lg:pt-14 sm:px-8">
@@ -72,32 +73,42 @@ function Project({ data }: { data: Overview }) {
             {t("manage")}
           </Link>
         </div>
-        {!fresh && (
-          <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {stats.map((s) => (
-              <div key={s.label} className="flex items-center gap-3 rounded-xl border border-line bg-card px-4 py-3.5 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
-                <span className={`grid size-10 shrink-0 place-items-center rounded-lg ${s.tone}`}>
-                  <s.icon className="size-[18px]" strokeWidth={1.9} aria-hidden />
-                </span>
-                <span className="min-w-0">
-                  <dt className="truncate text-xs text-fg-3">{s.label}</dt>
-                  <dd className="mt-0.5 text-xl font-bold text-fg">{s.value}</dd>
-                </span>
-              </div>
-            ))}
-          </dl>
-        )}
       </header>
 
-      <section aria-labelledby="new-run">
+      {!fresh && (
+        <div role="tablist" className="-mt-3 flex gap-1 overflow-x-auto border-b border-line">
+          {tabs.map(({ key, label, icon: Icon, count }) => {
+            const on = tab === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                id={`tab-${key}`}
+                aria-selected={on}
+                aria-controls={`panel-${key}`}
+                onClick={() => setTab(key)}
+                className={`-mb-px inline-flex h-11 shrink-0 items-center gap-2 border-b-2 px-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent ${on ? "border-accent text-fg" : key === "new" ? "border-transparent text-accent hover:bg-accent-soft/60" : "border-transparent text-fg-3 hover:text-fg"}`}
+              >
+                <Icon className="size-4" strokeWidth={1.9} aria-hidden />
+                {label}
+                {count !== null && <span className="rounded-full bg-fg/[0.06] px-1.5 text-[11px] text-fg-3">{nf.format(count)}</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {tab === "new" && (
+      <section role={fresh ? undefined : "tabpanel"} id="panel-new" aria-labelledby={fresh ? "new-run" : "tab-new"}>
         <h2 id="new-run" className="text-lg font-bold">{fresh ? t("firstRun") : t("newRun")}</h2>
         <p className="mt-1 mb-4 text-sm text-fg-2">{fresh ? t("firstRunHint") : t("newRunHint")}</p>
         <Composer site={project.baseUrl} draft={draft} setDraft={setDraft} />
       </section>
+      )}
 
-      {!fresh && (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <section className={card} aria-labelledby="history">
+      {!fresh && tab === "history" && (
+          <section role="tabpanel" id="panel-history" className={card} aria-labelledby="history">
             <header className={cardHeader}>
               <h2 id="history" className={cardTitle}>
                 {t("history")} <span className="font-normal text-fg-3">{nf.format(runs.length)}</span>
@@ -123,7 +134,10 @@ function Project({ data }: { data: Overview }) {
             </ul>
           </section>
 
-          <section className={`${card} self-start`} aria-labelledby="bugs">
+      )}
+
+      {!fresh && tab === "bugs" && (
+          <section role="tabpanel" id="panel-bugs" className={card} aria-labelledby="bugs">
             <header className={cardHeader}>
               <h2 id="bugs" className={cardTitle}>{t("recentBugs")}</h2>
             </header>
@@ -149,7 +163,6 @@ function Project({ data }: { data: Overview }) {
               </ul>
             )}
           </section>
-        </div>
       )}
     </div>
   );
