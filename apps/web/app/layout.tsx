@@ -1,3 +1,4 @@
+import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { Geist } from "next/font/google";
@@ -44,6 +45,7 @@ const jsonLd = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    <ConvexAuthNextjsServerProvider>
     <html lang="fa" dir="rtl" className={`${peyda.variable} ${geist.variable}`}>
       <body className="min-h-dvh font-sans antialiased">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -53,5 +55,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </NextIntlClientProvider>
       </body>
     </html>
+    </ConvexAuthNextjsServerProvider>
   );
 }
