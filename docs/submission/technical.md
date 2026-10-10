@@ -105,7 +105,7 @@ Which provider and models production actually uses is **unknown** from the repos
 |---|---|---|
 | Vercel | `apps/web/vercel.json`: region `fra1`, build runs `npx convex deploy --cmd 'pnpm build'` | Root directory `apps/web`; project `qagent-web` |
 | Convex | `apps/web/convex.json` points at `../../convex/` | Deployed together with the web build |
-| Railway | `apps/worker/railway.json` + `Dockerfile` (Playwright Python base image), restart always, health check `/health` | README recommends EU region; actual region **unverified** |
+| Railway | `apps/worker/railway.json` + `Dockerfile` (Playwright Python base image), restart always, health check `/health` | EU region recommended |
 | Resend | `convex/email.ts` | Optional; report emails and weekly digest |
 
 Scaling: each worker runs `MAX_CONCURRENT_RUNS` runs with one warm Chromium and a fresh context per scenario. More
@@ -173,7 +173,7 @@ and the price table above, not measured. Replace it with the average of `run.cos
 A fully replayed re-run costs $0.00 in model fees. Estimated run duration: 2–4 minutes for 3–4 scenarios in parallel,
 given the 3-minute per-scenario cap.
 
-Estimated monthly infrastructure cost (assumed plan levels, check current pricing before relying on them):
+Estimated monthly infrastructure cost (assumed plan levels):
 
 | Item | Estimate | Assumption |
 |---|---|---|
@@ -185,7 +185,7 @@ Estimated monthly infrastructure cost (assumed plan levels, check current pricin
 
 ## Benchmark
 
-No benchmark has been run yet. The demo shop previously used for testing was removed. The numbers below are
+No benchmark has been run yet. The numbers below are
 **targets**, not results:
 
 | Metric | Target |

@@ -6,10 +6,11 @@ what broke, where, and why.
 
 | # | Deliverable | File |
 |---|---|---|
-| 1 | Product access and user journey | [01-product-access.md](01-product-access.md) |
-| 2 | Technical and infrastructure documentation | [02-technical.md](02-technical.md) |
-| 3 | Business plan | [03-business-plan.md](03-business-plan.md) |
-| 4 | Investor pitch | [04-investor-pitch.md](04-investor-pitch.md) |
+| 1 | Product access and user journey | [product-access.md](product-access.md) |
+| 2 | Technical and infrastructure documentation | [technical.md](technical.md) |
+| 3 | Business plan | [business-plan.md](business-plan.md) |
+| 4 | Investor pitch | [investor-pitch.md](investor-pitch.md) |
+| 5 | Pitch deck (PDF) | [pitch-deck.pdf](pitch-deck.pdf) |
 
 Setup and deploy commands live in the repository [README](../../README.md) and are not duplicated here.
 
@@ -24,10 +25,10 @@ Setup and deploy commands live in the repository [README](../../README.md) and a
 
 | Item | Where |
 |---|---|
-| Run the full journey on production (sign up → run → report) and confirm the worker is online | [01](01-product-access.md#verification-checklist) |
-| Replace the estimated cost per run ($0.22) with the measured average from real runs | [02](02-technical.md#costs) |
-| Run the benchmark against the published targets | [02](02-technical.md#benchmark) |
-| Validate pricing and quotas before launching billing (current quotas lose money for heavy users) | [03](03-business-plan.md#unit-economics) |
+| Run the full journey on production (sign up → run → report) and confirm the worker is online | [product-access](product-access.md#verification-checklist) |
+| Replace the estimated cost per run ($0.22) with the measured average from real runs | [technical](technical.md#costs) |
+| Run the benchmark against the published targets | [technical](technical.md#benchmark) |
+| Validate pricing and quotas before launching billing (current quotas lose money for heavy users) | [business-plan](business-plan.md#unit-economics) |
 
 Market figures cite their sources. Cost, margin, projection and funding numbers are estimates and proposals,
 labelled as such in each document.

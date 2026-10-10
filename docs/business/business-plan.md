@@ -153,9 +153,9 @@ Planned hires: one engineer, then a growth/partnerships lead (see the funding pl
 - Payment and hosting constraints for Iranian customers using foreign infrastructure — **needs legal/ops review**.
 - Agent accuracy on unfamiliar sites — unmeasured until a benchmark exists.
 
-## Next steps
+## Roadmap
 
-1. Run a benchmark and measure cost per run.
-2. Interview 10–20 target users (shops, agencies) to validate problem and pricing.
-3. Add billing and quota enforcement per plan.
+1. Publish a benchmark of detection rate and cost per run.
+2. Interview 10–20 target users (shops, agencies) to validate pricing.
+3. Launch billing with per-plan quotas.
 4. Add site ownership verification and scheduled runs.

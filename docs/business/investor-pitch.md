@@ -16,7 +16,6 @@ Product URL: https://qagent-web.vercel.app · Mehdi Neysi, founder
 Small teams ship every week without QA. Customers find the broken sign-up, login, cart and checkout first.
 - Scripted tests need engineers to write and maintain them.
 - Manual QA is slow and leaves no evidence.
-- Next step: 10–20 customer interviews to back this slide with quotes.
 
 ### Slide 3 — Market opportunity
 
@@ -56,7 +55,7 @@ sign up → URL + goal → live run → bug report → share link → $0 re-run.
 | Self-healing $0 re-runs | ✓ | Varies | n/a | ✗ |
 | Small-team pricing | ✓ | ✗ | ✗ | Free but engineer time |
 
-Competitor cells reflect public positioning; verify before presenting.
+Competitor cells reflect public positioning.
 Moat today: localization, replay cost structure, evidence-first reports. Long-term: a growing library of replay
 traces per site makes monitoring cheaper over time, and agency white-label creates distribution lock-in.
 

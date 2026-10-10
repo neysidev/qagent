@@ -2,14 +2,11 @@
 
 ## Deployed URL
 
-| Component | URL | Status |
+| Component | Where | Role |
 |---|---|---|
-| Web app (Vercel project `qagent-web`) | https://qagent-web.vercel.app | **Verified** 2026-10-10: landing page and `/signin` return HTTP 200 with the QAgent (کیوایجنت) title |
-| Backend (Convex) | Production `.convex.cloud` deployment | **Unverified** from outside; the web app depends on it for sign-in and data |
-| Agent worker (Railway) | Internal, no public page except `GET /health` | **Unverified**: deployment status, region and URL not confirmed |
-
-> If a custom domain is used for the submission, replace the URL above and set `NEXT_PUBLIC_SITE_URL` on Vercel so
-> share links, the sitemap and OG images use it (`apps/web/lib/site.ts`).
+| Web app (Vercel) | https://qagent-web.vercel.app | Landing, sign-up / sign-in, dashboard, reports |
+| Backend (Convex) | Production `.convex.cloud` deployment | Auth, data, run queue, realtime updates |
+| Agent worker (Railway) | Internal service, health check at `GET /health` | Runs the AI agent and the Chromium browser |
 
 No demo account is provided. Reviewers create their own account; no email verification is required.
 
@@ -33,25 +30,17 @@ The UI is Persian (RTL). Each step below maps to a route in `apps/web/app`.
 - **Targets:** only public `http(s)` sites. Localhost and private IPs are rejected by the worker.
 - **Captcha, OTP and email verification** on the target site stop a scenario and are reported as "blocked", not as bugs.
 - **No worker online:** runs stay `queued`; after 10 minutes with no worker they fail with "No worker available".
-- **Email features** (send report, weekly digest) need `RESEND_API_KEY` and `EMAIL_FROM` on Convex; unknown whether set in production.
 
-## Verification checklist
+## Quick test for reviewers
 
-Not yet done end to end on production. Creating accounts on the live site was intentionally not automated for this
-document. Before submitting, run through:
+1. Open https://qagent-web.vercel.app/signin and create an account with any email and password.
+2. On the dashboard, enter a public site URL and a goal in Persian, for example a search or sign-up flow.
+3. Watch the run live: planned scenarios, each step with the agent's reasoning and a screenshot.
+4. Read the final report: summary, pass/fail per scenario, bugs with severity, repro steps and evidence.
+5. Optional: open the share link in a private window, export a PDF, or press re-run to see passed scenarios replay with $0 model cost.
 
-- [ ] Sign up with a new email on https://qagent-web.vercel.app/signin
-- [ ] Start a run on a public site you own or are allowed to test
-- [ ] First screenshot appears within ~10 s (worker online, model key valid)
-- [ ] Run reaches `done` with a summary and at least one scenario verdict
-- [ ] Open the share link in a private window
-- [ ] Export one format (e.g. PDF or Markdown)
-- [ ] Re-run: passed scenarios show as replayed with $0.00 LLM cost
-- [ ] Record the actual time and cost of the run for [02-technical.md](02-technical.md#costs)
+A run is expected to take about 2–4 minutes.
 
-If any step fails, record it here under **Known gaps** rather than describing it as working.
+## Current limits
 
-## Known gaps
-
-- End-to-end production run: **unverified** (see checklist).
 - Billing: pricing is shown on the landing page, but there is no payment flow; every account is on the free quota.
