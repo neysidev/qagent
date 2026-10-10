@@ -7,7 +7,7 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function Og() {
-  const font = await readFile(join(process.cwd(), "public/fonts/peyda-bold.woff2")).catch(() => null);
+  const font = await readFile(join(process.cwd(), "public/fonts/peyda-bold.ttf")).catch(() => null);
   return new ImageResponse(
     (
       <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#fff", color: "#0b0b0b", fontFamily: "Peyda", gap: 24 }}>
