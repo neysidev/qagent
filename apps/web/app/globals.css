@@ -130,21 +130,28 @@ dialog.modal::backdrop {
   backdrop-filter: blur(2px);
 }
 /* Mobile workspace drawer */
-/* On-screen movement: strong ease-in-out, gentle start and a soft landing. Shared so width, slide and radius move as one. */
+/* Sidebar: card-resize width tween + panel-reveal content (slide, fade, 2px cross-blur), transitions.dev tokens. */
 .drawer,
 .drawer-inner,
 .sidebar-anim {
-  transition-duration: 220ms;
-  transition-timing-function: var(--ease-in-out-strong);
+  --sb-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  transition-duration: 300ms;
+  transition-timing-function: var(--sb-ease);
 }
 .drawer {
   transition-property: transform, width;
+  will-change: width;
 }
 .drawer-inner {
-  transition-property: transform;
+  transition-property: transform, opacity, filter;
+  transition-duration: 350ms;
+  will-change: transform, opacity;
+}
+.drawer-inner.is-open {
+  transition-duration: 400ms;
 }
 .sidebar-anim {
-  transition-property: border-radius;
+  transition-property: border-radius, opacity;
 }
 @media (prefers-reduced-motion: reduce) {
   .pop,

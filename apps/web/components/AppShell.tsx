@@ -52,8 +52,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           className={`no-print drawer flex w-[272px] shrink-0 flex-col bg-canvas max-lg:fixed max-lg:inset-y-0 max-lg:start-0 max-lg:z-50 lg:relative lg:z-20 ${drawer ? "" : "max-lg:translate-x-full"} ${collapsed ? "lg:w-0 lg:overflow-hidden" : ""}`}
           inert={collapsed}
         >
-          <div className={`drawer-inner flex h-full w-[272px] shrink-0 flex-col ${collapsed ? "lg:translate-x-full" : ""}`}>
-            <Sidebar onHide={() => (drawer ? setDrawer(false) : setCollapsed(true))} />
+          <div className={`drawer-inner flex h-full w-[272px] shrink-0 flex-col ${collapsed ? "lg:translate-x-1/2 lg:opacity-0 lg:blur-[2px]" : "is-open"}`}>
+            <Sidebar onHide={() => (setDrawer(false), setCollapsed(true))} />
           </div>
         </aside>
         <main className={`theme-light print-flat relative min-w-0 flex-1 overflow-y-auto bg-canvas text-fg [color-scheme:light] sidebar-anim ${collapsed ? "" : "lg:rounded-r-[24px]"}`}>
@@ -63,7 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               setCollapsed(false);
             }}
             aria-label={t("showSidebar")}
-            className={`${button.icon} no-print absolute start-3 top-3 z-30 border-0 bg-transparent ${collapsed ? "" : "lg:hidden"}`}
+            className={`${button.icon} no-print absolute start-3 top-3 z-30 border-0 bg-transparent sidebar-anim transition-opacity ${collapsed ? "" : "lg:pointer-events-none lg:opacity-0"}`}
           >
             <PanelRight className="size-4" strokeWidth={1.75} />
           </button>
