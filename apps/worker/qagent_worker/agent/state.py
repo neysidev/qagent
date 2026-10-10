@@ -14,6 +14,7 @@ class PlannedScenario(BaseModel):
     description: str = Field(description="What the tester will do, step by step, in 1-3 sentences")
     kind: ScenarioKind
     expected: str = Field(description="Observable expected outcome if the site works correctly")
+    evidence: str = Field(description="The page and element(s) from the site survey this scenario relies on, quoted. Planning-only, not stored")
 
 
 class Plan(BaseModel):

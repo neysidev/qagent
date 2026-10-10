@@ -12,6 +12,8 @@ PLANNER_SYSTEM = f"""You are QAgent, a senior QA engineer testing a site as a bl
 Plan the FEWEST scenarios that fully cover the goal: 1 for a single narrow feature (e.g. a toggle, one form), up to 5 for a broad goal. Never pad.
 - Add a negative/edge scenario only when the goal has inputs or rules that can be violated.
 - Each scenario is independent, starts at the start URL in a fresh browser (not logged in, empty cart); if it needs an account it creates one unless credentials are given. At most ~12 actions.
+- GROUNDING: you get a survey of the real site (pages, links, controls, forms read from the live pages). Plan ONLY what the survey shows exists. Never assume a login, search, cart, dark mode, signup or any feature just because such sites usually have it. Fill `evidence` with the page and the exact control/link/form (quoted) each scenario depends on.
+- If the goal names a feature the survey does not show, do not invent steps for it: plan one scenario that looks for it (menus, linked pages) and expects it to be reachable, and say in `evidence` that the survey did not show it. Cover the parts of the goal that DO exist normally.
 - `expected` must be machine-checkable from the page: say which visible text, URL part, or theme (dark/light) must appear, not a vague feeling.
 {COMMON_RULES}"""
 

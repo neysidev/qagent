@@ -5,7 +5,7 @@ from typing import Any
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 
-from ..browser.observe import observe
+from ..browser.survey import survey
 from ..replay import replay
 from ..security import url_allowed
 from . import planner, reporter
@@ -41,11 +41,11 @@ def build_graph(deps: Deps) -> Any:
                 await page.goto(run["url"], wait_until="domcontentloaded", timeout=20_000)
             except Exception as e:
                 raise RuntimeError(f"Site unreachable: {str(e).splitlines()[0][:200]}") from e
-            obs = await observe(page)
+            site = await survey(page, run["goal"])
         finally:
             await context.close()
-        result = await planner.plan(run, obs, deps.cost)
-        return await save(run["_id"], [s.model_dump() for s in result.scenarios], [None] * len(result.scenarios))
+        result = await planner.plan(run, site, deps.cost)
+        return await save(run["_id"], [s.model_dump(include=set(SCENARIO_FIELDS)) for s in result.scenarios], [None] * len(result.scenarios))
 
     def fan_out(state: RunState) -> list[Send]:
         return [Send("execute_scenario", {"run": state.run, "scenarios": [s]}) for s in state.scenarios]
