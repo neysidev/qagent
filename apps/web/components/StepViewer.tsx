@@ -3,7 +3,7 @@
 import { useAction } from "convex/react";
 import { useTranslations } from "next-intl";
 import {
-  ArrowDownUp, Check, CornerDownLeft, Globe, Hourglass, Keyboard, ListChecks, MousePointerClick, SquareCheck, X, type LucideIcon,
+  ArrowDownUp, Check, CornerDownLeft, Globe, Hourglass, Keyboard, ListChecks, MousePointerClick, Pause, Play, SquareCheck, X, type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { api } from "@convex/_generated/api";
@@ -23,6 +23,20 @@ export function StepViewer({ steps, scenarios, live, runId }: { steps: Step[]; s
   const step = steps[selectedIndex];
   const following = live && selectedId === null;
   const scenarioTitle = (id: string) => scenarios.find((s) => s._id === id)?.title ?? "";
+
+  // Replay: walk the finished run step by step so the stage re-enacts it; stops on the last step.
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    if (!playing) return;
+    const next = steps[selectedIndex + 1];
+    if (!next) return setPlaying(false);
+    const id = setTimeout(() => setSelectedId(next._id), REPLAY_MS);
+    return () => clearTimeout(id);
+  }, [playing, selectedIndex, steps]);
+  function togglePlay() {
+    if (!playing && selectedIndex >= steps.length - 1) setSelectedId(steps[0]?._id ?? null);
+    setPlaying(!playing);
+  }
 
   const activeRow = useRef<HTMLButtonElement>(null);
   // Only when the person picks a step; while following live, the timeline scrolls itself (and never the page).
@@ -50,7 +64,7 @@ export function StepViewer({ steps, scenarios, live, runId }: { steps: Step[]; s
   // the screen is capped to the viewport height, so the whole player fits on one screen without scrolling.
   return (
     <div className="@container">
-      <div className="grid gap-4 @3xl:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid grid-cols-1 gap-4 @3xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0 space-y-3">
           {following && runId ? <LiveStage runId={runId} fallback={<Stage steps={steps} step={step} label={label} />} /> : <Stage steps={steps} step={step} label={label} />}
 
@@ -60,8 +74,14 @@ export function StepViewer({ steps, scenarios, live, runId }: { steps: Step[]; s
                 {t("step", { n: selectedIndex + 1 })} · {scenarioTitle(step.scenarioId)}
               </p>
               <p className="mt-1 text-sm text-pretty text-fg">{step.thought}</p>
-              {step.error && <p className="mt-1 text-sm text-danger" dir="ltr">{step.error}</p>}
+              {step.error && <p className="mt-1 text-sm text-warning" dir="ltr">{step.error}</p>}
             </div>
+            {!live && steps.length > 1 && (
+              <button onClick={togglePlay} className={button.secondary}>
+                {playing ? <Pause className="size-3.5" fill="currentColor" /> : <Play className="size-3.5" fill="currentColor" />}
+                {playing ? t("replayPause") : t("replay")}
+              </button>
+            )}
             {live && !following && (
               <button onClick={() => setSelectedId(null)} className={button.secondary}>
                 <span className="size-2 animate-pulse rounded-full bg-accent" aria-hidden />
@@ -79,6 +99,8 @@ export function StepViewer({ steps, scenarios, live, runId }: { steps: Step[]; s
     </div>
   );
 }
+
+const REPLAY_MS = 1800;
 
 // Decoded screenshots by URL, shared across viewers so revisiting a step never re-downloads or flashes.
 // ponytail: unbounded per page session; fine for a few hundred steps, add an LRU if runs grow far past that.
@@ -253,7 +275,7 @@ function Stage({ steps, step, label }: { steps: Step[]; step: Step; label: strin
       ref={box}
       dir="ltr"
       className="relative mx-auto w-full overflow-hidden rounded-xl border border-line bg-surface"
-      style={{ aspectRatio: `${shown.viewport.w} / ${shown.viewport.h}`, maxWidth: `calc(58dvh * ${shown.viewport.w} / ${shown.viewport.h})` }}
+      style={{ aspectRatio: `${shown.viewport.w} / ${shown.viewport.h}`, maxWidth: `calc(var(--stage-h, 58dvh) * ${shown.viewport.w} / ${shown.viewport.h})` }}
     >
       {prev?.screenshotUrl && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -333,11 +355,13 @@ function StepTimeline({ steps, selectedIndex, live, onSelect, activeRow }: {
   const list = useRef<HTMLOListElement>(null);
 
   // Keep the newest step in view as it arrives, without scrolling the page itself.
+  // New rows grow in from zero height, so scroll again once each one has finished growing.
   const last = steps.at(-1)?._id;
-  useEffect(() => {
+  const toBottom = () => {
     const el = list.current;
     if (live && el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [last, live]);
+  };
+  useEffect(toBottom, [last, live]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -345,7 +369,7 @@ function StepTimeline({ steps, selectedIndex, live, onSelect, activeRow }: {
         {t("steps")}
         <span className="rounded-full bg-fg/[0.06] px-1.5 py-0.5 text-[10px] text-fg-2">{steps.length.toLocaleString("fa-IR")}</span>
       </h3>
-      <ol ref={list} className="relative max-h-80 min-h-0 flex-1 overflow-y-auto rounded-xl border border-line bg-surface p-2 @3xl:max-h-none">
+      <ol ref={list} onAnimationEnd={toBottom} className="relative max-h-80 min-h-0 flex-1 overflow-y-auto rounded-xl border border-line bg-surface p-2 @3xl:max-h-none">
         {steps.map((s, i) => {
           const Icon = ACTION_ICONS[s.action.type] ?? MousePointerClick;
           const fresh = !initial.current!.has(s._id);
@@ -364,7 +388,7 @@ function StepTimeline({ steps, selectedIndex, live, onSelect, activeRow }: {
                   {/* rail: connects this node to the next one */}
                   {i < steps.length - 1 && <span aria-hidden className="absolute top-9 bottom-[-10px] start-[22px] w-px bg-line-strong" />}
                   <span className={`relative grid size-7 shrink-0 place-items-center rounded-full transition-colors duration-300 ${
-                    !s.ok ? "bg-danger-soft text-danger" : newest ? "bg-accent text-white" : selected ? "bg-accent-soft text-accent" : "bg-card text-fg-2 ring-1 ring-line-strong"
+                    !s.ok ? "bg-warning-soft text-warning" : newest ? "bg-accent text-white" : selected ? "bg-accent-soft text-accent" : "bg-card text-fg-2 ring-1 ring-line-strong"
                   }`}>
                     {newest && <span aria-hidden className="absolute inset-0 animate-ping rounded-full bg-accent/40 motion-reduce:animate-none" />}
                     <Icon className="relative size-3.5" strokeWidth={2} aria-hidden />
@@ -378,7 +402,7 @@ function StepTimeline({ steps, selectedIndex, live, onSelect, activeRow }: {
                     <span className="mt-0.5 block truncate text-xs text-fg-3">{s.thought}</span>
                   </span>
                   <span className="mt-1.5 shrink-0" aria-hidden>
-                    {s.ok ? <Check className="size-3.5 text-success" strokeWidth={2.5} /> : <X className="size-3.5 text-danger" strokeWidth={2.5} />}
+                    {s.ok ? <Check className="size-3.5 text-success" strokeWidth={2.5} /> : <X className="size-3.5 text-warning" strokeWidth={2.5} />}
                   </span>
                 </button>
               </div>

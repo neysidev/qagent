@@ -414,6 +414,8 @@
     "allScenarios": "همه سناریوها",
     "steps": "مراحل",
     "followLive": "دنبال کردن زنده",
+    "replay": "بازپخش",
+    "replayPause": "توقف",
     "noSteps": "برای این سناریو مرحله‌ای ثبت نشده",
     "step": "مرحله {n}",
     "kind": {

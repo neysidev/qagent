@@ -58,7 +58,7 @@ export function Report({ data, bugActions }: { data: RunDetails; bugActions?: (b
             )}
           </section>
 
-          <section className="grid gap-4 lg:grid-cols-[320px_1fr]">
+          <section className="grid grid-cols-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
             <div className={`${card} h-fit`}>
               <header className={cardHeader}>
                 <h3 className={cardTitle}>{t("verdicts")}</h3>

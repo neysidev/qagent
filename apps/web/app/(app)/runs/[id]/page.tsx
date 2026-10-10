@@ -160,7 +160,8 @@ function LiveView({ data }: { data: RunDetails }) {
     return <PendingScene status={run.status === "queued" ? "queued" : "planning"} host={hostOf(run.url)} />;
   }
   return (
-    <div className={`${card} min-w-0 space-y-4 p-4`}>
+    // Stage height = viewport minus header, stage track and card chrome, so the live player fits one screen (min 18rem).
+    <div className={`${card} min-w-0 space-y-4 p-4 [--stage-h:max(18rem,calc(100dvh-34rem))]`}>
       <ScenarioChips scenarios={scenarios} selected={scenarioId} onSelect={setScenarioId} />
       <StepViewer
         key={scenarioId ?? "all"}
