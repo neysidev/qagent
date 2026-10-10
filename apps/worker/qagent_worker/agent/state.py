@@ -21,10 +21,10 @@ class Plan(BaseModel):
 
 
 class Action(BaseModel):
-    type: Literal["click", "fill", "select", "check", "press", "navigate", "scroll", "wait"]
+    type: Literal["click", "fill", "select", "check", "press", "navigate", "scroll", "wait", "assert"]
     ref: str | None = Field(default=None, description="Element ref like e12 (click/fill/select/check)")
-    text: str | None = Field(default=None, description="Text for fill, option for select")
-    key: str | None = Field(default=None, description="Key for press, e.g. Enter")
+    text: str | None = Field(default=None, description="Text for fill, option for select; for assert, the expected text or URL part")
+    key: str | None = Field(default=None, description="Key for press, e.g. Enter. For assert: theme_dark | theme_light | url_contains | text_present | text_absent")
     url: str | None = Field(default=None, description="Absolute URL for navigate (same site only)")
     direction: Literal["up", "down"] | None = None
     ms: int | None = Field(default=None, description="Milliseconds for wait, max 3000")
@@ -37,8 +37,8 @@ class Done(BaseModel):
 
 class Decision(BaseModel):
     thought: str = Field(description="One or two short sentences of reasoning, in the requested language")
-    actions: list[Action] = Field(default_factory=list, max_length=4)
-    done: Done | None = Field(default=None, description="Set when the scenario is finished; then actions is empty")
+    actions: list[Action] = Field(default_factory=list, max_length=6)
+    done: Done | None = Field(default=None, description="Set when finished. With actions, only valid for success=true and when the last action is an assert")
 
 
 class BugReport(BaseModel):

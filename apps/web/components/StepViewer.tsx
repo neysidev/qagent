@@ -263,6 +263,7 @@ const ACTION_ICONS: Record<string, LucideIcon> = {
   navigate: Globe,
   scroll: ArrowDownUp,
   wait: Hourglass,
+  assert: Check,
 };
 
 /**

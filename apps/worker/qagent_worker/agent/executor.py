@@ -20,7 +20,7 @@ log = logging.getLogger("qagent.executor")
 
 MAX_STEPS = 25
 SCENARIO_TIMEOUT_S = 180
-HISTORY_LINES = 15
+HISTORY_LINES = 12
 
 
 class Api(Protocol):
@@ -128,6 +128,8 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
     final_shot: bytes | None = None
     trace: list[dict[str, Any]] = []
     blocked = False
+    asserts: list[str] = []
+    prev_obs: Observation | None = None
     try:
         page = await context.new_page()
         evidence.attach(page)
@@ -148,20 +150,24 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
                         f"Expected outcome: {scenario['expected']}\nOverall goal: {run['goal']}\n\n"
                         f"Test data:\n{data}\n\nSteps so far ({step}/{MAX_STEPS}):\n"
                         + ("\n".join(history[-HISTORY_LINES:]) or "(none)")
+                        + (f"\n\nChanges since last step:\n{obs.diff(prev_obs)}" if prev_obs else "")
                         + f"\n\nCurrent page:\n{obs.render(secret_values)}"
                     )
+                    prev_obs = obs
                     decision = await structured(
                         "fast", Decision, prompts.messages(prompts.EXECUTOR_SYSTEM, user), cost
                     )
                     thought = scrub(decision.thought, secret_values)
-                    if decision.done:
+                    # done + actions is allowed only as "actions ending in an assert, then done(success)"; the assert gates it
+                    pending = decision.done if decision.actions and decision.done and decision.done.success and decision.actions[-1].type == "assert" else None
+                    if decision.done and not pending:
                         finished_ok, conclusion = decision.done.success, scrub(decision.done.reason, secret_values)
                         break
                     if not decision.actions:
                         history.append("(no action chosen)")
                         step += 1
                         continue
-                    for i, action in enumerate(decision.actions[:4]):
+                    for i, action in enumerate(decision.actions[:6]):
                         if step >= MAX_STEPS:
                             break
                         target = None
@@ -205,6 +211,10 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
                             )
                         step += 1
                         history.append(f"{step}. {describe(action)} -> {'ok' if ok else 'FAILED: ' + (error or '')}")
+                        if action.type == "assert":
+                            asserts.append(f"{'PASS' if ok else 'FAIL'} {describe(action)}" + ("" if ok else f" ({error})"))
+                            if ok and pending and i == len(decision.actions) - 1:
+                                finished_ok, conclusion = True, scrub(pending.reason, secret_values)
                         if not ok or page.url != url_before:
                             break
                         nxt = decision.actions[i + 1] if i + 1 < len(decision.actions) else None
@@ -239,7 +249,7 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
         conclusion = f"{'success' if finished_ok else 'FAILED'}: {conclusion}"
 
     verdict = await verifier.verify(
-        run, scenario, history, conclusion, final_obs, final_shot, evidence, secret_values, cost, finished_ok
+        run, scenario, history, conclusion, final_obs, final_shot, evidence, secret_values, cost, finished_ok, asserts
     )
     # An unfinished scenario can only end as a proven site bug or an agent error, never a pass.
     if verdict.status == "passed" and finished_ok is None:

@@ -18,10 +18,12 @@ _EXTRACT_JS = r"""
     const byId = el.id && document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
     return clip(el.getAttribute('aria-label') || (el.labels && el.labels[0] && el.labels[0].innerText) ||
       (byId && byId.innerText) || el.getAttribute('placeholder') || el.getAttribute('alt') ||
-      el.getAttribute('title') || el.innerText || el.value || el.getAttribute('name'), 80);
+      el.getAttribute('title') || el.innerText || el.value || el.getAttribute('name') ||
+      (el.querySelector('svg title,img[alt]') && (el.querySelector('svg title')?.textContent || el.querySelector('img[alt]').alt)) ||
+      el.dataset.testid || (el.tagName === 'BUTTON' && el.id) || '', 80);
   };
   for (const el of document.querySelectorAll(SEL)) {
-    if (seen.has(el) || out.length >= 150) continue;
+    if (seen.has(el) || out.length >= 100) continue;
     const r = el.getBoundingClientRect(), st = getComputedStyle(el);
     if (r.width < 1 || r.height < 1 || st.visibility === 'hidden' || st.display === 'none' || +st.opacity === 0) continue;
     if (r.bottom < -100 || r.top > vh + 300) continue;
@@ -33,14 +35,36 @@ _EXTRACT_JS = r"""
     out.push({
       ref: el.dataset.qaRef, tag, role: el.getAttribute('role') || '', type, name: nameOf(el),
       value: clip(value, 60), disabled: !!el.disabled || el.getAttribute('aria-disabled') === 'true',
-      checked: (type === 'checkbox' || type === 'radio') ? !!el.checked : null,
+      checked: (type === 'checkbox' || type === 'radio') ? !!el.checked
+        : (el.getAttribute('aria-checked') ? el.getAttribute('aria-checked') === 'true' : null),
+      pressed: el.getAttribute('aria-pressed') ? el.getAttribute('aria-pressed') === 'true' : null,
+      expanded: el.getAttribute('aria-expanded') ? el.getAttribute('aria-expanded') === 'true' : null,
       invalid: el.getAttribute('aria-invalid') === 'true',
       bbox: { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) },
     });
   }
   const captcha = !!document.querySelector('iframe[src*="recaptcha"],iframe[src*="hcaptcha"],' +
     'iframe[src*="challenges.cloudflare.com"],.g-recaptcha,.h-captcha,.cf-turnstile,#challenge-form');
-  return { url: location.href, title: document.title, text: clip(document.body ? document.body.innerText : '', 1500), elements: out, captcha };
+  return { url: location.href, title: document.title, text: clip(document.body ? document.body.innerText : '', 1000), elements: out, captcha };
+}
+"""
+
+# Page-level look: theme is judged from the real rendered background colour (canvas decodes any CSS colour format).
+_STATE_JS = r"""
+() => {
+  const de = document.documentElement, b = document.body;
+  const c = document.createElement('canvas').getContext('2d');
+  const lum = (css) => {
+    c.clearRect(0, 0, 1, 1); c.fillStyle = '#000'; c.fillStyle = css; c.fillRect(0, 0, 1, 1);
+    const [r, g, bl, a] = c.getImageData(0, 0, 1, 1).data;
+    return a < 10 ? null : (0.2126 * r + 0.7152 * g + 0.0722 * bl) / 255;
+  };
+  let bg = null;
+  for (const el of [b, de]) { if (!el) continue; bg = lum(getComputedStyle(el).backgroundColor); if (bg !== null) break; }
+  if (bg === null) bg = 1;
+  const clip = (s) => (s || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  return { theme: bg < 0.4 ? 'dark' : 'light', bg: Math.round(bg * 100) / 100, cls: clip((de.className || '') + ' ' + ((b && b.className) || '')),
+    dataTheme: de.dataset.theme || (b && b.dataset.theme) || '', colorScheme: getComputedStyle(de).colorScheme };
 }
 """
 
@@ -58,6 +82,8 @@ class Element(BaseModel):
     value: str
     disabled: bool
     checked: bool | None
+    pressed: bool | None = None
+    expanded: bool | None = None
     invalid: bool
     bbox: dict[str, int]
 
@@ -81,6 +107,10 @@ class Element(BaseModel):
             parts.append("disabled")
         if self.checked is not None:
             parts.append("checked" if self.checked else "unchecked")
+        if self.pressed is not None:
+            parts.append("pressed" if self.pressed else "not-pressed")
+        if self.expanded is not None:
+            parts.append("expanded" if self.expanded else "collapsed")
         if self.invalid:
             parts.append("invalid")
         return " ".join(parts)
@@ -92,6 +122,35 @@ class Observation(BaseModel):
     text: str
     elements: list[Element]
     captcha: bool = False
+    state: dict[str, Any] = {}
+
+    def state_line(self) -> str:
+        st = self.state
+        if not st:
+            return ""
+        extra = "".join(f", {k}={st[k]!r}" for k in ("dataTheme", "cls", "colorScheme") if st.get(k))
+        return f"Theme: {st['theme']} (background luminance {st['bg']}{extra})"
+
+    def diff(self, prev: "Observation | None") -> str:
+        """What changed since the previous observation, so the model need not compare two page dumps."""
+        if prev is None:
+            return ""
+        out: list[str] = []
+        if self.url != prev.url:
+            out.append(f"URL: {prev.url} -> {self.url}")
+        if prev.state and self.state and prev.state["theme"] != self.state["theme"]:
+            out.append(f"Theme: {prev.state['theme']} -> {self.state['theme']}")
+        old = {e.line() for e in prev.elements}
+        new = [e.line() for e in self.elements if e.line() not in old and e.ref not in {p.ref for p in prev.elements}]
+        changed = [e.line() for e in self.elements if e.ref in {p.ref for p in prev.elements} and e.line() not in old]
+        if new:
+            out.append("New: " + "; ".join(new[:6]))
+        if changed:
+            out.append("Changed: " + "; ".join(changed[:6]))
+        gone = len({p.ref for p in prev.elements} - {e.ref for e in self.elements})
+        if gone:
+            out.append(f"{gone} element(s) disappeared")
+        return "\n".join(out) or "nothing visible changed"
 
     def checks(self) -> dict[str, Any]:
         """Deterministic end-state assertions for replay: URL path + key headings/messages."""
@@ -103,7 +162,7 @@ class Observation(BaseModel):
 
     def render(self, secrets: list[str]) -> str:
         body = "\n".join(e.line() for e in self.elements)
-        out = f"URL: {self.url}\nTitle: {self.title}\n\nElements:\n{body}\n\nVisible text (truncated):\n{self.text}"
+        out = f"URL: {self.url}\nTitle: {self.title}\n{self.state_line()}\n\nElements:\n{body}\n\nVisible text (truncated):\n{self.text}"
         for s in secrets:
             if s:
                 out = out.replace(s, "****")
@@ -113,7 +172,16 @@ class Observation(BaseModel):
 async def observe(page: Page) -> Observation:
     try:
         await page.wait_for_load_state("domcontentloaded", timeout=5_000)
+        await page.wait_for_load_state("networkidle", timeout=1_500)  # let SPAs hydrate before reading the page
     except Exception:
         pass
     raw: dict[str, Any] = await page.evaluate(_EXTRACT_JS)
+    raw["state"] = await page_state(page)
     return Observation.model_validate(raw)
+
+
+async def page_state(page: Page) -> dict[str, Any]:
+    try:
+        return await page.evaluate(_STATE_JS)
+    except Exception:
+        return {}

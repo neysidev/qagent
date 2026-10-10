@@ -35,7 +35,7 @@ def model_name(kind: ModelKind) -> str:
 
 # Cap on reply length. Replies are small structured JSON; without a cap, OpenAI-compatible providers reserve the
 # model's full output window (64k+ tokens) per call, which credit-limited keys reject outright (OpenRouter: 402).
-MAX_TOKENS = int(os.environ.get("LLM_MAX_TOKENS", "4096"))
+MAX_TOKENS = int(os.environ.get("LLM_MAX_TOKENS", "8192"))  # Gemini counts thinking tokens against this
 
 
 @cache
@@ -59,7 +59,8 @@ def chat_model(kind: ModelKind) -> BaseChatModel:
         model=name,
         google_api_key=os.environ["GOOGLE_API_KEY"],
         max_output_tokens=MAX_TOKENS,
-        temperature=0.1,
+        temperature=1.0,  # Gemini 3 degrades (loops, junk output) when lowered; 1.0 is Google's recommendation
+        thinking_level="low" if kind == "fast" else None,  # bounded thinking so it can't eat the output budget
         timeout=60,
         max_retries=0,
     )

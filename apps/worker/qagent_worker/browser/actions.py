@@ -6,7 +6,7 @@ from playwright.async_api import Locator, Page
 
 from ..agent.state import Action
 from ..security import url_allowed
-from .observe import Observation
+from .observe import Observation, page_state
 
 ACTION_TIMEOUT_MS = 20_000
 
@@ -35,6 +35,28 @@ async def _settle(page: Page) -> None:
         pass
 
 
+async def _assert(page: Page, kind: str | None, expected: str) -> None:
+    """Deterministic check, polled ~1.5s so CSS transitions and async renders can finish. Raises with the actual value."""
+    actual = ""
+    for _ in range(6):
+        if kind in ("theme_dark", "theme_light"):
+            st = await page_state(page)
+            actual = f"theme is {st.get('theme')} (background luminance {st.get('bg')}, class '{st.get('cls')}')"
+            ok = st.get("theme") == kind.split("_")[1]
+        elif kind == "url_contains":
+            actual, ok = f"url is {page.url}", expected in page.url
+        elif kind in ("text_present", "text_absent"):
+            body = " ".join((await page.inner_text("body")).split()).lower()
+            found = " ".join(expected.split()).lower() in body
+            actual, ok = f"text {'found' if found else 'not found'}", found == (kind == "text_present")
+        else:
+            raise ActionError(f"Unknown assert check {kind!r}")
+        if ok:
+            return
+        await page.wait_for_timeout(250)
+    raise ActionError(f"assert {kind} {expected!r} failed: {actual}")
+
+
 async def execute(page: Page, action: Action, obs: Observation, secrets: dict[str, str]) -> None:
     def resolve(text: str | None) -> str:
         text = text or ""
@@ -53,6 +75,8 @@ async def execute(page: Page, action: Action, obs: Observation, secrets: dict[st
             await page.keyboard.press(action.key or "Enter")
         elif t == "scroll":
             await page.mouse.wheel(0, -600 if action.direction == "up" else 600)
+        elif t == "assert":
+            await _assert(page, action.key, action.text or "")
         elif t == "wait":
             await page.wait_for_timeout(min(max(action.ms or 1000, 0), 3000))
         else:
