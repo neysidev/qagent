@@ -111,7 +111,7 @@ function AddressForm() {
             spellCheck={false}
             value={url}
             onChange={(e) => {
-              setUrl(e.target.value);
+              setUrl(e.target.value.replace(/^https:\/\//i, ""));
               setError(null);
             }}
             placeholder="example.com"
@@ -119,6 +119,8 @@ function AddressForm() {
             aria-describedby={error ? "address-error" : undefined}
             className="font-url h-14 min-w-0 flex-1 bg-transparent text-[18px] text-fg placeholder:text-fg-3 focus:outline-none"
           />
+          {/* RTL flex: sits visually left of the LTR input, reading as one address. */}
+          <span dir="ltr" aria-hidden className="font-url -me-2.5 text-[18px] text-fg-3 select-none">https://</span>
           <Globe className="size-6 shrink-0 text-fg-3" strokeWidth={1.75} aria-hidden />
         </label>
       </form>

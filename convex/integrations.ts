@@ -41,6 +41,7 @@ export const add = mutation({
   handler: async (ctx, { kind, target, secret, onlyFailures }) => {
     const userId = await requireUser(ctx);
     target = target.trim();
+    if (kind !== "telegram" && !/^[a-z][a-z\d+.-]*:\/\//i.test(target)) target = `https://${target}`;
     secret = secret?.trim() || undefined;
     if (!validTarget(kind, target, secret)) throw new ConvexError("INVALID_CHANNEL");
     const count = (await ctx.db.query("integrations").withIndex("by_user", (q) => q.eq("userId", userId)).collect()).length;
