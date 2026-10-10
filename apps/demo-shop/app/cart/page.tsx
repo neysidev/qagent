@@ -15,14 +15,12 @@ export default function CartPage() {
   function changeQty(id: string, raw: string) {
     const n = Number.parseInt(raw, 10);
     if (Number.isNaN(n)) return;
-    // B3: no lower bound, so 0 and negative quantities are accepted.
     const qty = hasBug("B3") ? n : Math.max(1, n);
     save(cart.map((i) => (i.id === id ? { ...i, qty } : i)));
   }
 
   async function remove(id: string) {
     const res = await fetch(`/api/cart/${id}`, { method: "DELETE", headers: { "x-qa-bugs": bugsHeader() } });
-    // B1: the API returns 500 and the item silently stays in the cart.
     if (res.ok) save(cart.filter((i) => i.id !== id));
   }
 

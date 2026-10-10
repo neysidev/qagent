@@ -1,5 +1,3 @@
-"""Live view: CDP screencast of a run's browser, served as an MJPEG stream while someone is watching."""
-
 import asyncio
 import base64
 import hashlib
@@ -15,12 +13,10 @@ SCREENCAST = {"format": "jpeg", "quality": 55, "maxWidth": 1280, "maxHeight": 80
 
 
 def token(run_id: str) -> str:
-    """Per-run stream token; Convex mints the same HMAC for the run's owner."""
     return hmac.new(os.environ["WORKER_SECRET"].encode(), run_id.encode(), hashlib.sha256).hexdigest()[:32]
 
 
 class Live:
-    """One per run. Streams the oldest open page (parallel scenarios would otherwise flicker), only while viewed."""
 
     def __init__(self) -> None:
         self.pages: list[Page] = []
@@ -60,7 +56,7 @@ class Live:
 
     def _push(self, q: asyncio.Queue[bytes | None], frame: bytes | None) -> None:
         if q.full():
-            q.get_nowait()  # slow viewer: drop the stale frame, keep the newest
+            q.get_nowait()
         q.put_nowait(frame)
 
     async def _sync(self) -> None:
@@ -73,7 +69,7 @@ class Live:
                     await self._cdp.send("Page.stopScreencast")
                     await self._cdp.detach()
                 except Exception:
-                    pass  # the page is already gone
+                    pass
             self._cdp = self._page = None
             if want is None:
                 return
@@ -113,10 +109,9 @@ async def drop(run_id: str) -> None:
 
 
 async def stream(run_id: str, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-    """Writes the multipart MJPEG response until the viewer leaves or the run ends. Resends the last frame as keepalive."""
     live = for_run(run_id)
     q = await live.subscribe()
-    gone = asyncio.create_task(reader.read(1))  # b"" once the client disconnects
+    gone = asyncio.create_task(reader.read(1))
     try:
         writer.write(
             b"HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace; boundary=frame\r\n"

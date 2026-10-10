@@ -14,7 +14,6 @@ import { button, input } from "./ui";
 const DAY = 86_400_000;
 const DAYS = [0, 1, 7, 30] as const;
 
-/** Nearest preset to a stored expiry, so the select shows what was chosen. */
 const presetOf = (expiresAt?: number) => (expiresAt ? DAYS.slice(1).reduce((a, d) => (Math.abs(d * DAY - (expiresAt - Date.now())) < Math.abs(a * DAY - (expiresAt - Date.now())) ? d : a), 30 as number) : 0);
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -26,7 +25,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-/** One place for everything that sends a report to someone: public link, email, connected channels. */
 export function ShareDialog({ open, onClose, run }: { open: boolean; onClose: () => void; run: Run }) {
   const t = useTranslations("share");
   const te = useTranslations("errors");

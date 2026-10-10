@@ -1,9 +1,3 @@
-/**
- * "The Box": black-box cube with the agent pixel on the lid.
- * Phase 2 states are CSS-only: idle (pixel breathes, lid lifts on parent `.group` hover),
- * bug (red pixel), pass (lid closed, check drawn once an ancestor gets `data-in`).
- * ponytail: loading/open states land with the Motion choreography in phase 3.
- */
 export type LogoState = "idle" | "bug" | "pass";
 
 export function LogoBox({ state = "idle", size = 28, className = "" }: { state?: LogoState; size?: number; className?: string }) {

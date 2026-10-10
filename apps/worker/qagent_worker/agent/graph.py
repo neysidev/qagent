@@ -1,5 +1,3 @@
-"""LangGraph: plan → fan-out execute_scenario (replay or agent + verify, max N parallel) → report."""
-
 from typing import Any
 
 from langgraph.graph import END, START, StateGraph
@@ -31,7 +29,7 @@ def build_graph(deps: Deps) -> Any:
             raise RuntimeError("This URL is not allowed (only public http/https sites can be tested)")
         if run.get("replayOf"):
             source = await deps.api.mutation("getReplay", runId=run["_id"])
-            if source:  # re-run: reuse the original scenarios, no planning call
+            if source:
                 planned = [{k: s[k] for k in SCENARIO_FIELDS} for s in source]
                 return await save(run["_id"], planned, [s.get("trace") for s in source])
         context = await deps.pool.new_context()
@@ -51,7 +49,7 @@ def build_graph(deps: Deps) -> Any:
         return [Send("execute_scenario", {"run": state.run, "scenarios": [s]}) for s in state.scenarios]
 
     async def execute_scenario(state: RunState | dict[str, Any]) -> dict[str, Any]:
-        if isinstance(state, dict):  # Send payloads may arrive uncoerced
+        if isinstance(state, dict):
             state = RunState.model_validate(state)
         scenario = state.scenarios[0]
         async with deps.scenario_slots:
@@ -64,7 +62,7 @@ def build_graph(deps: Deps) -> Any:
         run = state.run
         results = state.results
         await deps.api.mutation("setRunStatus", runId=run["_id"], status="reporting")
-        if deps.cost.llmCalls == 0:  # everything replayed: keep it at $0
+        if deps.cost.llmCalls == 0:
             n = len(results)
             text = f"{n} سناریو به‌صورت قطعی و بدون فراخوانی مدل بازپخش شد و همه موفق بودند. هزینه مدل: ۰ دلار."
         else:

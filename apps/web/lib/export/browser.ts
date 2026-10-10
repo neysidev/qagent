@@ -1,6 +1,5 @@
 import { render, imageUrls, type Doc, type ExportOptions } from ".";
 
-/** Downloads text or bytes as a file. */
 export function download(name: string, mime: string, data: BlobPart) {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([data], { type: mime }));
@@ -10,7 +9,6 @@ export function download(name: string, mime: string, data: BlobPart) {
 }
 
 let fontCss: Promise<string> | undefined;
-/** Peyda as base64 @font-face rules, so a saved HTML or PDF keeps the app's font on any machine. Empty if the fetch fails. */
 export function peydaCss(): Promise<string> {
   fontCss ??= Promise.all(
     ([["regular", 400], ["bold", 700]] as const).map(async ([file, weight]) => {
@@ -23,7 +21,6 @@ export function peydaCss(): Promise<string> {
   return fontCss;
 }
 
-/** Fetches a screenshot and re-encodes it as a smaller JPEG data: URL; falls back to the original URL if it cannot. */
 async function shrink(url: string): Promise<string> {
   try {
     const bmp = await createImageBitmap(await (await fetch(url)).blob());
@@ -44,7 +41,6 @@ async function shrink(url: string): Promise<string> {
 async function inline(urls: string[]): Promise<(u: string) => string> {
   const map = new Map<string, string>();
   let next = 0;
-  // Six at a time: enough to be quick, few enough not to stall the page.
   await Promise.all(
     Array.from({ length: Math.min(6, urls.length) }, async () => {
       while (next < urls.length) {
@@ -56,7 +52,6 @@ async function inline(urls: string[]): Promise<(u: string) => string> {
   return (u) => map.get(u) ?? u;
 }
 
-/** Opens the print dialog for a rendered page in a hidden frame, so "Save as PDF" gets the report and not the app. */
 function printHtml(html: string, title: string) {
   const frame = document.createElement("iframe");
   frame.style.cssText = "position:fixed;inset-inline-end:0;bottom:0;width:0;height:0;border:0";
@@ -66,13 +61,11 @@ function printHtml(html: string, title: string) {
     w.document.title = title;
     w.onafterprint = () => frame.remove();
     setTimeout(() => (w.focus(), w.print()), 150);
-    // Browsers that never fire afterprint would otherwise leave the frame behind.
     setTimeout(() => frame.remove(), 120_000);
   };
   document.body.append(frame);
 }
 
-/** Builds the file for one report and downloads it (PDF opens the print dialog). Screenshots are embedded for HTML and PDF. */
 export async function deliver(doc: Doc, o: ExportOptions) {
   const embed = o.format === "html" || o.format === "pdf";
   const file = render(doc, o, embed ? await inline(imageUrls(doc)) : undefined, embed ? await peydaCss() : undefined);
@@ -80,7 +73,6 @@ export async function deliver(doc: Doc, o: ExportOptions) {
   else download(file.name, file.mime, file.text);
 }
 
-/** The same font as files plus rules pointing at them, for zips where inlining it into every report would repeat 90 KB. */
 export const PEYDA_RELATIVE_CSS =
   '@font-face{font-family:Peyda;font-weight:400;src:url(fonts/peyda-regular.woff2) format("woff2")}' +
   '@font-face{font-family:Peyda;font-weight:700;src:url(fonts/peyda-bold.woff2) format("woff2")}';

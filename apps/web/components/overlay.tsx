@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { button } from "./ui";
 
-/** Click-to-open popover: closes on outside click, Escape, or when a child calls `close`. */
 export function Popover({
   trigger,
   children,
@@ -62,7 +61,6 @@ const placement = {
 export const menuItem =
   "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-start text-sm text-fg-2 transition-colors duration-100 hover:bg-card-hover hover:text-fg focus-visible:bg-card-hover focus-visible:outline-none aria-[current=true]:text-fg";
 
-/** Modal confirm built on <dialog>: native focus trap, Escape and backdrop dismissal. */
 export function ConfirmDialog({
   open,
   onClose,
@@ -116,7 +114,6 @@ export function ConfirmDialog({
   );
 }
 
-/** Content dialog on <dialog> (same shell as ConfirmDialog): scrolls when tall, closes on Escape or backdrop click. */
 export function Modal({
   open,
   onClose,

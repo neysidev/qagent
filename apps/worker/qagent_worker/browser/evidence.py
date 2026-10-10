@@ -1,5 +1,3 @@
-"""Console/page errors and failed network requests per page, plus highlighted screenshots."""
-
 from playwright.async_api import Page, Request, Response
 from pydantic import BaseModel
 
@@ -41,7 +39,6 @@ _HIGHLIGHT_OFF = "el => { el.style.outline = el.dataset.qaOutline || ''; delete 
 
 
 async def screenshot(page: Page, ref: str | None = None) -> bytes:
-    """JPEG of the viewport, with the target element outlined when given."""
     loc = page.locator(f'[data-qa-ref="{ref}"]').first if ref else None
     if loc is not None:
         try:

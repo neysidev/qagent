@@ -9,7 +9,6 @@ import Link from "next/link";
 import { Rise } from "./motion";
 import { btn } from "./ui";
 
-/** Arms `[data-reveal]` elements and marks each with `data-in` the first time it scrolls into view. */
 export function RevealObserver() {
   useEffect(() => {
     const els = document.querySelectorAll<HTMLElement>("[data-reveal]:not([data-in])");
@@ -34,7 +33,6 @@ type NavLabels = Record<"how" | "features" | "report" | "pricing" | "faq" | "log
 
 export function Nav({ labels }: { labels: NavLabels }) {
   const [open, setOpen] = useState(false);
-  // top: rides on the hero (dark, transparent) · in: fixed white bar · out: fixed bar sliding away before returning to top.
   const [bar, setBar] = useState<"top" | "in" | "out">("top");
   const closeRef = useRef<HTMLButtonElement>(null);
   const links = [
@@ -45,7 +43,6 @@ export function Nav({ labels }: { labels: NavLabels }) {
     ["#faq", labels.faq],
   ] as const;
 
-  // Scrolls away with the hero; slides in as a fixed white bar once the hero is gone, slides out on the way back.
   useEffect(() => {
     const hero = document.querySelector("[data-hero]");
     if (!hero) return;
@@ -57,7 +54,6 @@ export function Nav({ labels }: { labels: NavLabels }) {
     return () => io.disconnect();
   }, []);
 
-  // Timer, not transitionend: a fast scroll can skip the transition entirely, which would strand the bar invisible in "out".
   useEffect(() => {
     if (bar !== "out") return;
     const id = setTimeout(() => setBar("top"), 380);
@@ -81,11 +77,9 @@ export function Nav({ labels }: { labels: NavLabels }) {
       <header data-bar={bar}
         className={`nav-bar inset-x-0 top-0 z-50 text-fg ${bar === "top" ? "theme-dark absolute" : "fixed px-3 pt-3"}`}
       >
-        {/* Fade behind the floating bar so content scrolling past the top melts away instead of showing in the gap. */}
         {bar !== "top" && (
           <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-24 bg-gradient-to-b from-canvas via-canvas/85 to-transparent" />
         )}
-        {/* Over the hero: a full-width transparent bar. After it: a floating frosted island. */}
         <nav aria-label="ناوبری اصلی"
           className={`mx-auto grid w-full grid-cols-[1fr_auto_1fr] items-center transition-[max-width,height] duration-300 ${bar === "top"
             ? "h-16 max-w-[1200px] px-4 sm:px-6"
@@ -130,7 +124,6 @@ export function Nav({ labels }: { labels: NavLabels }) {
   );
 }
 
-/** Center links with one shared hover highlight that slides between items; siblings recede while hovering. */
 function NavLinks({ links }: { links: readonly (readonly [string, string])[] }) {
   const [active, setActive] = useState<number | null>(null);
   const [pill, setPill] = useState({ x: 0, w: 0, snap: true });
@@ -139,7 +132,6 @@ function NavLinks({ links }: { links: readonly (readonly [string, string])[] }) 
   function enter(i: number) {
     const el = refs.current[i];
     if (!el) return;
-    // First hover snaps into place (fade only); later hovers slide from the previous item.
     setPill({ x: el.offsetLeft, w: el.offsetWidth, snap: active === null });
     setActive(i);
   }
@@ -167,7 +159,6 @@ function NavLinks({ links }: { links: readonly (readonly [string, string])[] }) 
 
 const audienceIcons = [Store, Palette, Rocket, LayoutDashboard, CreditCard, Code2, Users];
 
-/** "Built for" carousel: icon cards in a horizontal scroller; arrows step one card, edge fades hint at more. */
 export function AudienceCards({ items, labels }: {
   items: { title: string; body: string }[];
   labels: { prev: string; next: string };
@@ -175,7 +166,6 @@ export function AudienceCards({ items, labels }: {
   const [edge, setEdge] = useState({ left: false, right: false, start: true, end: false });
   const track = useRef<HTMLUListElement>(null);
 
-  // Which sides still have content to scroll to (direction-aware, so it works in RTL).
   const measure = () => {
     const el = track.current;
     if (!el) return;
@@ -192,7 +182,6 @@ export function AudienceCards({ items, labels }: {
     return () => removeEventListener("resize", measure);
   }, []);
 
-  // Step one card toward the inline end (dir 1) or start (dir -1); scrollBy is physical, so flip in RTL.
   const step = (dir: 1 | -1) => {
     const el = track.current;
     const card = el?.firstElementChild as HTMLElement | null;
@@ -248,7 +237,6 @@ export type ReportDoc = {
 const formatIcons = [Link2, FileText, Hash];
 const severityPill = "inline-flex items-center gap-1.5 rounded-full bg-danger-soft px-2.5 py-0.5 text-xs font-medium text-danger before:size-1.5 before:rounded-full before:bg-current";
 
-/** The report itself, shared by the link and PDF previews. `paper` tightens it to a printed page. */
 function ReportBody({ d, paper = false }: { d: ReportDoc; paper?: boolean }) {
   const meta = [[d.dateLabel, d.date], [d.durationLabel, d.duration], [d.scenariosLabel, d.scenarios]];
   return (
@@ -340,7 +328,6 @@ function ReportBody({ d, paper = false }: { d: ReportDoc; paper?: boolean }) {
   );
 }
 
-/** Markdown export, shown as the file a developer would paste into an issue. */
 function MarkdownView({ d }: { d: ReportDoc }) {
   const lines: [string, "h1" | "h2" | "h3" | "kv" | "li" | "code" | "blank" | "text", string?][] = [
     [`# ${d.heading} · myshop.ir`, "h1"],
@@ -385,7 +372,6 @@ function MarkdownView({ d }: { d: ReportDoc }) {
   );
 }
 
-/** Report showcase: pick a format on the side, see exactly what that export looks like. */
 export function ReportFormats({ d, formats, label }: { d: ReportDoc; formats: { title: string; body: string }[]; label: string }) {
   const [active, setActive] = useState(0);
   const id = useId();
@@ -473,7 +459,6 @@ export function ReportFormats({ d, formats, label }: { d: ReportDoc; formats: { 
   );
 }
 
-/** Segmented control with a sliding active pill. Arrow keys move between options (tabs pattern). */
 function Segmented({ options, value, onChange, label, idBase }: {
   options: string[];
   value: number;

@@ -1,5 +1,3 @@
-"""Execute one agent action on the page. Targets by data-qa-ref, falls back to role/text."""
-
 from urllib.parse import urljoin, urlsplit
 
 from playwright.async_api import Locator, Page
@@ -36,7 +34,6 @@ async def _settle(page: Page) -> None:
 
 
 async def _assert(page: Page, kind: str | None, expected: str) -> None:
-    """Deterministic check, polled ~1.5s so CSS transitions and async renders can finish. Raises with the actual value."""
     actual = ""
     for _ in range(6):
         if kind in ("theme_dark", "theme_light"):

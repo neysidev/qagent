@@ -26,7 +26,6 @@ const FORMATS: { key: ExportFormat; icon: LucideIcon }[] = [
 
 const STORE = "qagent:export-options";
 
-/** Last choices, remembered per browser. Storage can be blocked or empty, so every access is guarded. */
 function useOptions(brand: Brand, bulk: boolean) {
   const [o, setO] = useState<ExportOptions>(DEFAULT_OPTIONS);
   useEffect(() => {
@@ -35,7 +34,6 @@ function useOptions(brand: Brand, bulk: boolean) {
       if (saved) setO({ ...DEFAULT_OPTIONS, ...saved });
     } catch {}
   }, []);
-  // A brand removed in settings must not stay switched on; bulk has no PDF and no embedded screenshots.
   const eff: ExportOptions = {
     ...o,
     whiteLabel: o.whiteLabel && !!brand,
@@ -180,7 +178,6 @@ export function ExportDialog({ open, onClose, data }: { open: boolean; onClose: 
 type RunRow = { _id: Id<"runs">; status: string; createdAt: number };
 const DAY = 86_400_000;
 
-/** All finished tests of a project (optionally a recent range) as one zip: a file per run plus an index.csv. */
 export function BulkExportDialog({ open, onClose, runs, projectName }: { open: boolean; onClose: () => void; runs: RunRow[]; projectName: string }) {
   const t = useTranslations("export");
   const convex = useConvex();

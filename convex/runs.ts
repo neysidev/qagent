@@ -11,7 +11,6 @@ type NewRun = Pick<Doc<"runs">, "url" | "goal" | "templateKey" | "credentials" |
 
 const dailyLimit = () => Number(process.env.DAILY_RUN_LIMIT ?? 10);
 
-/** A site address as typed by a person: scheme optional, http(s) only. */
 function parseSiteUrl(raw: string): URL {
   const trimmed = raw.trim();
   let parsed: URL;
@@ -20,12 +19,10 @@ function parseSiteUrl(raw: string): URL {
   } catch {
     throw new ConvexError("INVALID_URL");
   }
-  // Reachability and the private-network guard are the worker's job (security.py); this only checks the shape.
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new ConvexError("INVALID_URL");
   return parsed;
 }
 
-/** One project per site origin per user: returns the existing one or creates it. */
 async function ensureProject(ctx: MutationCtx, userId: Id<"users">, parsed: URL) {
   const baseUrl = parsed.origin;
   const existing = (
@@ -79,7 +76,6 @@ export const create = mutation({
   handler: async (ctx, args) => insertRun(ctx, await requireUser(ctx), args),
 });
 
-/** Core entry point: an address in, the site's project out (found by origin, created on first visit). */
 export const openProject = mutation({
   args: { url: v.string() },
   handler: async (ctx, { url }) => ensureProject(ctx, await requireUser(ctx), parseSiteUrl(url)),
@@ -89,7 +85,6 @@ export const rerun = mutation({
   args: { runId: v.id("runs") },
   handler: async (ctx, { runId }) => {
     const run = await requireOwnedRun(ctx, runId);
-    // Passed scenarios are replayed deterministically (no LLM); the rest re-run with the agent.
     return insertRun(ctx, run.userId, { ...run, replayOf: run._id });
   },
 });
@@ -103,7 +98,6 @@ export const cancel = mutation({
   },
 });
 
-/** Creates (or reuses) the public link. `expiresInDays` of 0 or none means the link never expires. */
 export const share = mutation({
   args: { runId: v.id("runs"), expiresInDays: v.optional(v.number()) },
   handler: async (ctx, { runId, expiresInDays }) => {
@@ -119,7 +113,6 @@ export async function ensureShare(ctx: MutationCtx, run: Doc<"runs">, expiresInD
   return shareToken;
 }
 
-/** Revokes the public link: the old URL stops working and a later share makes a new one. */
 export const unshare = mutation({
   args: { runId: v.id("runs") },
   handler: async (ctx, { runId }) => {
@@ -208,7 +201,6 @@ export const liveTarget = internalQuery({
   },
 });
 
-/** Signed MJPEG URL of the live browser (CDP screencast served by the worker), or null when unavailable. */
 export const liveAccess = action({
   args: { runId: v.id("runs") },
   handler: async (ctx, { runId }): Promise<string | null> => {
@@ -251,7 +243,6 @@ const summarize = (r: Doc<"runs">): RunSummary => ({
   replayOf: r.replayOf,
 });
 
-/** Newest first. ponytail: collects all runs of a project; paginate once a project passes a few hundred runs. */
 const projectRuns = (ctx: QueryCtx, projectId: Id<"projects">) =>
   ctx.db
     .query("runs")
@@ -259,7 +250,6 @@ const projectRuns = (ctx: QueryCtx, projectId: Id<"projects">) =>
     .order("desc")
     .collect();
 
-/** Projects with what a picker needs: run count and the latest run, most recently active first. */
 export const projectList = query({
   args: {},
   handler: async (ctx) => {
@@ -279,9 +269,7 @@ export const projectList = query({
   },
 });
 
-/** Everything the project page shows: its runs, aggregate results and the bugs found recently. */
 export const projectOverview = query({
-  // A plain string: the id comes from the URL, and a malformed one should read as "not found", not throw.
   args: { projectId: v.string() },
   handler: async (ctx, args) => {
     const userId = await requireUser(ctx);
@@ -314,10 +302,6 @@ export const projectOverview = query({
   },
 });
 
-/**
- * When a worker last checked in. Queries re-run when data changes, not as time passes, so the client compares
- * `lastSeenAt + onlineMs` with its own clock to notice a worker going quiet.
- */
 export const workerStatus = query({
   args: {},
   handler: async (ctx) => {
@@ -339,7 +323,6 @@ export const setWeeklyDigest = mutation({
   handler: async (ctx, { on }) => ctx.db.patch(await requireUser(ctx), { weeklyDigest: on }),
 });
 
-/** Report branding. A missing name clears it; the logo is a data: URL the client already shrank. */
 export const setBrand = mutation({
   args: { brand: v.union(v.null(), v.object({ name: v.string(), logo: v.optional(v.string()) })) },
   handler: async (ctx, { brand }) => {
@@ -388,7 +371,6 @@ export const setTracker = mutation({
   },
 });
 
-/** Re-reads the site's title and favicon (a custom name is kept). */
 export const refreshProject = mutation({
   args: { projectId: v.id("projects") },
   handler: async (ctx, { projectId }) => {
@@ -397,12 +379,10 @@ export const refreshProject = mutation({
   },
 });
 
-/** Deletes a project with all its runs, scenarios, steps, bugs and screenshots. */
 export const deleteProject = mutation({
   args: { projectId: v.id("projects") },
   handler: async (ctx, { projectId }) => {
     const project = await requireOwnedProject(ctx, projectId);
-    // ponytail: one transaction for the whole project; batch via scheduler if projects grow past a few hundred runs.
     const runs = await projectRuns(ctx, project._id);
     if (runs.some((r) => r.status === "queued" || (ACTIVE_STATUSES as readonly string[]).includes(r.status)))
       throw new ConvexError("PROJECT_BUSY");

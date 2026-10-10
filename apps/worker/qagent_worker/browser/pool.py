@@ -1,5 +1,3 @@
-"""One warm Chromium per worker; a fresh, guarded context per scenario."""
-
 from urllib.parse import urlsplit
 
 from playwright.async_api import Browser, BrowserContext, Playwright, Route, async_playwright

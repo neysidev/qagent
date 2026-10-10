@@ -9,13 +9,11 @@ export type Run = RunDetails["run"];
 const ERROR_CODES = ["INVALID_URL", "INVALID_GOAL", "DAILY_LIMIT", "INVALID_NAME", "PROJECT_BUSY",
   "INVALID_BRAND", "INVALID_TRACKER", "INVALID_CHANNEL", "INVALID_EMAIL", "EMAIL_NOT_CONFIGURED", "EMAIL_FAILED"] as const;
 
-/** Translation key under `errors` for a thrown mutation error. */
 export function errorKey(e: unknown): string {
   if (e instanceof ConvexError && ERROR_CODES.includes(e.data)) return e.data as string;
   return "generic";
 }
 
-// Codes the worker prefixes onto provider failures ("LLM_CREDITS: …"), mapped to `errors.*` keys.
 const RUN_ERROR_CODES: Record<string, string> = {
   LLM_CREDITS: "llmCredits",
   LLM_AUTH: "llmAuth",
@@ -24,10 +22,8 @@ const RUN_ERROR_CODES: Record<string, string> = {
   LLM_UNAVAILABLE: "llmUnavailable",
   LLM_BAD_OUTPUT: "llmBadOutput",
 };
-// Runs that failed before the worker coded its errors only carry the provider's raw "Error code: NNN".
 const LEGACY_HTTP: Record<string, string> = { "402": "llmCredits", "401": "llmAuth", "403": "llmAuth", "404": "llmModel", "429": "llmRateLimit" };
 
-/** Translation key under `errors` for a worker-reported run error. Always a key: unknown errors read as generic. */
 export function runErrorKey(error: string): string {
   if (error.startsWith("Site unreachable")) return "unreachable";
   if (error.startsWith("This URL is not allowed")) return "notAllowed";
@@ -49,7 +45,6 @@ export function runDuration(run: Run, now: number): number {
   return (run.finishedAt ?? now) - start;
 }
 
-/** Display value for a step's action: never reveals credentials. */
 export function actionValue(step: Step): string | undefined {
   const { value, url, key } = step.action;
   const raw = value ?? key ?? url;
@@ -59,7 +54,6 @@ export function actionValue(step: Step): string | undefined {
 }
 
 const rtf = new Intl.RelativeTimeFormat("fa", { numeric: "auto", style: "short" });
-/** "۵ دقیقه پیش" style relative time. */
 export function timeAgo(ts: number, now = Date.now()): string {
   const s = Math.round((ts - now) / 1000);
   const abs = Math.abs(s);
@@ -79,6 +73,5 @@ export const hostOf = (url: string) => {
 };
 
 const PLANS = ["free", "pro", "agency"] as const;
-/** Translation key under `common` for a stored plan id; unknown ids fall back to the free plan's label. */
 export const planKey = (plan: string | undefined) =>
   `plans.${PLANS.includes(plan as (typeof PLANS)[number]) ? plan : "free"}` as `plans.${(typeof PLANS)[number]}`;

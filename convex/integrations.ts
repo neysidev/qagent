@@ -7,7 +7,6 @@ import { requireUser } from "./lib";
 
 const kind = v.union(v.literal("slack"), v.literal("telegram"), v.literal("webhook"));
 
-/** Public https endpoints only; the host check is a basic guard, not a full SSRF defence. */
 function validTarget(k: Doc<"integrations">["kind"], target: string, secret?: string) {
   if (k === "telegram") return /^-?\d{3,20}$/.test(target) && /^\d+:[\w-]{20,}$/.test(secret ?? "");
   let u: URL;
@@ -21,7 +20,6 @@ function validTarget(k: Doc<"integrations">["kind"], target: string, secret?: st
   return !/^(localhost|127\.|10\.|192\.168\.|169\.254\.|0\.|\[)/.test(u.hostname) && u.hostname.includes(".");
 }
 
-/** What the settings page shows: never the secret parts. */
 export const list = query({
   args: {},
   handler: async (ctx) => {
@@ -105,7 +103,6 @@ async function hmac(secret: string, body: string) {
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** Posts one message to one channel; returns whether the channel accepted it. */
 async function deliver(c: Doc<"integrations">, m: Message): Promise<boolean> {
   try {
     let res: Response;
@@ -131,7 +128,6 @@ async function deliver(c: Doc<"integrations">, m: Message): Promise<boolean> {
   }
 }
 
-/** Runs after a run finishes: tells every channel that wants to know. */
 export const notifyRun = internalAction({
   args: { runId: v.id("runs") },
   handler: async (ctx, { runId }) => {
@@ -142,7 +138,6 @@ export const notifyRun = internalAction({
   },
 });
 
-/** Manual "send this report to my channels": ignores the failures-only filter and reports how many accepted. */
 export const sendRun = action({
   args: { runId: v.id("runs") },
   handler: async (ctx, { runId }): Promise<{ sent: number; total: number }> => {
@@ -156,7 +151,6 @@ export const sendRun = action({
   },
 });
 
-/** "Send test" for one channel in settings. */
 export const test = action({
   args: { id: v.id("integrations") },
   handler: async (ctx, { id }): Promise<boolean> => {

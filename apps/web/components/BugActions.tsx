@@ -15,7 +15,6 @@ import { button, input, segment, segmented } from "./ui";
 
 const KINDS = ["github", "linear", "jira"] as const;
 
-/** Per-bug menu: copy as text, or open a pre-filled ticket in the project's tracker. */
 export function BugActions({ bug, run }: { bug: Bug; run: Run }) {
   const t = useTranslations("issue");
   const { projects } = useWorkspace();

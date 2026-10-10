@@ -1,9 +1,3 @@
-"""Deterministic replay of a passed scenario's action trace, with no LLM calls.
-
-Elements are re-located by role + accessible name (stored ref as fallback). Returns None when the trace
-no longer reproduces, so the caller falls back to the agent ("self-healing").
-"""
-
 import logging
 import re
 import time

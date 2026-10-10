@@ -22,7 +22,6 @@ export function Icon({ name, size = 20, className }: { name: string; size?: numb
   );
 }
 
-/** Product "photo": a soft tinted tile with a large line icon, so the shop needs no image assets. */
 export function ProductArt({ product, size = 56 }: { product: Product; size?: number }) {
   return (
     <div className="art" style={{ background: product.tone }}>

@@ -52,7 +52,6 @@ export type Doc = {
   scenarios: DocScenario[];
 };
 
-/** Everything a report says, already cut down to what the options allow. Every renderer starts from this. */
 export function buildDoc(data: RunDetails, o: ExportOptions, brand: Brand): Doc {
   const { run, scenarios, steps, bugs } = data;
   const detail = o.scope !== "summary";
@@ -164,7 +163,6 @@ export const toJson = (d: Doc) => JSON.stringify({ schema: "qagent.report.v1", .
 
 const xml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "");
 
-/** JUnit XML: one test case per scenario, so CI dashboards show scenarios as tests. */
 export function toJunit(d: Doc, lang: Lang): string {
   const L = LABELS[lang];
   const host = d.run.url ? hostOf(d.run.url) : "qagent";
@@ -196,12 +194,10 @@ export function toJunit(d: Doc, lang: Lang): string {
 
 const csvCell = (v: string | number | boolean | undefined) => {
   const s = String(v ?? "");
-  // A leading = + - @ would run as a formula in Excel; the apostrophe keeps it text.
   const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
   return /[",\n\r]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
 };
 
-/** One row per step; scenarios with no steps (summary or failed-only scope) still get a row. A BOM makes Excel read Persian as UTF-8. */
 export function toCsv(d: Doc, lang: Lang): string {
   const L = LABELS[lang];
   const rows: (string | number | boolean | undefined)[][] = [["scenario", "status", "reason", "step", "action", "thought", "page", "ok", "duration_ms", "error"]];
@@ -228,7 +224,6 @@ details{margin-top:6px}summary{cursor:pointer;color:#55524b}.step{padding:8px 0;
 .bad{color:#b42318}footer{margin-top:32px;text-align:center;color:#8a867d;font-size:12px}
 @page{margin:14mm}@media print{body{background:#fff}main{padding:0}details[open] summary{display:none}}@media(max-width:600px){.cols{grid-template-columns:1fr}}`;
 
-/** A single self-contained page: styles inline, screenshots as data: URLs (via `img`). Also the source for PDF. */
 export function toHtml(d: Doc, lang: Lang, dir: "rtl" | "ltr", img: (u: string) => string = (u) => u, fontCss = ""): string {
   const L = LABELS[lang];
   const shot = (u: string) => `<img class="shot" src="${esc(img(u))}" alt="">`;
@@ -271,7 +266,6 @@ export const fileName = (d: Doc, ext: string) => {
   return `qagent-${host}-${d.run.date?.slice(0, 10) ?? "report"}-${d.run.id.slice(-6)}.${ext}`;
 };
 
-/** Text of one report in the chosen format (PDF renders as HTML, the caller prints it). */
 export function render(d: Doc, o: ExportOptions, img?: (u: string) => string, fontCss?: string): RenderedFile {
   const ext = EXT[o.format];
   const text =
@@ -283,5 +277,4 @@ export function render(d: Doc, o: ExportOptions, img?: (u: string) => string, fo
   return { name: fileName(d, ext), mime: `${MIME[ext]};charset=utf-8`, text };
 }
 
-/** Every screenshot URL a document uses, so they can be fetched once and embedded. */
 export const imageUrls = (d: Doc) => [...new Set([...d.bugs.flatMap((b) => b.screenshots), ...d.scenarios.flatMap((s) => s.steps.flatMap((x) => (x.shot ? [x.shot] : [])))])];

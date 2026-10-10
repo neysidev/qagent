@@ -190,7 +190,7 @@ function ProjectRow({
     setRefreshing(true);
     try {
       await refresh({ projectId: project._id });
-      await new Promise((r) => setTimeout(r, 1500)); // the fetch runs server-side; hold the spinner while it lands
+      await new Promise((r) => setTimeout(r, 1500));
     } finally {
       setRefreshing(false);
     }

@@ -13,13 +13,10 @@ import { input, label } from "./ui";
 export const DEMO_URL = process.env.NEXT_PUBLIC_DEMO_SHOP_URL ?? "";
 export type Draft = { path: string; goal: string };
 
-// A free-text goal that talks about signing in probably needs an account; only used to nudge, never to block.
 const LOGIN_HINT = /وارد شو|ورود|لاگین|پنل|داشبورد|پروفایل|حساب کاربری|login|sign ?in|dashboard|account/i;
 
-/** Start URL inside the project's site: the path may be typed with or without a leading slash. */
 const startUrl = (site: string, path: string) => new URL(path.trim().replace(/^\/*/, "/"), site).href;
 
-/** New test for one project, as three short steps: what to test, where to start, and (when needed) a test account. */
 export function Composer({ site, draft, setDraft }: { site: string; draft: Draft; setDraft: (d: Draft) => void }) {
   const t = useTranslations("composer");
   const te = useTranslations("errors");
@@ -78,7 +75,6 @@ export function Composer({ site, draft, setDraft }: { site: string; draft: Draft
           value={draft.goal}
           onChange={(e) => setDraft({ ...draft, goal: e.target.value })}
           onKeyDown={(e) => {
-            // Enter sends, Shift+Enter breaks the line; never while a Persian IME is composing.
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
               void send();
@@ -164,7 +160,6 @@ function Chip({ on, done, icon: Icon, label, onClick }: { on: boolean; done: boo
   );
 }
 
-/** Height-animated disclosure; content stays mounted so typed values survive a collapse. */
 function Reveal({ open, children }: { open: boolean; children: ReactNode }) {
   return (
     <div aria-hidden={!open} inert={!open} className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>

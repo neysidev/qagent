@@ -49,7 +49,6 @@ export default function ComparePage() {
   const current = useQuery(api.runs.get, { runId: id as Id<"runs"> });
   const overview = useQuery(api.runs.projectOverview, current ? { projectId: current.run.projectId } : "skip");
 
-  // Candidates: finished runs of this project; default to the one just before this run, else the newest other one.
   const others = useMemo(() => (overview?.runs ?? []).filter((r) => r._id !== id && r.status === "done"), [overview, id]);
   const defaultId = useMemo(() => {
     if (!current) return null;

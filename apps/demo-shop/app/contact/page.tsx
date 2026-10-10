@@ -12,7 +12,6 @@ export default function ContactPage() {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.currentTarget));
     if (hasBug("B4")) {
-      // B4: shows success, but crashes before anything is sent.
       setToast("پیام شما ارسال شد");
       setTimeout(() => {
         throw new TypeError("Cannot read properties of undefined (reading 'send')");

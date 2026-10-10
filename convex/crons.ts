@@ -5,7 +5,6 @@ import { ACTIVE_STATUSES, lastWorkerSeen, WORKER_ONLINE_MS } from "./lib";
 
 const STALE_MS = 90_000;
 const MAX_ATTEMPTS = 2;
-/** A queued run gives up after this long, but only while no worker is online (a busy queue still waits). */
 const QUEUE_GIVE_UP_MS = 10 * 60_000;
 
 export const reapStaleRuns = internalMutation({
@@ -41,6 +40,5 @@ export const reapStaleRuns = internalMutation({
 
 const crons = cronJobs();
 crons.interval("reap stale runs", { seconds: 30 }, internal.crons.reapStaleRuns);
-// Saturday morning (Tehran), the start of the Iranian week.
 crons.weekly("weekly digest", { dayOfWeek: "saturday", hourUTC: 5, minuteUTC: 30 }, internal.email.weeklyDigest);
 export default crons;

@@ -27,7 +27,6 @@ const severityTone: Record<Overview["recentBugs"][number]["severity"], Tone> = {
   low: "neutral",
 };
 
-/** A site's workspace: how it is doing, a new test against it, and everything run on it so far. */
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const data = useOverview(id);
@@ -184,7 +183,6 @@ function Severity({ severity }: { severity: Overview["recentBugs"][number]["seve
   return <span className={pill(severityTone[severity])}>{t(`severity.${severity}`)}</span>;
 }
 
-/** Mirrors Project's returning-user layout (header, tabs, composer) box for box so the swap doesn't shift anything. */
 function ProjectSkeleton() {
   const bar = `${skeleton} rounded-md`;
   return (

@@ -9,7 +9,6 @@ const siteUrl = () => (process.env.SITE_URL ?? "").replace(/\/$/, "");
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Sends through Resend. Needs RESEND_API_KEY and EMAIL_FROM on the Convex deployment. */
 async function sendEmail(to: string[], subject: string, html: string) {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
@@ -28,13 +27,11 @@ const layout = (title: string, body: string, cta?: { href: string; label: string
 ${cta ? `<p style="margin:20px 0 0"><a href="${esc(cta.href)}" style="display:inline-block;background:#f26a1b;color:#fff;text-decoration:none;border-radius:999px;padding:10px 20px;font-size:14px">${esc(cta.label)}</a></p>` : ""}
 </div><p style="color:#8a867d;font-size:12px;text-align:center">کیوایجنت</p></div></body></html>`;
 
-/** Verifies ownership, makes sure a 30 day public link exists and returns what the email needs. */
 export const prepare = internalMutation({
   args: { userId: v.id("users"), runId: v.id("runs") },
   handler: async (ctx, { userId, runId }) => {
     const run = await ctx.db.get(runId);
     if (!run || run.userId !== userId) throw new Error("Run not found");
-    // An existing link keeps its own expiry; only a new one gets the 30 day default.
     const token = run.shareToken ?? (await ensureShare(ctx, run, 30));
     const bugs = await ctx.db.query("bugs").withIndex("by_run", (q) => q.eq("runId", runId)).collect();
     const owner = await ctx.db.get(userId);
@@ -66,7 +63,6 @@ export const sendReport = action({
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-/** One entry per opted-in user: their projects' runs from the last week. ponytail: scans all users; index digest opt-ins once there are thousands. */
 export const digestData = internalQuery({
   args: {},
   handler: async (ctx) => {
@@ -97,7 +93,6 @@ export const digestData = internalQuery({
   },
 });
 
-/** Weekly cron: one email per opted-in user who ran something this week. */
 export const weeklyDigest = internalAction({
   args: {},
   handler: async (ctx) => {
@@ -111,7 +106,6 @@ export const weeklyDigest = internalAction({
       try {
         await sendEmail([email], "خلاصه هفتگی کیوایجنت", layout("خلاصه این هفته", body, { href: `${siteUrl()}/dashboard`, label: "باز کردن پروژه‌ها" }));
       } catch {
-        // One bad address or provider hiccup must not stop the other users' digests.
       }
     }
   },

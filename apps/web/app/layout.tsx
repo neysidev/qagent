@@ -15,7 +15,6 @@ const peyda = localFont({
   variable: "--font-peyda",
 });
 
-// Geist is only for URLs and hosts (the `font-url` utility); Peyda stays the font for everything else.
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 
 const description = "ایجنت هوشمندی که مسیرهای سایتت را مثل یک کاربر واقعی تست می‌کند.";

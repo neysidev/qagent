@@ -1,5 +1,3 @@
-"""Pydantic models shared by the agent nodes (LLM schemas + graph state)."""
-
 import operator
 from typing import Annotated, Any, Literal
 
@@ -73,8 +71,7 @@ class ScenarioResult(BaseModel):
 
 
 class RunState(BaseModel):
-    """LangGraph state. `run` is the claimed Convex run document."""
 
     run: dict[str, Any]
-    scenarios: list[dict[str, Any]] = []  # PlannedScenario dumps + "_id"
+    scenarios: list[dict[str, Any]] = []
     results: Annotated[list[ScenarioResult], operator.add] = []

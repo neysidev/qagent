@@ -12,7 +12,6 @@ import { NoStepsIllustration } from "./illustrations";
 import { button } from "./ui";
 import { ZoomImage } from "./ZoomImage";
 
-/** The selected step on a stage (screenshot + moving cursor), its details, and a scrubbable step list. */
 export function StepViewer({ steps, scenarios, live, runId }: { steps: Step[]; scenarios: Scenario[]; live: boolean; runId?: string }) {
   const t = useTranslations("run");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -24,7 +23,6 @@ export function StepViewer({ steps, scenarios, live, runId }: { steps: Step[]; s
   const following = live && selectedId === null;
   const scenarioTitle = (id: string) => scenarios.find((s) => s._id === id)?.title ?? "";
 
-  // Replay: walk the finished run step by step so the stage re-enacts it; stops on the last step.
   const [playing, setPlaying] = useState(false);
   useEffect(() => {
     if (!playing) return;
@@ -39,12 +37,10 @@ export function StepViewer({ steps, scenarios, live, runId }: { steps: Step[]; s
   }
 
   const activeRow = useRef<HTMLButtonElement>(null);
-  // Only when the person picks a step; while following live, the timeline scrolls itself (and never the page).
   useEffect(() => {
     if (selectedId) activeRow.current?.scrollIntoView({ block: "nearest" });
   }, [selectedId]);
 
-  // Start fetching screenshots the moment steps arrive, before the stage asks for them.
   useEffect(() => {
     for (const s of steps.slice(-3)) preload(s.screenshotUrl);
   }, [steps]);
@@ -60,8 +56,6 @@ export function StepViewer({ steps, scenarios, live, runId }: { steps: Step[]; s
 
   const label = `${t(`action.${step.action.type}` as "action.click")}${actionValue(step) ? `: ${actionValue(step)}` : ""}`;
 
-  // Screen and steps side by side once there is room (container query, so it adapts to wherever it is placed);
-  // the screen is capped to the viewport height, so the whole player fits on one screen without scrolling.
   return (
     <div className="@container">
       <div className="grid grid-cols-1 gap-4 @3xl:grid-cols-[minmax(0,1fr)_300px]">
@@ -102,8 +96,6 @@ export function StepViewer({ steps, scenarios, live, runId }: { steps: Step[]; s
 
 const REPLAY_MS = 1800;
 
-// Decoded screenshots by URL, shared across viewers so revisiting a step never re-downloads or flashes.
-// ponytail: unbounded per page session; fine for a few hundred steps, add an LRU if runs grow far past that.
 const decoded = new Map<string, Promise<void>>();
 function preload(url: string | null | undefined): Promise<void> {
   if (!url) return Promise.resolve();
@@ -112,13 +104,12 @@ function preload(url: string | null | undefined): Promise<void> {
     const img = new Image();
     img.fetchPriority = "high";
     img.src = url;
-    p = img.decode().catch(() => {}); // a broken image still resolves, so the stage never stalls on it
+    p = img.decode().catch(() => {});
     decoded.set(url, p);
   }
   return p;
 }
 
-/** The worker's real browser as an MJPEG <img>; shows `fallback` (the step stage) until frames arrive or if the stream is unavailable. */
 function LiveStage({ runId, fallback }: { runId: string; fallback: React.ReactNode }) {
   const access = useAction(api.runs.liveAccess);
   const [src, setSrc] = useState<string | null>(null);
@@ -148,7 +139,6 @@ function LiveStage({ runId, fallback }: { runId: string; fallback: React.ReactNo
 const CLICKY = new Set(["click", "select", "check"]);
 type Point = { x: number; y: number };
 
-/** Center of the latest target at or before `index`, as 0..1 of the viewport; center of the page if none. */
 function cursorAt(steps: Step[], index: number): Point {
   for (let i = index; i >= 0; i--) {
     const t = steps[i].target;
@@ -157,21 +147,15 @@ function cursorAt(steps: Step[], index: number): Point {
   return { x: 0.5, y: 0.5 };
 }
 
-/**
- * Screenshot + cursor, sequenced like a real session: the next screenshot is decoded off-screen, crossfades in,
- * then the cursor glides along a soft arc to the target and clicks. Moves are interruptible (they start from
- * wherever the cursor is), run as compositor transforms via WAAPI, and snap under reduced motion.
- */
 function Stage({ steps, step, label }: { steps: Step[]; step: Step; label: string }) {
   const box = useRef<HTMLDivElement>(null);
   const cursorEl = useRef<HTMLDivElement>(null);
-  const pos = useRef<Point>({ x: 0.5, y: 0.5 }); // last settled position, 0..1
+  const pos = useRef<Point>({ x: 0.5, y: 0.5 });
   const [shown, setShown] = useState(step);
   const [prev, setPrev] = useState<Step | null>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [arrived, setArrived] = useState<{ id: string; at: Point } | null>(null);
   const shownRef = useRef(shown);
-  // URL of the screenshot that is decoded and on screen; overlays (cursor, highlight) wait for it.
   const [readyUrl, setReadyUrl] = useState<string | null>(null);
   const loaded = !!shown.screenshotUrl && readyUrl === shown.screenshotUrl;
   useEffect(() => {
@@ -183,13 +167,11 @@ function Stage({ steps, step, label }: { steps: Step[]; step: Step; label: strin
     };
   }, [shown.screenshotUrl]);
 
-  // Keep the neighbours decoded so scrubbing back and forth is instant.
   const index = steps.findIndex((s) => s._id === step._id);
   useEffect(() => {
     for (const i of [index + 1, index + 2, index - 1]) preload(steps[i]?.screenshotUrl);
   }, [index, steps]);
 
-  // Swap screenshots only once the next one is decoded: no blank frame, no half-painted image.
   useEffect(() => {
     if (step._id === shownRef.current._id) return;
     let alive = true;
@@ -216,7 +198,6 @@ function Stage({ steps, step, label }: { steps: Step[]; step: Step; label: strin
   const shownIndex = steps.findIndex((s) => s._id === shown._id);
   const target = cursorAt(steps, shownIndex < 0 ? index : shownIndex);
 
-  // Glide to the shown step's target. Depends on the target and box size only, so a resize re-places instantly.
   const moveKey = `${shown._id}:${target.x}:${target.y}`;
   const lastMove = useRef("");
   useEffect(() => {
@@ -227,7 +208,6 @@ function Stage({ steps, step, label }: { steps: Step[]; step: Step; label: strin
     lastMove.current = moveKey;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // Start from where the cursor really is right now, even mid-flight.
     const running = el.getAnimations()[0];
     let from = pos.current;
     if (running) {
@@ -246,7 +226,6 @@ function Stage({ steps, step, label }: { steps: Step[]; step: Step; label: strin
     const dy = (target.y - from.y) * size.h;
     const dist = Math.hypot(dx, dy);
     if (dist < 2) return done();
-    // A hand doesn't travel in a ruler-straight line: bow the path a little to one side (quadratic Bézier).
     const bow = Math.min(dist * 0.18, 60);
     const ctrl = { x: from.x * size.w + dx / 2 - (dy / dist) * bow, y: from.y * size.h + dy / 2 + (dx / dist) * bow };
     const frames = Array.from({ length: 21 }, (_, i) => {
@@ -338,10 +317,6 @@ const ACTION_ICONS: Record<string, LucideIcon> = {
   assert: Check,
 };
 
-/**
- * Steps as a vertical timeline: an icon per action on one rail. While a run is live, each new step grows into
- * place and the newest one pulses; steps already present on mount render still, so reopening a long run is calm.
- */
 function StepTimeline({ steps, selectedIndex, live, onSelect, activeRow }: {
   steps: Step[];
   selectedIndex: number;
@@ -354,8 +329,6 @@ function StepTimeline({ steps, selectedIndex, live, onSelect, activeRow }: {
   initial.current ??= new Set(steps.map((s) => s._id));
   const list = useRef<HTMLOListElement>(null);
 
-  // Keep the newest step in view as it arrives, without scrolling the page itself.
-  // New rows grow in from zero height, so scroll again once each one has finished growing.
   const last = steps.at(-1)?._id;
   const toBottom = () => {
     const el = list.current;
@@ -385,7 +358,6 @@ function StepTimeline({ steps, selectedIndex, live, onSelect, activeRow }: {
                   aria-current={selected}
                   className={`group relative flex w-full items-start gap-3 rounded-lg px-2 py-2 text-start transition-colors duration-150 hover:bg-card aria-[current=true]:bg-card aria-[current=true]:shadow-[0_1px_2px_rgb(0_0_0/0.05)] ${fresh ? "step-in" : ""}`}
                 >
-                  {/* rail: connects this node to the next one */}
                   {i < steps.length - 1 && <span aria-hidden className="absolute top-9 bottom-[-10px] start-[22px] w-px bg-line-strong" />}
                   <span className={`relative grid size-7 shrink-0 place-items-center rounded-full transition-colors duration-300 ${
                     !s.ok ? "bg-warning-soft text-warning" : newest ? "bg-accent text-white" : selected ? "bg-accent-soft text-accent" : "bg-card text-fg-2 ring-1 ring-line-strong"

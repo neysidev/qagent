@@ -1,5 +1,3 @@
-"""In-page extraction of interactive/meaningful elements with stable data-qa-ref ids."""
-
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -49,7 +47,6 @@ _EXTRACT_JS = r"""
 }
 """
 
-# Page-level look: theme is judged from the real rendered background colour (canvas decodes any CSS colour format).
 _STATE_JS = r"""
 () => {
   const de = document.documentElement, b = document.body;
@@ -132,7 +129,6 @@ class Observation(BaseModel):
         return f"Theme: {st['theme']} (background luminance {st['bg']}{extra})"
 
     def diff(self, prev: "Observation | None") -> str:
-        """What changed since the previous observation, so the model need not compare two page dumps."""
         if prev is None:
             return ""
         out: list[str] = []
@@ -153,7 +149,6 @@ class Observation(BaseModel):
         return "\n".join(out) or "nothing visible changed"
 
     def checks(self) -> dict[str, Any]:
-        """Deterministic end-state assertions for replay: URL path + key headings/messages."""
         texts = [e.name for e in self.elements if e.name and (e.tag in INFO_TAGS or e.role in ("alert", "status"))]
         return {"path": urlsplit(self.url).path, "texts": texts[:3]}
 
@@ -172,7 +167,7 @@ class Observation(BaseModel):
 async def observe(page: Page) -> Observation:
     try:
         await page.wait_for_load_state("domcontentloaded", timeout=5_000)
-        await page.wait_for_load_state("networkidle", timeout=1_500)  # let SPAs hydrate before reading the page
+        await page.wait_for_load_state("networkidle", timeout=1_500)
     except Exception:
         pass
     raw: dict[str, Any] = await page.evaluate(_EXTRACT_JS)

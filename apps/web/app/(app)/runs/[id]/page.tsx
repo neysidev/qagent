@@ -33,10 +33,6 @@ function useNow(ticking: boolean) {
   return now;
 }
 
-/**
- * A live counter that never jiggles: the brand font's Persian digits have different widths and no tabular
- * figures, so every character gets its own fixed-width, centered slot.
- */
 function Ticker({ value }: { value: string }) {
   return (
     <span dir="ltr" className="inline-flex text-fg" aria-label={value}>
@@ -91,10 +87,8 @@ function RunHeader({ data, actions }: { data: RunDetails; actions: React.ReactNo
   );
 }
 
-/** Agent job pipeline: where the run is right now. */
 const STAGE_ICONS = { queued: Hourglass, planning: Route, running: Play, verifying: ShieldCheck, reporting: FileText } as const;
 
-/** Where an active run is: icon nodes on one rail that fills as stages complete, plus what the current stage is doing. */
 function StageTrack({ status }: { status: RunDetails["run"]["status"] }) {
   const t = useTranslations("status");
   const tr = useTranslations("run");
@@ -113,7 +107,6 @@ function StageTrack({ status }: { status: RunDetails["run"]["status"] }) {
         <span className="shrink-0 text-xs text-fg-3">{tr("stageOf", { n: (current + 1).toLocaleString("fa-IR"), total: STAGES.length.toLocaleString("fa-IR") })}</span>
       </div>
       <ol className="relative mt-5 grid grid-cols-5">
-        {/* rail from the first node's center to the last; the filled part grows toward the inline end */}
         <span aria-hidden className="absolute inset-x-[10%] top-[18px] h-0.5 rounded-full bg-line-strong" />
         <span aria-hidden className="absolute start-[10%] top-[18px] h-0.5 rounded-full bg-accent transition-[width] duration-500 ease-[var(--ease-out-strong)]"
           style={{ width: `${(current / (STAGES.length - 1)) * 80}%` }} />
@@ -137,7 +130,6 @@ function StageTrack({ status }: { status: RunDetails["run"]["status"] }) {
   );
 }
 
-/** Queued with nobody to run it: say so plainly instead of animating progress that isn't happening. */
 function WorkerOffline() {
   const t = useTranslations("run.offline");
   return (
@@ -160,7 +152,6 @@ function LiveView({ data }: { data: RunDetails }) {
     return <PendingScene status={run.status === "queued" ? "queued" : "planning"} host={hostOf(run.url)} />;
   }
   return (
-    // Stage height = viewport minus header, stage track and card chrome, so the live player fits one screen (min 18rem).
     <div className={`${card} min-w-0 space-y-4 p-4 [--stage-h:max(18rem,calc(100dvh-34rem))]`}>
       <ScenarioChips scenarios={scenarios} selected={scenarioId} onSelect={setScenarioId} />
       <StepViewer
@@ -183,7 +174,6 @@ const chipDot: Record<RunDetails["scenarios"][number]["status"], string> = {
   skipped: "bg-fg-3/50",
 };
 
-/** Live scenarios as one scrollable row of filter chips, so the player keeps the full width. */
 function ScenarioChips({ scenarios, selected, onSelect }: {
   scenarios: RunDetails["scenarios"];
   selected: string | null;
@@ -289,7 +279,6 @@ function Actions({ data }: { data: RunDetails }) {
 
 function RunError({ error }: { error: string }) {
   const te = useTranslations("errors");
-  // Only the short Persian explanation is shown; the raw provider detail stays in the worker logs.
   return (
     <div role="alert" className="rounded-xl border border-danger/25 bg-danger-soft px-4 py-3 text-sm text-danger">
       {te(runErrorKey(error))}
@@ -297,7 +286,6 @@ function RunError({ error }: { error: string }) {
   );
 }
 
-/** Mirrors the finished-run layout: header boxes are exact, the report body is a stand-in for data-driven content. */
 function RunSkeleton() {
   const bar = `${skeleton} rounded-md`;
   return (

@@ -1,5 +1,3 @@
-"""Prompt templates. Natural-language output is always Persian; JSON keys stay English."""
-
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 
 LANGUAGE = "Persian (Farsi) only for the free-text fields: title, description, expected, thought, reason, bug text. Never translate typed values, refs, URLs or JSON keys."

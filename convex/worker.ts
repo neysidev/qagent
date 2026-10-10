@@ -18,7 +18,6 @@ export const claimNextRun = mutation({
       .first();
     if (!run) return null;
     if (run.attempts) {
-      // Re-queued after a worker died: drop partial results from the previous attempt.
       for (const table of ["steps", "scenarios", "bugs"] as const) {
         const docs = await ctx.db
           .query(table)
@@ -44,9 +43,8 @@ export const heartbeat = mutation({
   args: { secret, runId: v.id("runs"), workerId: v.string(), cost: v.optional(cost) },
   handler: async (ctx, { secret, runId, workerId, cost }) => {
     checkSecret(secret);
-    await markWorkerSeen(ctx, workerId); // a worker with every slot busy stops polling but keeps heartbeating
+    await markWorkerSeen(ctx, workerId);
     const run = await ctx.db.get(runId);
-    // Tell the worker to stop if the run was canceled or handed to someone else.
     if (!run || run.workerId !== workerId) return { stop: true };
     if (run.status === "canceled" || run.status === "failed" || run.status === "done") return { stop: true };
     await ctx.db.patch(runId, { heartbeatAt: Date.now(), ...(cost && { cost }) });
@@ -95,7 +93,6 @@ export const updateScenario = mutation({
   },
 });
 
-/** Scenarios of the run being replayed, with traces for the ones that passed. */
 export const getReplay = mutation({
   args: { secret, runId: v.id("runs") },
   handler: async (ctx, { secret, runId }) => {

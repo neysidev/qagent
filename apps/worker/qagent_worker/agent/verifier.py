@@ -13,7 +13,6 @@ LOW_CONFIDENCE = 0.7
 def quick_verdict(
     finished_ok: bool | None, final_obs: Observation | None, evidence: Evidence, passed_asserts: int = 0
 ) -> Verdict | None:
-    """Rule-based verdict from Playwright signals alone; None means a model must decide."""
     clean = not evidence.console_errors and not evidence.network_errors
     invalid = any(e.invalid for e in final_obs.elements) if final_obs else False
     if finished_ok is None and clean:
@@ -53,7 +52,6 @@ async def verify(
     verdict = await structured("fast", Verdict, msgs, cost)
     escalate = model_name("smart") != model_name("fast")
     if escalate and (verdict.status == "failed" or verdict.confidence < LOW_CONFIDENCE):
-        # Second opinion is text-only: the smart model may not accept images.
         verdict = await structured("smart", Verdict, prompts.messages(prompts.VERIFIER_SYSTEM, text), cost)
     if verdict.status == "failed" and verdict.bug is None:
         verdict.status = "agent_error"

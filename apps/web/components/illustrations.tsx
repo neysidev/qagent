@@ -1,8 +1,5 @@
-/** Spot illustrations for app empty/error states. Token colors only, so they follow the theme they render in. */
-
 const frame = "fill-card stroke-line-strong";
 
-/** No projects yet: a browser whose address bar is waiting for a site, with a project card sliding out of it. */
 export function SitesIllustration({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 240 160" className={className} aria-hidden>
@@ -34,7 +31,6 @@ export function SitesIllustration({ className = "" }: { className?: string }) {
   );
 }
 
-/** Not found / failed to load: a page with a broken link and a warning sign. */
 export function LostIllustration({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 240 160" className={className} aria-hidden>
@@ -56,7 +52,6 @@ export function LostIllustration({ className = "" }: { className?: string }) {
   );
 }
 
-/** Run ended before any scenario existed: an empty scenario board with dashed slots and a stop badge. */
 export function NoScenariosIllustration({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 240 160" className={className} aria-hidden>
@@ -81,7 +76,6 @@ export function NoScenariosIllustration({ className = "" }: { className?: string
   );
 }
 
-/** No steps to replay yet: a screen with an empty filmstrip of dashed frames and a ghost play button. */
 export function NoStepsIllustration({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 280 160" className={className} aria-hidden>
@@ -104,7 +98,6 @@ export function NoStepsIllustration({ className = "" }: { className?: string }) 
   );
 }
 
-/** Every scenario behaved: a shield with a check, ringed by a few soft sparkles. */
 export function CleanRunIllustration({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 200 140" className={className} aria-hidden>
@@ -120,7 +113,6 @@ export function CleanRunIllustration({ className = "" }: { className?: string })
   );
 }
 
-/** Nothing finished yet to find bugs in: a magnifier over a dotted, not-yet-found bug outline. */
 export function BugHuntIllustration({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 200 140" className={className} aria-hidden>
@@ -139,7 +131,6 @@ export function BugHuntIllustration({ className = "" }: { className?: string }) 
   );
 }
 
-/** Search came up empty: a magnifier over blank result rows with a question mark in the lens. */
 export function SearchEmptyIllustration({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 160 110" className={className} aria-hidden>
@@ -158,7 +149,6 @@ export function SearchEmptyIllustration({ className = "" }: { className?: string
   );
 }
 
-/** No notifications: a resting bell with a few drifting z's. */
 export function QuietBellIllustration({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 160 110" className={className} aria-hidden>

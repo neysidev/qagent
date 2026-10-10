@@ -19,7 +19,6 @@ export function TooltipContent({ className = "", sideOffset = 6, ...props }: Com
   );
 }
 
-/** Tooltip around a single element (usually an icon button). */
 export function Tip({ label, children }: { label: ReactNode; children: ReactNode }) {
   return (
     <TooltipProvider delayDuration={150} skipDelayDuration={400}>

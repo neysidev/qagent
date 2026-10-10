@@ -12,4 +12,4 @@ async def summarize(run: dict[str, Any], scenarios: list[dict[str, Any]], result
         res = await structured("fast", RunSummary, prompts.messages(prompts.REPORTER_SYSTEM, user), cost)
         return res.summary
     except Exception:
-        return "\n".join(lines)  # the report must never fail the run
+        return "\n".join(lines)

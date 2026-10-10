@@ -10,7 +10,6 @@ type State = { read: string[]; hidden: string[] };
 const EMPTY = '{"read":[],"hidden":[]}';
 const listeners = new Set<() => void>();
 
-// The raw string is the snapshot, so React sees a stable value until it actually changes.
 const snapshot = () => {
   try {
     return localStorage.getItem(KEY) ?? EMPTY;
@@ -33,7 +32,6 @@ const write = (s: State) => {
   listeners.forEach((l) => l());
 };
 
-/** Notifications are finished runs; read and dismissed state lives in this browser. */
 export function useNotifications() {
   const { runs } = useWorkspace();
   const raw = useSyncExternalStore(subscribe, snapshot, () => EMPTY);

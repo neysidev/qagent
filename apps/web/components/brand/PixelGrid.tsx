@@ -1,10 +1,5 @@
 import { useId } from "react";
 
-/**
- * Grid of small rounded squares. Off cells are one SVG <pattern> (cheap at any size); `lit` cells are
- * static accent rects; `twinkle` is the share of cells that softly fade on/off with staggered delays.
- * Deterministic so SSR and client match. Twinkle animates opacity only and is off for reduced motion.
- */
 export function PixelGrid({
   cols, rows, cell = 8, gap = 4, density = 0.08, twinkle = 0, seed = 7, lit, color = "var(--accent)", className = "",
 }: {
@@ -12,12 +7,9 @@ export function PixelGrid({
   rows: number;
   cell?: number;
   gap?: number;
-  /** Share of cells statically lit when `lit` is not given. */
   density?: number;
-  /** Share of cells that twinkle. */
   twinkle?: number;
   seed?: number;
-  /** Explicit lit cell indexes (row-major). */
   lit?: number[];
   color?: string;
   className?: string;

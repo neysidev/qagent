@@ -14,7 +14,6 @@ import { skeleton } from "@/components/ui";
 import { errorKey, hostOf, timeAgo } from "@/lib/format";
 import { PageTitle } from "@/components/PageTitle";
 
-/** Start: type an address, land in that site's project. Existing projects sit right below. */
 export default function Start() {
   const t = useTranslations("home");
   const ts = useTranslations("shell");
@@ -22,7 +21,6 @@ export default function Start() {
 
   return (
     <div className="relative isolate">
-      {/* Faint dot grid that fades out from the middle, plus a soft brand glow behind the hero. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[640px] bg-[radial-gradient(circle,var(--border-strong)_1px,transparent_1.5px)] [background-size:22px_22px] opacity-50 [mask-image:radial-gradient(ellipse_60%_70%_at_50%_40%,#000,transparent)]"
@@ -119,7 +117,6 @@ function AddressForm() {
             aria-describedby={error ? "address-error" : undefined}
             className="font-url h-14 min-w-0 flex-1 bg-transparent text-[18px] text-fg placeholder:text-fg-3 focus:outline-none"
           />
-          {/* RTL flex: sits visually left of the LTR input, reading as one address. */}
           <span dir="ltr" aria-hidden className="font-url -me-2.5 text-[18px] text-fg-3 select-none">https://</span>
           <Globe className="size-6 shrink-0 text-fg-3" strokeWidth={1.75} aria-hidden />
         </label>

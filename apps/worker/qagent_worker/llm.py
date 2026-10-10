@@ -1,5 +1,3 @@
-"""Model factory + token/cost accounting. Provider and models are env-configurable."""
-
 import asyncio
 import json
 import logging
@@ -17,8 +15,6 @@ log = logging.getLogger("qagent.llm")
 T = TypeVar("T", bound=BaseModel)
 ModelKind = Literal["fast", "smart"]
 
-# USD per 1M tokens: {"model": [input, output]}. Override with PRICE_TABLE_JSON.
-# ponytail: 3.8 Flash doubles to [1.50, 7.50] on 2027-01-01; override via PRICE_TABLE_JSON then.
 DEFAULT_PRICES: dict[str, list[float]] = {
     "gemini-3.8-flash": [0.75, 3.75],
     "gemini-3.1-flash-lite": [0.25, 1.50],
@@ -33,9 +29,7 @@ def model_name(kind: ModelKind) -> str:
     return os.environ.get("MODEL_SMART", "gemini-3.1-pro-preview")
 
 
-# Cap on reply length. Replies are small structured JSON; without a cap, OpenAI-compatible providers reserve the
-# model's full output window (64k+ tokens) per call, which credit-limited keys reject outright (OpenRouter: 402).
-MAX_TOKENS = int(os.environ["LLM_MAX_TOKENS"]) if os.environ.get("LLM_MAX_TOKENS") else None  # unset = no cap (provider default)
+MAX_TOKENS = int(os.environ["LLM_MAX_TOKENS"]) if os.environ.get("LLM_MAX_TOKENS") else None
 
 
 @cache
@@ -59,8 +53,8 @@ def chat_model(kind: ModelKind) -> BaseChatModel:
         model=name,
         google_api_key=os.environ["GOOGLE_API_KEY"],
         max_output_tokens=MAX_TOKENS,
-        temperature=1.0,  # Gemini 3 degrades (loops, junk output) when lowered; 1.0 is Google's recommendation
-        thinking_level="low" if kind == "fast" else None,  # bounded thinking so it can't eat the output budget
+        temperature=1.0,
+        thinking_level="low" if kind == "fast" else None,
         timeout=60,
         max_retries=0,
     )
@@ -81,7 +75,7 @@ class Cost(BaseModel):
 
 
 RETRY_MARKERS = ("429", "500", "502", "503", "504", "RESOURCE_EXHAUSTED", "UNAVAILABLE", "overloaded", "timed out", "Timeout")
-ATTEMPTS = 5  # 2+4+8+16s backoff ≈ 30s before giving up (or the server-hinted delay)
+ATTEMPTS = 5
 
 
 def _retryable(e: Exception) -> bool:
@@ -92,8 +86,6 @@ def _retryable(e: Exception) -> bool:
 
 
 async def _call(kind: ModelKind, schema: type[T], messages: list[BaseMessage], cost: Cost) -> T:
-    """Retries 429/5xx with exponential backoff; retries once on a parse failure. Usage is always billed."""
-    # OpenAI-compatible providers (Qwen etc.) often loop under strict json_schema; tool calling is widely supported
     kw = {"method": "function_calling"} if os.environ.get("LLM_PROVIDER", "gemini") == "openai_compatible" else {}
     llm = chat_model(kind).with_structured_output(schema, include_raw=True, **kw)
     parse_failures = 0
@@ -120,7 +112,6 @@ async def _call(kind: ModelKind, schema: type[T], messages: list[BaseMessage], c
 
 
 async def structured(kind: ModelKind, schema: type[T], messages: list[BaseMessage], cost: Cost) -> T:
-    """Structured call on `kind`; if that model stays unavailable, falls back to the other one."""
     try:
         return await _call(kind, schema, messages, cost)
     except Exception as e:
@@ -132,7 +123,6 @@ async def structured(kind: ModelKind, schema: type[T], messages: list[BaseMessag
 
 
 def error_code(e: BaseException) -> str | None:
-    """Stable code for a model-provider failure, stored on the run so the app can explain it; None if not one."""
     status = getattr(e, "status_code", None) or getattr(e, "code", None)
     text = str(e)
     if status == 402 or "requires more credits" in text or "insufficient_quota" in text:

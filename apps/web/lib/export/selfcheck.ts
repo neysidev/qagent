@@ -1,4 +1,3 @@
-// Run: esbuild lib/export/selfcheck.ts --bundle --platform=node --format=esm --outfile=/tmp/sc.mjs && node /tmp/sc.mjs
 import assert from "node:assert";
 import { buildDoc, DEFAULT_OPTIONS, render, toCsv, toJunit } from ".";
 import { diffRuns } from "../diff";

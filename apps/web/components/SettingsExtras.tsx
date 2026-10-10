@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { errorKey } from "@/lib/format";
 import { button, card, cardHeader, cardTitle, input, pill, segment, segmented, skeleton } from "./ui";
 
-/** Shrinks an uploaded logo to a small PNG data: URL so it can live on the user's record. */
 async function logoDataUrl(file: File): Promise<string> {
   const bmp = await createImageBitmap(file);
   const scale = Math.min(1, 256 / bmp.width, 96 / bmp.height);

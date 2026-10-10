@@ -20,7 +20,6 @@ function Section({ id, tone = "canvas", children }: { id?: string; tone?: "canva
   );
 }
 
-/** Section heading: rounded badge, title with an optional orange <hl> span, subtitle. */
 function SectionHeading({ ns }: { ns: string }) {
   const t = useTranslations(ns);
   return (
@@ -77,7 +76,6 @@ export function BuiltFor() {
 const mono = "ui-monospace, SFMono-Regular, Menlo, monospace";
 type ProblemArt = { checklist: string; flows: string[]; hours: string; everyRelease: string; complaint: string; complaintMeta: string };
 
-/** 01: a release checklist re-clicked by hand, half done, with the hours it eats. */
 function ManualArt({ a }: { a: ProblemArt }) {
   return (
     <svg viewBox="0 0 320 200" direction="ltr" className="h-full w-full" aria-hidden>
@@ -109,7 +107,6 @@ function ManualArt({ a }: { a: ProblemArt }) {
   );
 }
 
-/** 02: network log quietly 500-ing while the first report comes from a customer. */
 function CustomerArt({ a }: { a: ProblemArt }) {
   const log = [["200", "GET /products"], ["200", "POST /cart"], ["200", "PATCH /cart/12"], ["500", "DELETE /cart/12"]];
   return (
@@ -140,7 +137,6 @@ function CustomerArt({ a }: { a: ProblemArt }) {
   );
 }
 
-/** 03: a selector-based test that broke because the button changed. */
 function BrittleArt() {
   const code: [string, string?][] = [
     ['test("checkout", async () => {'],
@@ -187,7 +183,6 @@ export function Problem() {
       <div data-reveal className="max-w-2xl">
         <SectionHeading ns="landing.problem" />
       </div>
-      {/* One tray holding all three cards, so they read as a single block. */}
       <Rise as="ul" className="mt-12 grid gap-1.5 rounded-[28px] border border-line bg-fg/[0.03] p-1.5 md:grid-cols-3">
         {items.map((it, i) => (
           <li key={it.title} data-reveal style={stagger(i)} className="flex flex-col overflow-hidden rounded-[22px] bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.04)] md:p-6">
@@ -206,7 +201,6 @@ type HowArt = {
   templates: string[]; run: string; high: string; reportTitle: string; reportSteps: string[];
 };
 
-/** 01: just a URL field, nothing to install. */
 function UrlArt({ a }: { a: HowArt }) {
   return (
     <svg viewBox="0 0 320 200" direction="ltr" className="h-full w-full" aria-hidden>
@@ -219,7 +213,6 @@ function UrlArt({ a }: { a: HowArt }) {
       </g>
       <text x="76" y="93" fontFamily={mono} fontSize="13" className="fill-fg">https://myshop.ir</text>
       <rect x="216" y="80" width="1.5" height="16" className="caret fill-accent" />
-      {/* Chips line up from the right edge (RTL start): check icon first, then the label. */}
       {[a.noCode, a.noSdk].map((label, i) => {
         const right = 300 - i * 86;
         return (
@@ -234,7 +227,6 @@ function UrlArt({ a }: { a: HowArt }) {
   );
 }
 
-/** 02: the goal in plain words, a few starter templates, and the run button. */
 function GoalArt({ a }: { a: HowArt }) {
   return (
     <svg viewBox="0 0 320 200" direction="ltr" className="h-full w-full" aria-hidden>
@@ -258,7 +250,6 @@ function GoalArt({ a }: { a: HowArt }) {
   );
 }
 
-/** 03: a bug report with severity, repro steps and screenshots. */
 function ReportArt({ a }: { a: HowArt }) {
   return (
     <svg viewBox="0 0 320 200" direction="ltr" className="h-full w-full" aria-hidden>
@@ -317,7 +308,6 @@ type FeatureArt = {
   dashboard: string; copy: string; noAccount: string; bugCount: string;
 };
 
-/** Agent pointer with an orange body, used wherever the agent "acts" in an illustration. */
 function AgentPointer({ x, y }: { x: number; y: number }) {
   return (
     <path d={`M${x} ${y} l0 17 l4.5 -4.2 l3.2 7.4 l3 -1.3 l-3.2 -7.3 l6.2 -0.4 z`} className="fill-accent stroke-card" strokeWidth="1.4" strokeLinejoin="round" />
@@ -328,7 +318,6 @@ function Check({ x, y, tone = "stroke-success" }: { x: number; y: number; tone?:
   return <path d={`M${x - 3.5} ${y} l2.5 2.5 l5 -5.5`} fill="none" className={tone} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />;
 }
 
-/** Live viewer: the agent's pointer pressing "add to cart" inside a streamed browser frame. */
 function LiveArt({ a }: { a: FeatureArt }) {
   return (
     <svg viewBox="0 0 320 200" direction="ltr" className="h-full w-full" aria-hidden>
@@ -359,7 +348,6 @@ function LiveArt({ a }: { a: FeatureArt }) {
   );
 }
 
-/** Evidence: an annotated screenshot plus the console and network lines captured with it. */
 function EvidenceArt() {
   return (
     <svg viewBox="0 0 320 200" direction="ltr" className="h-full w-full" aria-hidden>
@@ -392,7 +380,6 @@ function EvidenceArt() {
   );
 }
 
-/** Planner: one plain goal fanning out into separate scenarios, each with its own status. */
 function ScenariosArt({ a }: { a: FeatureArt }) {
   const rows = [36, 100, 164];
   const states = ["pass", "pass", "run"] as const;
@@ -428,7 +415,6 @@ function ScenariosArt({ a }: { a: FeatureArt }) {
   );
 }
 
-/** Self-healing replay: recorded steps replay until the page changed, then the agent finds the new button. */
 function ReplayArt({ a }: { a: FeatureArt }) {
   const nodes = [272, 204, 136, 68];
   return (
@@ -468,7 +454,6 @@ function ReplayArt({ a }: { a: FeatureArt }) {
   );
 }
 
-/** Logged-in flows: a test account signs in, and the dashboard behind it gets tested too. */
 function LoginArt({ a }: { a: FeatureArt }) {
   return (
     <svg viewBox="0 0 320 200" direction="ltr" className="h-full w-full" aria-hidden>
@@ -499,7 +484,6 @@ function LoginArt({ a }: { a: FeatureArt }) {
   );
 }
 
-/** Sharing: a public report link with a copy button, opened by people without an account. */
 function ShareArt({ a }: { a: FeatureArt }) {
   return (
     <svg viewBox="0 0 320 200" direction="ltr" className="h-full w-full" aria-hidden>
@@ -623,7 +607,6 @@ export function Faq() {
   );
 }
 
-/** Closing CTA: a light, centered panel so it stands apart from the dark footer below; the agent leads the eye down to the action. */
 export function FinalCta() {
   const t = useTranslations("landing.cta");
   const h = useTranslations("landing.hero");
@@ -655,8 +638,6 @@ export function FinalCta() {
   );
 }
 
-/** Skyline above the footer: a dev & QA scene — server rack, code editor, CI board, a bug under the
- * magnifier, a terminal run, a phone, the site under test with the agent's cursor, and a filed bug ticket. */
 function FooterSkyline() {
   const ink = "fill-canvas";
   const cut = "#fff";
@@ -664,7 +645,6 @@ function FooterSkyline() {
   const code = [[34, 52, 0], [22, 38, 1], [22, 70, 0], [34, 30, 1], [22, 56, 0], [34, 44, 0], [22, 26, 1]] as const;
   return (
     <svg viewBox="0 0 1200 140" direction="ltr" className="mx-auto block h-auto w-full max-w-[960px]" aria-hidden>
-      {/* server rack */}
       <rect x="40" y="48" width="72" height="92" rx="6" className={ink} />
       {[0, 1, 2, 3, 4].map((i) => (
         <g key={i}>
@@ -678,7 +658,6 @@ function FooterSkyline() {
       ))}
       <path d="M112 132 C122 132 124 136 134 136 H186" fill="none" className="stroke-canvas" strokeWidth="3" strokeLinecap="round" />
 
-      {/* code editor monitor */}
       <rect x="130" y="22" width="172" height="92" rx="8" className={ink} />
       <rect x="138" y="30" width="156" height="76" rx="3" fill={cut} />
       <rect x="138" y="30" width="16" height="76" rx="3" className="fill-shell" />
@@ -693,7 +672,6 @@ function FooterSkyline() {
       <rect x="208" y="114" width="16" height="18" className={ink} />
       <rect x="186" y="132" width="60" height="8" rx="3" className={ink} />
 
-      {/* CI pipeline board */}
       <rect x="324" y="28" width="156" height="62" rx="8" className={ink} />
       <rect x="340" y="90" width="6" height="50" className={ink} />
       <rect x="458" y="90" width="6" height="50" className={ink} />
@@ -712,7 +690,6 @@ function FooterSkyline() {
         </g>
       ))}
 
-      {/* magnifier over a bug */}
       <path d="M570 86 L600 136" className="stroke-canvas" strokeWidth="12" strokeLinecap="round" />
       <circle cx="548" cy="58" r="32" fill={cut} className="stroke-canvas" strokeWidth="9" />
       <path d="M528 44 a24 24 0 0 1 14 -10" fill="none" className="stroke-pixel-off" strokeWidth="3" strokeLinecap="round" />
@@ -723,7 +700,6 @@ function FooterSkyline() {
       <circle cx="548" cy="49" r="5.5" className="fill-accent" />
       <path d="M548 53 v21" stroke={cut} strokeWidth="1.5" />
 
-      {/* terminal */}
       <rect x="626" y="44" width="156" height="96" rx="8" className={ink} />
       {[640, 650, 660].map((cx) => <circle key={cx} cx={cx} cy="55" r="3" fill={cut} opacity="0.55" />)}
       <path d="M626 64 H782" stroke={cut} strokeOpacity="0.15" />
@@ -734,7 +710,6 @@ function FooterSkyline() {
       </g>
       <rect x="638" y="122" width="6" height="10" fill={cut}><animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite" /></rect>
 
-      {/* phone */}
       <rect x="806" y="58" width="54" height="82" rx="10" className={ink} />
       <rect x="812" y="68" width="42" height="64" rx="4" fill={cut} />
       <rect x="826" y="62" width="14" height="3" rx="1.5" fill={cut} opacity="0.35" />
@@ -748,7 +723,6 @@ function FooterSkyline() {
       ))}
       <rect x="817" y="114" width="32" height="10" rx="5" className="fill-accent" />
 
-      {/* site under test, with the agent's cursor on the CTA */}
       <rect x="884" y="12" width="222" height="128" rx="8" className={ink} />
       {[896, 906, 916].map((cx) => <circle key={cx} cx={cx} cy="24" r="3" fill={cut} opacity="0.6" />)}
       <rect x="930" y="19" width="160" height="10" rx="5" fill={cut} opacity="0.2" />
@@ -767,7 +741,6 @@ function FooterSkyline() {
       <circle cx="1072" cy="74" r="6" className="fill-pixel-off" />
       <path d="M944 112 l0 17 l4.5 -4.2 l3.2 7.4 l3 -1.3 l-3.2 -7.3 l6.2 -0.4 z" className="fill-accent stroke-canvas" strokeWidth="1.4" strokeLinejoin="round" />
 
-      {/* filed bug ticket */}
       <rect x="1150" y="84" width="5" height="56" className={ink} />
       <rect x="1118" y="30" width="70" height="56" rx="6" className={ink} />
       <rect x="1118" y="30" width="70" height="13" rx="6" className="fill-accent" />
@@ -786,7 +759,6 @@ export function Footer() {
   const link = "rounded text-fg-2 transition-colors duration-150 hover:text-fg focus-visible:outline-2 focus-visible:outline-accent";
   return (
     <footer className="theme-dark text-fg [color-scheme:dark]">
-      {/* Whole scene scales down as one piece and stays centered, instead of being cropped at the sides. */}
       <div className="bg-white px-4 sm:px-6">
         <FooterSkyline />
       </div>

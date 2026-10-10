@@ -1,4 +1,3 @@
-/** Words inside exported files. Separate from the app's Persian-only UI strings: a report can be handed over in English. */
 export const LABELS = {
   fa: {
     report: "گزارش تست",

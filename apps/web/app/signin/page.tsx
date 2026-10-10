@@ -47,7 +47,6 @@ export default function SignIn() {
 
   return (
     <main className="theme-light grid min-h-dvh bg-canvas text-fg lg:grid-cols-[minmax(0,560px)_1fr]">
-      {/* Brand side first so it sits on the right (RTL start): the same dark world as the landing hero */}
       <aside className="theme-dark relative m-3 hidden overflow-hidden rounded-[32px] bg-canvas text-fg [color-scheme:dark] lg:flex lg:flex-col">
         <div aria-hidden className="hero-dots absolute inset-0" />
         <div className="relative px-12 pt-16">
@@ -70,7 +69,6 @@ export default function SignIn() {
           <Image src={agent} alt={t("imageAlt")} priority sizes="520px" className="hero-image relative mx-auto w-full max-w-[520px]" />
         </div>
       </aside>
-      {/* Form side */}
       <section className="flex flex-col px-5 py-6 sm:px-10">
         <div className="flex items-center justify-between">
           <Link href="/" className="group flex items-center gap-2 rounded-lg font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">

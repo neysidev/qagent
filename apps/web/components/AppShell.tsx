@@ -23,7 +23,6 @@ const useProjects = () => useQuery(api.runs.projectList);
 
 type Workspace = {
   runs: ReturnType<typeof useRuns>;
-  /** Most recently active first, with run counts and the latest run. */
   projects: ProjectRow[] | undefined;
 };
 
@@ -35,7 +34,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const runs = useRuns();
   const projects = useProjects();
   const pathname = usePathname();
-  /** Mobile: drawer open. Desktop: sidebar collapsed. */
   const [drawer, setDrawer] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -45,7 +43,6 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <WorkspaceContext.Provider value={value}>
-      {/* Dark shell (sidebar + frame) around a white content panel, same black/white/orange as the landing. */}
       <div className="theme-dark flex h-dvh overflow-hidden bg-canvas text-fg [color-scheme:dark] print:block print:h-auto print:overflow-visible">
         {drawer && <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setDrawer(false)} aria-hidden />}
         <aside
@@ -73,8 +70,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     </WorkspaceContext.Provider>
   );
 }
-
-/* ---------- Sidebar: nav on top, task history grouped by day, account at the bottom ---------- */
 
 const navItem =
   "flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-sm text-fg-2 transition-colors duration-150 hover:bg-fg/[0.06] hover:text-fg aria-[current=page]:bg-fg/[0.09] aria-[current=page]:text-fg";
@@ -135,7 +130,6 @@ function Sidebar({ onHide }: { onHide: () => void }) {
   );
 }
 
-/** The sidebar's main list: one entry per site. A run page highlights the project it belongs to. */
 function ProjectsNav({ query, pathname }: { query: string; pathname: string }) {
   const t = useTranslations("shell");
   const { projects, runs } = useWorkspace();
@@ -175,7 +169,6 @@ function ProjectsNav({ query, pathname }: { query: string; pathname: string }) {
   );
 }
 
-// Warm-to-cool palette that sits well next to the brand orange; one is picked per site, so it never changes.
 const AVATAR_TONES = [
   "from-[#f26b1d] to-[#f5a524]",
   "from-[#e5484d] to-[#f76b8a]",
@@ -187,10 +180,6 @@ const AVATAR_TONES = [
 const SIZES = { sm: "size-5 rounded-md text-[10px]", md: "size-8 rounded-lg text-sm", lg: "size-14 rounded-xl text-2xl" };
 const ICON_PAD = { sm: "p-0.5", md: "p-1.5", lg: "p-3" };
 
-/**
- * A site's identity: its own favicon, loaded straight from the site, over a colored monogram that shows
- * while it loads and stays when the site has none (or blocks it).
- */
 export function ProjectAvatar({ name, url, favicon, size = "md" }: { name: string; url: string; favicon?: string; size?: keyof typeof SIZES }) {
   const [icon, setIcon] = useState<"loading" | "ok" | "none">("loading");
   const host = hostOf(url).replace(/^www\./, "");

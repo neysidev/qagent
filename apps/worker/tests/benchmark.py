@@ -1,11 +1,3 @@
-"""Benchmark the agent against the demo shop, in-process (no Convex needed).
-
-    DEMO_SHOP_URL=https://<demo-shop> GOOGLE_API_KEY=... python -m tests.benchmark
-    (for a local shop: DEMO_SHOP_URL=http://localhost:3001 ALLOW_PRIVATE_URLS=1)
-
-Prints detection rate (bugs=all), false positives (bugs=none), average duration and cost.
-"""
-
 import asyncio
 import os
 import re

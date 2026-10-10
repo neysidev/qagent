@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* QAgent design tokens (dark by default). `.theme-dark` restores them inside a light page. Components use the Tailwind names mapped below, never raw hex. */
 :root,
 .theme-dark {
   --bg-canvas: #141414;
@@ -31,8 +30,6 @@
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-/* Light theme: the whole document when any `.theme-light` is rendered, plus that subtree itself so it can nest
- * inside `.theme-dark` (app content panel inside the dark shell). Same token names, so components re-skin untouched. */
 :root:has(.theme-light),
 .theme-light {
   --bg-canvas: #ffffff;
@@ -104,7 +101,6 @@ body {
   color: var(--text-primary);
 }
 
-/* Popovers & dialogs: scale in from their trigger edge, exit faster than enter. */
 .pop {
   transition:
     opacity 150ms var(--ease-out),
@@ -129,8 +125,6 @@ dialog.modal::backdrop {
   background: rgb(0 0 0 / 0.6);
   backdrop-filter: blur(2px);
 }
-/* Mobile workspace drawer */
-/* Sidebar: the layout slot tweens width while the panel translates fully out of view; same duration and curve keep the panel flush with the content edge. */
 .drawer,
 .drawer-inner,
 .sidebar-anim {
@@ -162,12 +156,10 @@ dialog.modal::backdrop {
   }
 }
 
-/* URLs and hosts read better in Geist; everything else stays Peyda. */
 @utility font-url {
   font-family: var(--font-geist), var(--font-peyda), ui-sans-serif, sans-serif;
 }
 
-/* ---- Marketing type scale ---- */
 @utility t-display {
   font-size: clamp(40px, 6vw, 76px);
   line-height: 1.05;
@@ -185,7 +177,6 @@ dialog.modal::backdrop {
   line-height: 1.4;
   font-weight: 500;
 }
-/* ---- Reveal on view: fade + rise, once. Hidden only after RevealObserver arms it, so no-JS still shows content. ---- */
 .reveal-armed [data-reveal]:not([data-in]) {
   opacity: 0;
   transform: translateY(16px);
@@ -197,7 +188,6 @@ dialog.modal::backdrop {
   transition-delay: calc(var(--i, 0) * 60ms);
 }
 
-/* ---- LogoBox ---- */
 @keyframes logo-breathe {
   50% {
     opacity: 0.6;
@@ -224,7 +214,6 @@ dialog.modal::backdrop {
   stroke-dashoffset: 0;
 }
 
-/* Mobile nav sheet: staggered link reveal */
 .sheet-item {
   transition:
     opacity 300ms var(--ease-out),
@@ -253,7 +242,6 @@ dialog.modal::backdrop {
   }
 }
 
-/* First-load logo: lid lifts and settles on a loop, pixel blinks faster, shadow breathes with the lid. */
 @keyframes logo-lift {
   50% {
     transform: translateY(-4px);
@@ -281,7 +269,6 @@ dialog.modal::backdrop {
   }
 }
 
-/* Skeleton: a soft highlight sweeps across (transform only, off the main thread). Reduced motion keeps a static block. */
 .skeleton {
   position: relative;
   overflow: hidden;
@@ -305,7 +292,6 @@ dialog.modal::backdrop {
   }
 }
 
-/* Entering content: fade + small rise. Opacity-only for reduced motion. */
 @keyframes rise {
   from {
     opacity: 0;
@@ -355,7 +341,6 @@ dialog.modal::backdrop {
   }
 }
 
-/* PixelGrid twinkle: each cell eases on and off on its own offset, so the field never pulses in unison. */
 @keyframes pixel-twinkle {
   0%,
   100% {
@@ -375,14 +360,11 @@ dialog.modal::backdrop {
   }
 }
 
-/* ---- Landing hero ---- */
-/* Faint dot field behind the headline, fading out toward the edges. */
 .hero-dots {
   background-image: radial-gradient(var(--border-strong) 1px, transparent 1.2px);
   background-size: 14px 14px;
   mask-image: radial-gradient(ellipse 60% 70% at 50% 30%, black 10%, transparent 75%);
 }
-/* Orange LED band behind the helmet, echoing its visor. */
 .hero-band {
   background-image: radial-gradient(var(--accent) 1.6px, transparent 2px);
   background-size: 9px 9px;
@@ -392,7 +374,6 @@ dialog.modal::backdrop {
     linear-gradient(to bottom, transparent, black 25%, black 75%, transparent);
   mask-composite: intersect;
 }
-/* Cut-out photo; mask fades the crop at the bottom into the canvas. */
 .hero-image {
   mask-image: linear-gradient(to bottom, black 70%, transparent);
 }
@@ -408,7 +389,6 @@ dialog.modal::backdrop {
   animation-delay: calc(var(--i, 0) * 80ms);
 }
 
-/* ---- Landing nav: one shared highlight slides to the hovered link; siblings recede. ---- */
 .nav-pill {
   transition:
     transform 260ms var(--ease-out-strong),
@@ -425,7 +405,6 @@ dialog.modal::backdrop {
   color: var(--text-muted);
 }
 
-/* ---- Audience cards: horizontal scroller with edge fades that hint at more cards. ---- */
 .audience-track {
   scrollbar-width: none;
 }
@@ -437,7 +416,6 @@ dialog.modal::backdrop {
   opacity: 1;
 }
 
-/* ---- Step stage (StepViewer): screenshot crossfade, target highlight, click feedback. ---- */
 .stage-in {
   animation: stage-in 280ms var(--ease-out-strong) both;
 }
@@ -480,7 +458,6 @@ dialog.modal::backdrop {
   from { opacity: 0; }
 }
 
-/* Live step timeline: a new step opens room for itself (grid-rows 0fr → 1fr), then its row slides in. */
 .step-grow {
   display: grid;
   animation: step-grow 360ms var(--ease-out-strong) both;
@@ -500,7 +477,6 @@ dialog.modal::backdrop {
   .step-in { animation: stage-fade 160ms ease both; }
 }
 
-/* ---- Run waiting room (PendingScene): compositor-only loops, all off under reduced motion. ---- */
 .pending-scan {
   animation: pending-scan 3.2s var(--ease-in-out-strong) infinite alternate;
 }
@@ -594,7 +570,6 @@ dialog.modal::backdrop {
   from { opacity: 0; }
 }
 
-/* FAQ: answers slide open where the browser can animate details content; others just toggle. */
 .faq-item {
   interpolate-size: allow-keywords;
 }
@@ -617,7 +592,6 @@ dialog.modal::backdrop {
   }
 }
 
-/* Footer road: dashes drift slowly, like data flowing between the machines above. */
 @keyframes footer-road {
   to {
     background-position-x: -52px;
@@ -633,7 +607,6 @@ dialog.modal::backdrop {
   }
 }
 
-/* Nav after the hero: slides down softly on enter, glides up a little faster on exit. */
 @keyframes nav-drop {
   from {
     transform: translateY(-100%);
@@ -674,7 +647,6 @@ dialog.modal::backdrop {
   }
 }
 
-/* Tooltip: quick scale+fade from its trigger; skipped when moving between adjacent tooltips. */
 .tooltip {
   transform-origin: var(--radix-tooltip-content-transform-origin);
   transition: opacity 125ms cubic-bezier(0.23, 1, 0.32, 1), transform 125ms cubic-bezier(0.23, 1, 0.32, 1);

@@ -67,23 +67,18 @@ export default defineSchema({
     isAnonymous: v.optional(v.boolean()),
     plan: v.optional(v.string()),
     weeklyDigest: v.optional(v.boolean()),
-    /** White-label identity for exported and shared reports; `logo` is a small data: URL. */
     brand: v.optional(v.object({ name: v.string(), logo: v.optional(v.string()) })),
   }).index("email", ["email"]),
 
-  /** Where a finished run is announced: a Slack webhook, a Telegram chat or any HTTPS endpoint. */
   integrations: defineTable({
     userId: v.id("users"),
     kind: v.union(v.literal("slack"), v.literal("telegram"), v.literal("webhook")),
-    /** Slack/webhook URL, or the Telegram chat id. */
     target: v.string(),
-    /** Telegram bot token, or the webhook's signing secret. */
     secret: v.optional(v.string()),
     onlyFailures: v.boolean(),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
 
-  /** Last time each worker process checked in (polling or heartbeating), so the app can tell nobody is running tests. */
   workers: defineTable({
     workerId: v.string(),
     lastSeenAt: v.number(),
@@ -94,7 +89,6 @@ export default defineSchema({
     name: v.string(),
     baseUrl: v.string(),
     faviconUrl: v.optional(v.string()),
-    /** Where "create issue" on a bug opens: a GitHub repo, a Linear team key or a Jira project. */
     tracker: v.optional(
       v.object({ kind: v.union(v.literal("github"), v.literal("linear"), v.literal("jira")), target: v.string(), projectId: v.optional(v.string()) }),
     ),
@@ -107,12 +101,12 @@ export default defineSchema({
     url: v.string(),
     goal: v.string(),
     templateKey: v.optional(v.string()),
-    locale: v.optional(v.string()), // legacy: the app is Persian-only now
+    locale: v.optional(v.string()),
     credentials: v.optional(v.object({ username: v.string(), password: v.string() })),
     status: runStatus,
     replayOf: v.optional(v.id("runs")),
     workerId: v.optional(v.string()),
-    liveUrl: v.optional(v.string()), // public URL of the claiming worker, for the live browser view
+    liveUrl: v.optional(v.string()),
     heartbeatAt: v.optional(v.number()),
     attempts: v.optional(v.number()),
     startedAt: v.optional(v.number()),

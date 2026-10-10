@@ -5,12 +5,6 @@ import { useEffect, useState } from "react";
 
 const LINE_MS = 3200;
 
-/**
- * Waiting room for a run that has no scenarios yet (queued or planning). A looping scene of the site being
- * read — a scan beam, elements lighting up as they're found, a cursor visiting them and scenario cards being
- * drafted — next to a status line that changes every few seconds, so the wait reads as progress.
- * All motion is CSS (transform/opacity on the compositor) and stops under prefers-reduced-motion.
- */
 export function PendingScene({ status, host }: { status: "queued" | "planning"; host: string }) {
   const t = useTranslations("run.pending");
   const lines = t.raw(status === "queued" ? "queuedLines" : "planningLines") as string[];
@@ -36,7 +30,6 @@ export function PendingScene({ status, host }: { status: "queued" | "planning"; 
 }
 
 function Scene({ host, planning }: { host: string; planning: boolean }) {
-  // Page elements in the mock site; each lights up in turn as if detected.
   const blocks = [
     { x: 24, y: 54, w: 92, h: 10 },
     { x: 24, y: 72, w: 150, h: 6 },
@@ -47,7 +40,6 @@ function Scene({ host, planning }: { host: string; planning: boolean }) {
   ];
   return (
     <svg viewBox="0 0 420 230" direction="ltr" className="relative mx-auto block w-full max-w-[520px]" aria-hidden>
-      {/* site under test */}
       <g className="pending-float">
         <rect x="8" y="10" width="260" height="210" rx="12" className="fill-card stroke-line-strong" strokeWidth="1.5" />
         <path d="M8 36 H268" className="stroke-line" strokeWidth="1.5" />
@@ -64,24 +56,20 @@ function Scene({ host, planning }: { host: string; planning: boolean }) {
         <rect x="196" y="54" width="58" height="70" rx="8" className="pending-block fill-surface" style={{ animationDelay: "1.2s" }} />
         <path d="M202 116 l14 -18 l10 12 l6 -7 l16 13 z" className="fill-pixel-off" />
 
-        {/* detection boxes snapping around found elements */}
         <rect x="20" y="100" width="78" height="28" rx="12" className="pending-detect fill-none stroke-accent" strokeWidth="1.5" strokeDasharray="4 3" />
         <rect x="20" y="134" width="158" height="34" rx="8" className="pending-detect fill-none stroke-accent" strokeWidth="1.5" strokeDasharray="4 3" style={{ animationDelay: "2s" }} />
 
-        {/* scan beam */}
         <g className="pending-scan">
           <rect x="9" y="38" width="258" height="26" fill="url(#pending-beam)" />
           <rect x="9" y="63" width="258" height="1.5" className="fill-accent" opacity="0.7" />
         </g>
 
-        {/* cursor visiting elements */}
         <g className="pending-cursor">
           <path d="M0 0 l0 16 l4.3 -4 l3 7 l2.8 -1.2 l-3 -7 l5.9 -0.4 z" className="fill-fg stroke-card" strokeWidth="1.3" strokeLinejoin="round" />
           <circle r="9" className="pending-click fill-none stroke-accent" strokeWidth="1.5" />
         </g>
       </g>
 
-      {/* scenarios being drafted; dimmed while still queued (animations override inline opacity, so dim a wrapper) */}
       <g opacity={planning ? 1 : 0.35}>
       {[0, 1, 2].map((n) => (
         <g key={n} className="pending-card" style={{ animationDelay: `${0.6 + n * 0.9}s` }}>

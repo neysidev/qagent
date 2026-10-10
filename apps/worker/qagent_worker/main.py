@@ -1,5 +1,3 @@
-"""Worker entry: claim loop, concurrency cap, heartbeat; each run executes the LangGraph agent."""
-
 import asyncio
 import hmac
 import json
@@ -23,7 +21,7 @@ log = logging.getLogger("qagent")
 WORKER_ID = os.environ.get("WORKER_ID") or socket.gethostname()
 MAX_CONCURRENT_RUNS = int(os.environ.get("MAX_CONCURRENT_RUNS", "2"))
 SCENARIO_PARALLELISM = int(os.environ.get("SCENARIO_PARALLELISM", "3"))
-LIVE_URL = os.environ.get("LIVE_URL", "").rstrip("/")  # public https URL of this worker's port, for the live view
+LIVE_URL = os.environ.get("LIVE_URL", "").rstrip("/")
 POLL_INTERVAL_S = 1.0
 HEARTBEAT_INTERVAL_S = 15.0
 
@@ -43,7 +41,6 @@ class JsonFormatter(logging.Formatter):
 
 
 async def start_health_server(running: set[asyncio.Task[None]]) -> None:
-    """GET /health → 200 JSON (Railway healthcheck). Up only once the browser is warm."""
     started = time.time()
 
     async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
@@ -122,7 +119,6 @@ async def handle(api: ConvexApi, pool: BrowserPool, run: dict[str, Any], slots: 
 
 
 def _run_error(e: BaseException) -> str:
-    """Run error as stored: "CODE: detail" for known provider failures (the app maps CODE), raw text otherwise."""
     code = error_code(e)
     return (f"{code}: {e}" if code else str(e))[:500]
 

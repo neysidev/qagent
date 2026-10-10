@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-/** One layout for every empty state: illustration, a short title, an optional line of context, an optional action. */
 export function EmptyState({ art, title, body, action, compact = false, className = "" }: {
   art: ReactNode;
   title: string;

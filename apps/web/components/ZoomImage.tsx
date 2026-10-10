@@ -4,7 +4,6 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 
-/** Image that opens in a lightbox on click; a shared layout animation grows it from (and returns it to) its slot. */
 export function ZoomImage({ src, alt, className, imgKey }: { src: string; alt: string; className?: string; imgKey?: string }) {
   const id = useId();
   const [open, setOpen] = useState(false);

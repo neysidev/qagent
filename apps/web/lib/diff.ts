@@ -15,7 +15,6 @@ export type RunDiff = {
 const bad = (s: string) => s === "failed" || s === "error";
 const key = (t: string) => t.trim().toLowerCase();
 
-/** What changed from run `a` (older) to run `b` (newer): scenarios matched by title, bugs by title. */
 export function diffRuns(a: RunDetails, b: RunDetails): RunDiff {
   const before = new Map(a.scenarios.map((s) => [key(s.title), s]));
   const after = new Map(b.scenarios.map((s) => [key(s.title), s]));

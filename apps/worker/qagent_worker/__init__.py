@@ -1,14 +1,8 @@
-"""QAgent worker."""
-
 import os
 from pathlib import Path
 
 
 def _load_dotenv(path: Path) -> None:
-    """Local dev convenience: KEY=VALUE lines from apps/worker/.env, never overriding real env vars.
-
-    Runs on package import, before any module reads its settings. No file (Docker, Railway) means no-op.
-    """
     if not path.is_file():
         return
     for raw in path.read_text().splitlines():

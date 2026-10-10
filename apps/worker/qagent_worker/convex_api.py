@@ -1,5 +1,3 @@
-"""Thin async wrapper around the sync Convex client. Every call passes WORKER_SECRET."""
-
 import asyncio
 import os
 from typing import Any

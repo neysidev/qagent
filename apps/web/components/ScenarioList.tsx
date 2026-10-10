@@ -12,7 +12,6 @@ const dot: Record<Scenario["status"], string> = {
   skipped: "bg-fg-3/50",
 };
 
-/** Scenarios with live status; clicking one filters the step viewer. */
 export function ScenarioList({
   scenarios,
   selected,

@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { LostIllustration } from "@/components/illustrations";
 import { button } from "@/components/ui";
 
-/** Any page in the app that fails to load (e.g. a Convex query throws) lands here instead of a blank screen. */
 export default function AppError({ reset }: { error: Error; reset: () => void }) {
   const t = useTranslations("errors");
   return (

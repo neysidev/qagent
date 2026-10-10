@@ -24,7 +24,6 @@ function read<T>(key: string, fallback: T): T {
 }
 const write = (key: string, value: unknown) => localStorage.setItem(key, JSON.stringify(value));
 
-/** Reads ?bugs= once and persists it, so it survives in-site navigation. */
 export function initBugs() {
   const param = new URLSearchParams(location.search).get("bugs");
   if (param) localStorage.setItem("bugs", param);
@@ -63,7 +62,6 @@ export function signup(email: string, password: string): string | null {
 }
 
 export function login(email: string, password: string): string | null {
-  // B5: forgets to normalize case, so "User@x.com" never matches the stored "user@x.com".
   const key = hasBug("B5") ? email.trim() : email.trim().toLowerCase();
   const user = read<User[]>("users", []).find((u) => u.email === key && u.password === password);
   if (!user) return "ایمیل یا رمز عبور اشتباه است";

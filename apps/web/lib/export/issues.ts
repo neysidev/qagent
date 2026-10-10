@@ -5,7 +5,6 @@ export type Tracker = { kind: "github" | "linear" | "jira"; target: string; proj
 
 const L = LABELS.fa;
 
-/** Plain-text bug report, ready to paste anywhere. */
 export function bugText(b: Bug, run: Pick<Run, "url">, flavor: "md" | "jira" | "plain" = "plain"): string {
   const h = (s: string) => (flavor === "md" ? `**${s}**` : flavor === "jira" ? `*${s}*` : s);
   const img = (u: string) => (flavor === "md" ? `![](${u})` : flavor === "jira" ? `!${u}!` : u);
@@ -24,9 +23,8 @@ export function bugText(b: Bug, run: Pick<Run, "url">, flavor: "md" | "jira" | "
   ].join("\n");
 }
 
-const MAX_BODY = 3500; // keeps the whole URL under what browsers and trackers accept
+const MAX_BODY = 3500;
 
-/** Link that opens the tracker's new-issue page pre-filled, plus the full text to copy when the link cannot carry it all. */
 export function issueLink(t: Tracker, b: Bug, run: Pick<Run, "url">): { url: string; body: string } {
   const body = bugText(b, run, t.kind === "jira" ? "jira" : "md");
   const short = body.length > MAX_BODY ? `${body.slice(0, MAX_BODY)}…` : body;
@@ -39,7 +37,6 @@ export function issueLink(t: Tracker, b: Bug, run: Pick<Run, "url">): { url: str
     q.set("description", short);
     return { url: `https://linear.app/team/${t.target}/new?${q}`, body };
   }
-  // Jira's create form takes numeric ids; issuetype 10004 is not universal, so the form's own default type is kept.
   const j = new URLSearchParams({ pid: t.projectId ?? "", summary: b.title, description: short });
   return { url: `https://${t.target}/secure/CreateIssueDetails!init.jspa?${j}`, body };
 }

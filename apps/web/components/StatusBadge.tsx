@@ -31,7 +31,6 @@ export function StatusBadge({ status }: { status: Status }) {
   );
 }
 
-/** Compact glyph for task lists: what a finished job produced, or that it's still working. */
 export function TaskIcon({ status, bugs = 0 }: { status: Status; bugs?: number }) {
   const cls = "size-4 shrink-0";
   if (status === "queued") return <CircleDashed className={`${cls} text-fg-3`} aria-hidden />;

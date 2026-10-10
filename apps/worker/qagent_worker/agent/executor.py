@@ -1,5 +1,3 @@
-"""Observe → decide → act loop for one scenario, in its own browser context."""
-
 import asyncio
 import logging
 import random
@@ -35,11 +33,10 @@ class Deps:
     pool: BrowserPool
     cost: Cost = field(default_factory=Cost)
     scenario_slots: asyncio.Semaphore = field(default_factory=lambda: asyncio.Semaphore(3))
-    stop: asyncio.Event = field(default_factory=asyncio.Event)  # set when the user cancels the run
+    stop: asyncio.Event = field(default_factory=asyncio.Event)
 
 
 class StepWriter:
-    """Uploads screenshots and writes steps in order, off the agent loop."""
 
     def __init__(self, api: Api, stop: asyncio.Event) -> None:
         self._api = api
@@ -161,7 +158,6 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
                         "fast", Decision, prompts.messages(prompts.EXECUTOR_SYSTEM, user), cost
                     )
                     thought = scrub(decision.thought, secret_values)
-                    # done + actions is allowed only as "actions ending in an assert, then done(success)"; the assert gates it
                     pending = decision.done if decision.actions and decision.done and decision.done.success and decision.actions[-1].type == "assert" else None
                     if decision.done and not pending:
                         finished_ok, conclusion = decision.done.success, scrub(decision.done.reason, secret_values)
@@ -222,7 +218,7 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
                             break
                         nxt = decision.actions[i + 1] if i + 1 < len(decision.actions) else None
                         if nxt and nxt.ref and not await page.locator(f'[data-qa-ref="{nxt.ref}"]').count():
-                            break  # page changed under us; re-observe
+                            break
         except TimeoutError:
             limit_reason = f"Scenario time limit ({SCENARIO_TIMEOUT_S // 60} min) reached"
         except Exception as e:
@@ -243,7 +239,6 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
         await writer.close()
 
     if blocked:
-        # Captchas are a test-environment limit, not a site bug; no LLM verdict needed.
         reason = "Blocked by captcha: the agent cannot test past a captcha challenge."
         await api.mutation("updateScenario", scenarioId=scenario["_id"], status="error", verdictReason=reason)
         return ScenarioResult(index=scenario["index"], status="error", reason=reason)
@@ -256,7 +251,6 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
     verdict = await verifier.verify(
         run, scenario, history, conclusion, final_obs, final_shot, evidence, secret_values, cost, finished_ok, asserts
     )
-    # An unfinished scenario can only end as a proven site bug or an agent error, never a pass.
     if verdict.status == "passed" and finished_ok is None:
         verdict.status, verdict.reason = "agent_error", limit_reason or verdict.reason
 

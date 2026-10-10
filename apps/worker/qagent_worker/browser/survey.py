@@ -1,5 +1,3 @@
-"""Pre-planning survey: what the site really offers, read from the start page and a few key pages (no LLM)."""
-
 import asyncio
 import re
 from urllib.parse import urldefrag, urljoin, urlsplit
@@ -41,7 +39,7 @@ _INVENTORY_JS = r"""
 
 
 async def _inventory(page: Page) -> dict:
-    try:  # reveal lazy content below the fold, then come back
+    try:
         await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
         await page.wait_for_timeout(300)
         await page.evaluate("window.scrollTo(0, 0)")
@@ -66,7 +64,6 @@ def _render(path: str, inv: dict, origin: str) -> str:
 
 
 def _candidates(inv: dict, origin: str, current: str, goal: str) -> list[str]:
-    """Same-site pages worth a look: ones matching the goal's words first, then navigation links."""
     words = [w for w in re.split(r"\W+", goal.lower()) if len(w) >= 3]
     scored: dict[str, int] = {}
     for l in inv["links"]:
@@ -79,7 +76,6 @@ def _candidates(inv: dict, origin: str, current: str, goal: str) -> list[str]:
 
 
 async def survey(page: Page, goal: str) -> str:
-    """Text inventory of the start page (already loaded) plus a few linked pages. Best effort: failures just shorten it."""
     start = page.url
     origin = "{0.scheme}://{0.netloc}".format(urlsplit(start))
     inv = await _inventory(page)

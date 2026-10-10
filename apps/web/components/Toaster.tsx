@@ -2,7 +2,6 @@
 
 import { Toaster as Sonner } from "sonner";
 
-/** The app's single toaster (shadcn's toast is Sonner too): bottom-right, RTL, styled with the design tokens. */
 export function Toaster() {
   return (
     <Sonner
