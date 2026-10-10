@@ -22,7 +22,6 @@ flowchart LR
   `WORKER_SECRET`, and a 30 s cron that re-queues (1 retry) or fails runs whose heartbeat is older than 90 s.
 - **apps/worker** — Python 3.12, LangGraph, Playwright (async Chromium), Pydantic v2. One warm browser per worker;
   a fresh context per scenario.
-- **apps/demo-shop** — Persian shop with five switchable bugs (B1–B5) used for the demo and the benchmark.
 
 ## Agent flow
 

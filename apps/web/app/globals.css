@@ -130,7 +130,7 @@ dialog.modal::backdrop {
   backdrop-filter: blur(2px);
 }
 /* Mobile workspace drawer */
-/* Sidebar: card-resize width tween + panel-reveal content (slide, fade, 2px cross-blur), transitions.dev tokens. */
+/* Sidebar: the layout slot tweens width while the panel translates fully out of view; same duration and curve keep the panel flush with the content edge. */
 .drawer,
 .drawer-inner,
 .sidebar-anim {
@@ -139,16 +139,11 @@ dialog.modal::backdrop {
   transition-timing-function: var(--sb-ease);
 }
 .drawer {
-  transition-property: transform, width;
-  will-change: width;
+  transition-property: translate, width;
 }
 .drawer-inner {
-  transition-property: transform, opacity, filter;
-  transition-duration: 350ms;
-  will-change: transform, opacity;
-}
-.drawer-inner.is-open {
-  transition-duration: 400ms;
+  transition-property: translate;
+  will-change: translate;
 }
 .sidebar-anim {
   transition-property: border-radius, opacity;

@@ -49,10 +49,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="theme-dark flex h-dvh overflow-hidden bg-canvas text-fg [color-scheme:dark] print:block print:h-auto print:overflow-visible">
         {drawer && <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setDrawer(false)} aria-hidden />}
         <aside
-          className={`no-print drawer flex w-[272px] shrink-0 flex-col bg-canvas max-lg:fixed max-lg:inset-y-0 max-lg:start-0 max-lg:z-50 lg:relative lg:z-20 ${drawer ? "" : "max-lg:translate-x-full"} ${collapsed ? "lg:w-0 lg:overflow-hidden" : ""}`}
+          className={`no-print drawer flex w-[272px] shrink-0 flex-col bg-canvas max-lg:fixed max-lg:inset-y-0 max-lg:start-0 max-lg:z-50 lg:relative lg:z-20 ${drawer ? "" : "max-lg:translate-x-full"} ${collapsed ? "lg:w-0" : ""}`}
           inert={collapsed}
         >
-          <div className={`drawer-inner flex h-full w-[272px] shrink-0 flex-col ${collapsed ? "lg:translate-x-1/2 lg:opacity-0 lg:blur-[2px]" : "is-open"}`}>
+          <div className={`drawer-inner flex h-full w-[272px] shrink-0 flex-col ${collapsed ? "lg:-translate-x-full lg:rtl:translate-x-full" : ""}`}>
             <Sidebar onHide={() => (setDrawer(false), setCollapsed(true))} />
           </div>
         </aside>
