@@ -7,8 +7,8 @@ import { checkSecret, markWorkerSeen } from "./lib";
 const secret = v.string();
 
 export const claimNextRun = mutation({
-  args: { secret, workerId: v.string() },
-  handler: async (ctx, { secret, workerId }) => {
+  args: { secret, workerId: v.string(), liveUrl: v.optional(v.string()) },
+  handler: async (ctx, { secret, workerId, liveUrl }) => {
     checkSecret(secret);
     await markWorkerSeen(ctx, workerId);
     const run = await ctx.db
@@ -31,6 +31,7 @@ export const claimNextRun = mutation({
     await ctx.db.patch(run._id, {
       status: "planning",
       workerId,
+      liveUrl,
       heartbeatAt: now,
       startedAt: now,
       attempts: (run.attempts ?? 0) + 1,

@@ -1,17 +1,19 @@
 "use client";
 
+import { useAction } from "convex/react";
 import { useTranslations } from "next-intl";
 import {
   ArrowDownUp, Check, CornerDownLeft, Globe, Hourglass, Keyboard, ListChecks, MousePointerClick, SquareCheck, X, type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { api } from "@convex/_generated/api";
 import { actionValue, type Scenario, type Step } from "@/lib/format";
 import { NoStepsIllustration } from "./illustrations";
 import { button } from "./ui";
 import { ZoomImage } from "./ZoomImage";
 
 /** The selected step on a stage (screenshot + moving cursor), its details, and a scrubbable step list. */
-export function StepViewer({ steps, scenarios, live }: { steps: Step[]; scenarios: Scenario[]; live: boolean }) {
+export function StepViewer({ steps, scenarios, live, runId }: { steps: Step[]; scenarios: Scenario[]; live: boolean; runId?: string }) {
   const t = useTranslations("run");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedIndex = Math.max(
@@ -45,7 +47,7 @@ export function StepViewer({ steps, scenarios, live }: { steps: Step[]; scenario
     <div className="@container">
       <div className="grid gap-4 @3xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0 space-y-3">
-          <Stage steps={steps} step={step} label={label} />
+          {following && runId ? <LiveStage runId={runId} fallback={<Stage steps={steps} step={step} label={label} />} /> : <Stage steps={steps} step={step} label={label} />}
 
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
@@ -86,6 +88,33 @@ function preload(url: string | null | undefined): Promise<void> {
     decoded.set(url, p);
   }
   return p;
+}
+
+/** The worker's real browser as an MJPEG <img>; shows `fallback` (the step stage) until frames arrive or if the stream is unavailable. */
+function LiveStage({ runId, fallback }: { runId: string; fallback: React.ReactNode }) {
+  const access = useAction(api.runs.liveAccess);
+  const [src, setSrc] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    access({ runId: runId as never }).then((u) => alive && setSrc(u)).catch(() => {});
+    return () => { alive = false; };
+  }, [access, runId]);
+  return (
+    <>
+      {!ready && fallback}
+      {src && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt=""
+          onLoad={() => setReady(true)}
+          onError={() => { setSrc(null); setReady(false); }}
+          className={ready ? "aspect-[16/10] w-full rounded-xl border border-line object-contain bg-surface" : "hidden"}
+        />
+      )}
+    </>
+  );
 }
 
 const CLICKY = new Set(["click", "select", "check"]);

@@ -1,7 +1,8 @@
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { action, internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { ACTIVE_STATUSES, lastWorkerSeen, requireOwnedRun, requireUser, WORKER_ONLINE_MS } from "./lib";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -196,6 +197,31 @@ export type RunDetails = Awaited<ReturnType<typeof details>>;
 export const get = query({
   args: { runId: v.id("runs") },
   handler: async (ctx, { runId }) => details(ctx, await requireOwnedRun(ctx, runId)),
+});
+
+export const liveTarget = internalQuery({
+  args: { runId: v.id("runs"), userId: v.id("users") },
+  handler: async (ctx, { runId, userId }) => {
+    const run = await ctx.db.get(runId);
+    if (!run || run.userId !== userId || !(ACTIVE_STATUSES as readonly string[]).includes(run.status)) return null;
+    return run.liveUrl ?? null;
+  },
+});
+
+/** Signed MJPEG URL of the live browser (CDP screencast served by the worker), or null when unavailable. */
+export const liveAccess = action({
+  args: { runId: v.id("runs") },
+  handler: async (ctx, { runId }): Promise<string | null> => {
+    const userId = await getAuthUserId(ctx);
+    const secret = process.env.WORKER_SECRET;
+    if (!userId || !secret) return null;
+    const base = await ctx.runQuery(internal.runs.liveTarget, { runId, userId });
+    if (!base) return null;
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(runId)));
+    const token = Array.from(mac, (b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+    return `${base}/live/${runId}?token=${token}`;
+  },
 });
 
 export const getShared = query({

@@ -8,6 +8,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+from ..browser import live
 from ..browser.actions import ActionError, execute
 from ..browser.evidence import Evidence, screenshot
 from ..browser.observe import Observation, observe
@@ -130,8 +131,10 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
     blocked = False
     asserts: list[str] = []
     prev_obs: Observation | None = None
+    page = None
     try:
         page = await context.new_page()
+        await live.for_run(run["_id"]).add_page(page)
         evidence.attach(page)
         try:
             async with asyncio.timeout(SCENARIO_TIMEOUT_S):
@@ -234,6 +237,8 @@ async def run_scenario(deps: Deps, run: dict[str, Any], scenario: dict[str, Any]
         except Exception:
             pass
     finally:
+        if page:
+            await live.for_run(run["_id"]).remove_page(page)
         await context.close()
         await writer.close()
 

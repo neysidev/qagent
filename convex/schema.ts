@@ -112,6 +112,7 @@ export default defineSchema({
     status: runStatus,
     replayOf: v.optional(v.id("runs")),
     workerId: v.optional(v.string()),
+    liveUrl: v.optional(v.string()), // public URL of the claiming worker, for the live browser view
     heartbeatAt: v.optional(v.number()),
     attempts: v.optional(v.number()),
     startedAt: v.optional(v.number()),

@@ -1,16 +1,19 @@
 """Worker entry: claim loop, concurrency cap, heartbeat; each run executes the LangGraph agent."""
 
 import asyncio
+import hmac
 import json
 import logging
 import os
 import socket
 import time
 from typing import Any
+from urllib.parse import parse_qsl, urlsplit
 
 from .agent.executor import Deps
 from .agent.graph import build_graph
 from .agent.state import RunState
+from .browser import live
 from .browser.pool import BrowserPool
 from .convex_api import ConvexApi
 from .llm import error_code
@@ -20,6 +23,7 @@ log = logging.getLogger("qagent")
 WORKER_ID = os.environ.get("WORKER_ID") or socket.gethostname()
 MAX_CONCURRENT_RUNS = int(os.environ.get("MAX_CONCURRENT_RUNS", "2"))
 SCENARIO_PARALLELISM = int(os.environ.get("SCENARIO_PARALLELISM", "3"))
+LIVE_URL = os.environ.get("LIVE_URL", "").rstrip("/")  # public https URL of this worker's port, for the live view
 POLL_INTERVAL_S = 1.0
 HEARTBEAT_INTERVAL_S = 15.0
 
@@ -45,7 +49,14 @@ async def start_health_server(running: set[asyncio.Task[None]]) -> None:
     async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         try:
             line = await asyncio.wait_for(reader.readline(), timeout=5)
-            ok = line.split(b" ")[1:2] == [b"/health"]
+            path = urlsplit(line.split(b" ")[1].decode()) if line.count(b" ") >= 2 else urlsplit("")
+            parts = path.path.split("/")
+            if parts[:2] == ["", "live"] and len(parts) == 3 and hmac.compare_digest(
+                dict(parse_qsl(path.query)).get("token", ""), live.token(parts[2])
+            ):
+                await live.stream(parts[2], reader, writer)
+                return
+            ok = path.path == "/health"
             body = json.dumps({"ok": True, "worker": WORKER_ID, "runs": len(running), "uptime": int(time.time() - started)})
             status = "200 OK" if ok else "404 Not Found"
             writer.write(
@@ -106,6 +117,7 @@ async def handle(api: ConvexApi, pool: BrowserPool, run: dict[str, Any], slots: 
     finally:
         hb.cancel()
         watcher.cancel()
+        await live.drop(run_id)
         slots.release()
 
 
@@ -130,7 +142,7 @@ async def main() -> None:
         while True:
             await slots.acquire()
             try:
-                run = await api.mutation("claimNextRun", workerId=WORKER_ID)
+                run = await api.mutation("claimNextRun", workerId=WORKER_ID, **({"liveUrl": LIVE_URL} if LIVE_URL else {}))
             except Exception:
                 log.exception("claim failed")
                 run = None

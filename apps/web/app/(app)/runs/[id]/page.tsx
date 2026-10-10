@@ -167,6 +167,7 @@ function LiveView({ data }: { data: RunDetails }) {
         steps={scenarioId ? steps.filter((s) => s.scenarioId === scenarioId) : steps}
         scenarios={scenarios}
         live
+        runId={run._id}
       />
     </div>
   );
