@@ -93,7 +93,9 @@ def _retryable(e: Exception) -> bool:
 
 async def _call(kind: ModelKind, schema: type[T], messages: list[BaseMessage], cost: Cost) -> T:
     """Retries 429/5xx with exponential backoff; retries once on a parse failure. Usage is always billed."""
-    llm = chat_model(kind).with_structured_output(schema, include_raw=True)
+    # OpenAI-compatible providers (Qwen etc.) often loop under strict json_schema; tool calling is widely supported
+    kw = {"method": "function_calling"} if os.environ.get("LLM_PROVIDER", "gemini") == "openai_compatible" else {}
+    llm = chat_model(kind).with_structured_output(schema, include_raw=True, **kw)
     parse_failures = 0
     attempt = 0
     while True:
