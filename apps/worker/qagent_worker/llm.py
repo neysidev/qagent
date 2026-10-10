@@ -35,7 +35,7 @@ def model_name(kind: ModelKind) -> str:
 
 # Cap on reply length. Replies are small structured JSON; without a cap, OpenAI-compatible providers reserve the
 # model's full output window (64k+ tokens) per call, which credit-limited keys reject outright (OpenRouter: 402).
-MAX_TOKENS = int(os.environ.get("LLM_MAX_TOKENS", "8192"))  # Gemini counts thinking tokens against this
+MAX_TOKENS = int(os.environ["LLM_MAX_TOKENS"]) if os.environ.get("LLM_MAX_TOKENS") else None  # unset = no cap (provider default)
 
 
 @cache
