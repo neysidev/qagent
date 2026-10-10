@@ -4,10 +4,11 @@
   "packageManager": "pnpm@10.30.1",
   "scripts": {
     "dev:web": "pnpm --filter web dev",
+    "dev:shop": "pnpm --filter demo-shop dev",
     "convex": "cd apps/web && npx convex dev",
     "typecheck": "pnpm -r typecheck",
     "worker": "cd apps/worker && .venv/bin/python -m qagent_worker.main",
-    "dev": "concurrently -n web,convex,worker -c blue,magenta,yellow \"pnpm dev:web\" \"pnpm convex\" \"pnpm worker\""
+    "dev": "concurrently -n web,shop,convex,worker -c blue,green,magenta,yellow \"pnpm dev:web\" \"pnpm dev:shop\" \"pnpm convex\" \"pnpm worker\""
   },
   "dependencies": {
     "@auth/core": "^0.41.3",
