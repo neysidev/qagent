@@ -12,10 +12,12 @@ import { SitesIllustration } from "@/components/illustrations";
 import { TaskIcon } from "@/components/StatusBadge";
 import { skeleton } from "@/components/ui";
 import { errorKey, hostOf, timeAgo } from "@/lib/format";
+import { PageTitle } from "@/components/PageTitle";
 
 /** Start: type an address, land in that site's project. Existing projects sit right below. */
 export default function Start() {
   const t = useTranslations("home");
+  const ts = useTranslations("shell");
   const { projects } = useWorkspace();
 
   return (
@@ -32,6 +34,7 @@ export default function Start() {
       <div className="mx-auto w-full max-w-[880px] px-4 pb-16 sm:px-8">
       <div className="pt-16 sm:pt-[12vh]">
         <div className="mx-auto max-w-[560px] text-center">
+          <PageTitle title={ts("newTask")} />
           <h1 className="text-[26px] leading-[1.3] font-bold sm:text-[34px]">{t("title")}</h1>
           <p className="mt-3 text-fg-2">{t("subtitle")}</p>
         </div>

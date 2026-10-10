@@ -10,6 +10,7 @@ import { TaskIcon } from "@/components/StatusBadge";
 import { button, card, segment, segmented, skeleton } from "@/components/ui";
 import { hostOf, nf, timeAgo } from "@/lib/format";
 import { useNotifications, type NotifKind } from "@/lib/useNotifications";
+import { PageTitle } from "@/components/PageTitle";
 
 const KINDS: ("all" | NotifKind)[] = ["all", "bugs", "clean", "failed"];
 
@@ -25,6 +26,7 @@ export default function NotificationsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-8 max-lg:pt-14 sm:px-8">
       <div className="pb-1">
+        <PageTitle title={t("title")} />
         <h1 className="text-[28px] leading-[1.3] font-bold">{t("title")}</h1>
         <p className="mt-1 text-sm text-fg-3">{n.unread ? t("unreadCount", { count: nf.format(n.unread) }) : t("allRead")}</p>
       </div>
