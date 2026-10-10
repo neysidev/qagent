@@ -10,7 +10,6 @@ import { errorKey, hostOf, nf } from "@/lib/format";
 import { useWorkerOnline } from "@/lib/useWorkerOnline";
 import { input, label } from "./ui";
 
-export const DEMO_URL = process.env.NEXT_PUBLIC_DEMO_SHOP_URL ?? "";
 export type Draft = { path: string; goal: string };
 
 const LOGIN_HINT = /وارد شو|ورود|لاگین|پنل|داشبورد|پروفایل|حساب کاربری|login|sign ?in|dashboard|account/i;
