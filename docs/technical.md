@@ -70,19 +70,7 @@ switches to any OpenAI-compatible endpoint by config. Token usage is read from e
 
 ## Benchmark
 
-`apps/worker/tests/benchmark.py` runs four fixed goals against the demo shop with `?bugs=all` and `?bugs=none`,
-then one re-run to measure replay.
-
-| Metric | Result |
-|---|---|
-| Bugs detected (of 5) | _not yet measured_ |
-| False positives on `?bugs=none` | _not yet measured_ |
-| Average run duration | _not yet measured_ |
-| Average LLM cost per run | _not yet measured_ |
-| Replay re-run duration / cost | _not yet measured_ |
-
-> Fill this table from a real benchmark run before submission:
-> `DEMO_SHOP_URL=https://<demo-shop> GOOGLE_API_KEY=… python -m tests.benchmark`
+No benchmark yet. The demo shop it relied on was removed; build a fixed set of real public sites before quoting numbers.
 
 ## Setup and deploy
 

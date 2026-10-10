@@ -27,13 +27,6 @@ pip install -e . && playwright install chromium
 CONVEX_URL=... WORKER_SECRET=... GOOGLE_API_KEY=... python -m qagent_worker.main
 ```
 
-Benchmark (in-process, no Convex):
-
-```bash
-cd apps/worker
-DEMO_SHOP_URL=https://<demo-shop> GOOGLE_API_KEY=... python -m tests.benchmark
-```
-
 ## Env vars
 
 See `.env.example` (Convex), `apps/web/.env.example`, `apps/worker/.env.example`.
@@ -41,8 +34,8 @@ See `.env.example` (Convex), `apps/web/.env.example`, `apps/worker/.env.example`
 ## Deploy
 
 1. **Convex:** create a production deployment in the dashboard; set `WORKER_SECRET`, `DAILY_RUN_LIMIT`, and run `npx @convex-dev/auth --prod` (sets `SITE_URL` to the Vercel URL + JWT keys). Copy a production deploy key.
-2. **Web (Vercel):** import the repo, Root Directory `apps/web`. Env: `CONVEX_DEPLOY_KEY`, `NEXT_PUBLIC_DEMO_SHOP_URL`. `vercel.json` runs `npx convex deploy --cmd 'pnpm build'`, which also sets `NEXT_PUBLIC_CONVEX_URL`.
-4. **Worker (Railway):** new service from the repo, Root Directory `apps/worker` (uses `Dockerfile`), EU region. Env: `CONVEX_URL` (the `.convex.cloud` URL), `WORKER_SECRET`, `WORKER_ID`, `MAX_CONCURRENT_RUNS`.
+2. **Web (Vercel):** import the repo, Root Directory `apps/web`. Env: `CONVEX_DEPLOY_KEY`. `vercel.json` runs `npx convex deploy --cmd 'pnpm build'`, which also sets `NEXT_PUBLIC_CONVEX_URL`.
+3. **Worker (Railway):** new service from the repo, Root Directory `apps/worker` (uses `Dockerfile`), EU region. Env: `CONVEX_URL` (the `.convex.cloud` URL), `WORKER_SECRET`, `WORKER_ID`, `MAX_CONCURRENT_RUNS`.
 
 ## Agent
 
@@ -65,6 +58,6 @@ with the agent.
 
 ## Acceptance checks
 
-- Sign up on the web URL → **Try on demo shop** → a screenshot appears on the run page within ~10s.
+- Sign up on the web URL → create a project with any public URL and start a run → a screenshot appears on the run page within ~10s.
 - Wrong secret rejected: `CONVEX_URL=... python apps/worker/tests/test_secret.py`
 - Kill the worker mid-run: within ~2 min the cron (`convex/crons.ts`) re-queues it (1 retry), then marks it `failed`.

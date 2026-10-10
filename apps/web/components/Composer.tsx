@@ -10,7 +10,6 @@ import { errorKey, hostOf, nf } from "@/lib/format";
 import { useWorkerOnline } from "@/lib/useWorkerOnline";
 import { input, label } from "./ui";
 
-export const DEMO_URL = process.env.NEXT_PUBLIC_DEMO_SHOP_URL ?? "";
 export type Draft = { path: string; goal: string };
 
 // A free-text goal that talks about signing in probably needs an account; only used to nudge, never to block.
