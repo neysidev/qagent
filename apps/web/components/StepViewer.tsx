@@ -30,6 +30,11 @@ export function StepViewer({ steps, scenarios, live, runId }: { steps: Step[]; s
     if (selectedId) activeRow.current?.scrollIntoView({ block: "nearest" });
   }, [selectedId]);
 
+  // Start fetching screenshots the moment steps arrive, before the stage asks for them.
+  useEffect(() => {
+    for (const s of steps.slice(-3)) preload(s.screenshotUrl);
+  }, [steps]);
+
   if (!step) {
     return (
       <div className="flex aspect-[16/10] flex-col items-center justify-center rounded-xl bg-surface px-6 text-center">
@@ -83,6 +88,7 @@ function preload(url: string | null | undefined): Promise<void> {
   let p = decoded.get(url);
   if (!p) {
     const img = new Image();
+    img.fetchPriority = "high";
     img.src = url;
     p = img.decode().catch(() => {}); // a broken image still resolves, so the stage never stalls on it
     decoded.set(url, p);
@@ -143,6 +149,17 @@ function Stage({ steps, step, label }: { steps: Step[]; step: Step; label: strin
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [arrived, setArrived] = useState<{ id: string; at: Point } | null>(null);
   const shownRef = useRef(shown);
+  // URL of the screenshot that is decoded and on screen; overlays (cursor, highlight) wait for it.
+  const [readyUrl, setReadyUrl] = useState<string | null>(null);
+  const loaded = !!shown.screenshotUrl && readyUrl === shown.screenshotUrl;
+  useEffect(() => {
+    let alive = true;
+    const url = shown.screenshotUrl;
+    if (url) void preload(url).then(() => alive && setReadyUrl(url));
+    return () => {
+      alive = false;
+    };
+  }, [shown.screenshotUrl]);
 
   // Keep the neighbours decoded so scrubbing back and forth is instant.
   const index = steps.findIndex((s) => s._id === step._id);
@@ -159,6 +176,7 @@ function Stage({ steps, step, label }: { steps: Step[]; step: Step; label: strin
       setPrev(shownRef.current);
       shownRef.current = step;
       setShown(step);
+      setReadyUrl(step.screenshotUrl ?? null);
     });
     return () => {
       alive = false;
@@ -181,7 +199,7 @@ function Stage({ steps, step, label }: { steps: Step[]; step: Step; label: strin
   const lastMove = useRef("");
   useEffect(() => {
     const el = cursorEl.current;
-    if (!el || !size.w) return;
+    if (!el || !size.w || !loaded) return;
     const px = (p: Point) => `translate(${p.x * size.w}px, ${p.y * size.h}px)`;
     const isNewMove = lastMove.current !== moveKey;
     lastMove.current = moveKey;
@@ -225,9 +243,9 @@ function Stage({ steps, step, label }: { steps: Step[]; step: Step; label: strin
       anim.cancel();
       done();
     };
-  }, [moveKey, size.w, size.h]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [moveKey, size.w, size.h, loaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const landed = arrived?.id === shown._id;
+  const landed = loaded && arrived?.id === shown._id;
   const t = shown.target;
 
   return (
@@ -241,7 +259,10 @@ function Stage({ steps, step, label }: { steps: Step[]; step: Step; label: strin
         // eslint-disable-next-line @next/next/no-img-element
         <img src={prev.screenshotUrl} alt="" aria-hidden className="absolute inset-0 size-full object-contain" />
       )}
-      {shown.screenshotUrl && (
+      {!loaded && !prev?.screenshotUrl && (
+        <div aria-hidden className="skeleton absolute inset-0 animate-pulse bg-fg/[0.05] backdrop-blur-md motion-reduce:animate-none" />
+      )}
+      {loaded && shown.screenshotUrl && (
         <ZoomImage imgKey={shown._id} src={shown.screenshotUrl} alt={shown.thought}
           className="stage-in absolute inset-0 size-full object-contain" />
       )}
@@ -267,7 +288,7 @@ function Stage({ steps, step, label }: { steps: Step[]; step: Step; label: strin
         />
       )}
 
-      <div ref={cursorEl} className="pointer-events-none absolute top-0 left-0 will-change-transform">
+      <div ref={cursorEl} className={`pointer-events-none absolute top-0 left-0 will-change-transform ${loaded ? "" : "invisible"}`}>
         <svg key={landed ? `press-${shown._id}` : "idle"} viewBox="0 0 24 24"
           className={`absolute -top-0.5 -left-0.5 size-6 drop-shadow-md ${landed && CLICKY.has(shown.action.type) ? "cursor-press" : ""}`} aria-hidden>
           <path d="M3 2l7.5 19 2.6-7.9L21 10.5z" fill="#111" stroke="#fff" strokeWidth="1.5" strokeLinejoin="round" />
