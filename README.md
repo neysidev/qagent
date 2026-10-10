@@ -53,8 +53,8 @@ with the agent.
 ## Operations
 
 - Worker logs are JSON lines on stdout. `GET /health` on `$PORT` (default 8080) is the Railway healthcheck.
-- LLM 429/5xx/timeouts: 3 attempts with backoff, then fallback to the other model.
-- Docs: `docs/technical.md`, `docs/business-plan.md`, `docs/pitch-outline.md`, `docs/video-script.md`.
+- LLM 429/5xx/timeouts: up to 5 attempts with backoff, then fallback to the other model.
+- Docs: `docs/submission/` (product access, technical, business plan, investor pitch).
 
 ## Acceptance checks
 
